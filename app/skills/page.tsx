@@ -3,18 +3,26 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Gem, Sparkles, TrendingUp } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { gameAssets } from "../../lib/gameAssets";
-import { readProgress } from "../../lib/learningProgress";
+import { defaultProgress, readProgress } from "../../lib/learningProgress";
 import { calculateSkillCards, type SkillCardRecord } from "../../lib/skillEngine";
 
 export default function SkillsPage() {
-  const [progress] = useState(() => readProgress());
+  const [progress, setProgress] = useState(defaultProgress);
   const skills = useMemo(() => calculateSkillCards(progress), [progress]);
   const grownCount = skills.filter((skill) => getSkillTotalExp(skill) > 0).length;
   const totalExp = skills.reduce((sum, skill) => sum + getSkillTotalExp(skill), 0);
   const abilityLevel = Math.min(5, Math.max(1, Math.floor(totalExp / 20) + 1));
   const abilityTitle = abilityLevel >= 4 ? "熟练" : abilityLevel >= 2 ? "成长中" : "新手";
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setProgress(readProgress());
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#18247a] text-white">

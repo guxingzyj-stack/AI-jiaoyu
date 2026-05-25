@@ -17,11 +17,18 @@ import {
   Zap,
   type LucideIcon
 } from "lucide-react";
-import { useMemo, useState } from "react";
-import { readDailyQuestState, type DailyQuest } from "../../lib/dailyQuestEngine";
+import { useEffect, useMemo, useState } from "react";
+import {
+  createDailyQuests,
+  readDailyQuestState,
+  type DailyQuest,
+  type DailyQuestState
+} from "../../lib/dailyQuestEngine";
 import { gameAssets } from "../../lib/gameAssets";
 import {
   LAUNCHES_STORAGE_KEY,
+  defaultProgress,
+  defaultStudent,
   readProgress,
   readStudent,
   type LearningProgress,
@@ -37,16 +44,26 @@ const navItems = [
 ];
 
 export default function AdventurePage() {
-  const [student] = useState<StudentProfile>(() => readStudent());
-  const [progress] = useState<LearningProgress>(() => readProgress());
-  const [dailyState] = useState(() => readDailyQuestState());
-  const [launches, setLaunches] = useState(() => {
-    if (typeof window === "undefined") {
-      return 0;
-    }
+  const [student, setStudent] = useState<StudentProfile>(defaultStudent);
+  const [progress, setProgress] = useState<LearningProgress>(defaultProgress);
+  const [dailyState, setDailyState] = useState<DailyQuestState>(() => ({
+    lastQuestDate: "",
+    dailyQuests: createDailyQuests(),
+    dailyCompleted: false,
+    streak: defaultStudent.streak
+  }));
+  const [launches, setLaunches] = useState(0);
 
-    return Number(window.localStorage.getItem(LAUNCHES_STORAGE_KEY) ?? 0);
-  });
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setStudent(readStudent());
+      setProgress(readProgress());
+      setDailyState(readDailyQuestState());
+      setLaunches(Number(window.localStorage.getItem(LAUNCHES_STORAGE_KEY) ?? 0));
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const expPercent = useMemo(
     () => Math.min(100, Math.round((student.exp / student.maxExp) * 100)),

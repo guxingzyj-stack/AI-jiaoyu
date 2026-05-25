@@ -16,15 +16,25 @@ import {
   TrendingUp,
   Zap
 } from "lucide-react";
-import { useMemo, useState } from "react";
-import { readDailyQuestState, resetExperienceData } from "../../lib/dailyQuestEngine";
+import { useEffect, useMemo, useState } from "react";
+import {
+  createDailyQuests,
+  readDailyQuestState,
+  resetExperienceData,
+  type DailyQuestState
+} from "../../lib/dailyQuestEngine";
 import { gameAssets } from "../../lib/gameAssets";
-import { readProgress } from "../../lib/learningProgress";
+import { defaultProgress, defaultStudent, readProgress } from "../../lib/learningProgress";
 import { buildGrowthReport } from "../../lib/reportEngine";
 
 export default function ReportPage() {
-  const [progress] = useState(() => readProgress());
-  const [dailyState] = useState(() => readDailyQuestState());
+  const [progress, setProgress] = useState(defaultProgress);
+  const [dailyState, setDailyState] = useState<DailyQuestState>(() => ({
+    lastQuestDate: "",
+    dailyQuests: createDailyQuests(),
+    dailyCompleted: false,
+    streak: defaultStudent.streak
+  }));
   const report = useMemo(() => buildGrowthReport(progress), [progress]);
   const hasLearningData =
     progress.attempts.length > 0 ||
@@ -43,6 +53,15 @@ export default function ReportPage() {
       ? "下一关推荐：先去怪兽图鉴完成 1 次复盘。"
       : "下一关推荐：继续完成 1 道数学挑战，并先尝试独立思考。";
   const harvestSummary = `今日收获：${report.overview.exp} 经验、${report.overview.coins} 金币、${report.overview.aiHelpCount} 次 Nova 提示记录。`;
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setProgress(readProgress());
+      setDailyState(readDailyQuestState());
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
   const resetData = () => {
     if (window.confirm("确定要重置体验数据吗？这会清空本机的挑战、怪兽、技能和报告记录。")) {
       resetExperienceData();

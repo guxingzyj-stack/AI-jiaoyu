@@ -11,7 +11,7 @@ import {
   Sparkles,
   Swords
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { applyDailyQuestCompletion } from "../../lib/dailyQuestEngine";
 import { gameAssets } from "../../lib/gameAssets";
 import { ensureMonstersForMistakes, getMonsterVisual } from "../../lib/monsterEngine";
@@ -19,6 +19,8 @@ import {
   readProgress,
   readStudent,
   saveStudentAndProgress,
+  defaultProgress,
+  defaultStudent,
   type LearningProgress,
   type MonsterRecord,
   type StudentProfile
@@ -46,10 +48,21 @@ function loadMonsterState(): MonsterPageState {
 }
 
 export default function MonstersPage() {
-  const [pageState, setPageState] = useState<MonsterPageState>(() => loadMonsterState());
+  const [pageState, setPageState] = useState<MonsterPageState>(() => ({
+    progress: defaultProgress,
+    student: defaultStudent
+  }));
   const [expandedMonsterId, setExpandedMonsterId] = useState<string | null>(null);
   const [reviewMonsterId, setReviewMonsterId] = useState<string | null>(null);
   const [skillCue, setSkillCue] = useState("");
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setPageState(loadMonsterState());
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const { progress, student } = pageState;
   const stats = useMemo(

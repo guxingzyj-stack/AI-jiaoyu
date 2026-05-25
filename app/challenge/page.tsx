@@ -16,8 +16,8 @@ import {
   Swords,
   XCircle
 } from "lucide-react";
-import { useMemo, useState } from "react";
-import type { Question } from "../../data/questions";
+import { useEffect, useMemo, useState } from "react";
+import { questions, type Question } from "../../data/questions";
 import { getAiTutorHint } from "../../lib/aiTutor";
 import { applyDailyQuestCompletion } from "../../lib/dailyQuestEngine";
 import { gameAssets } from "../../lib/gameAssets";
@@ -44,7 +44,7 @@ const aiButtonLabels: Record<AiHelpLevel, string> = {
 };
 
 export default function ChallengePage() {
-  const [question] = useState<Question>(() => selectChallengeQuestion(readProgress()));
+  const [question, setQuestion] = useState<Question>(() => questions[0]);
   const [selectedAnswer, setSelectedAnswer] = useState("");
   const [result, setResult] = useState<ResultState>("idle");
   const [rewardApplied, setRewardApplied] = useState(false);
@@ -52,6 +52,14 @@ export default function ChallengePage() {
   const [aiMessages, setAiMessages] = useState<AiTutorResponse[]>([]);
   const [aiLoadingLevel, setAiLoadingLevel] = useState<AiHelpLevel | null>(null);
   const [skillCue, setSkillCue] = useState("");
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setQuestion(selectChallengeQuestion(readProgress()));
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const isChoice = question.type === "choice";
   const canSubmit = selectedAnswer.trim().length > 0 && result === "idle";
