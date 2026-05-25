@@ -71,6 +71,7 @@ export type LearningProgress = {
   exp: number;
   coins: number;
   completedChallenges: number;
+  tutorialFirstWinDone: boolean;
   attempts: ChallengeAttempt[];
   mistakes: MistakeRecord[];
   monsters: MonsterRecord[];
@@ -95,6 +96,7 @@ export const defaultProgress: LearningProgress = {
   exp: defaultStudent.exp,
   coins: defaultStudent.coins,
   completedChallenges: 0,
+  tutorialFirstWinDone: false,
   attempts: [],
   mistakes: [],
   monsters: [],
@@ -156,6 +158,8 @@ export function readProgress(): LearningProgress {
     ...progress,
     exp: progress.exp ?? student.exp,
     coins: progress.coins ?? student.coins,
+    completedChallenges: progress.completedChallenges ?? 0,
+    tutorialFirstWinDone: progress.tutorialFirstWinDone ?? false,
     attempts: progress.attempts ?? [],
     mistakes: progress.mistakes ?? [],
     monsters: progress.monsters ?? [],

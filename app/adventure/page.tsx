@@ -68,8 +68,10 @@ export default function AdventurePage() {
   );
   const activeMonsterCount = progress.monsters.filter((monster) => monster.status === "active").length;
   const hasSkillUpgrade = calculateSkillCards(progress).some((skill) => skill.level >= 2);
+  const tutorialDone = progress.tutorialFirstWinDone;
   const experienceStarted = launches > 0 || progress.attempts.length > 0;
   const experienceCompleted = progress.attempts.length > 0;
+  const challengeHref = tutorialDone ? "/challenge" : "/challenge?mode=tutorial";
 
   const handleStart = () => {
     const nextLaunches = launches + 1;
@@ -120,10 +122,10 @@ export default function AdventurePage() {
             </div>
             <Link
               className="absolute bottom-4 left-4 inline-flex min-h-12 items-center justify-center gap-2 rounded-[22px] bg-amber-300 px-4 text-sm font-black text-slate-950 shadow-glow"
-              href="/challenge"
+              href={challengeHref}
               onClick={handleStart}
             >
-              开始星星题
+              {tutorialDone ? "继续星星挑战" : "进入教程岛"}
               <ChevronRight size={18} />
             </Link>
           </div>
@@ -131,7 +133,9 @@ export default function AdventurePage() {
             <div className="min-w-0">
               <h2 className="text-2xl font-black leading-tight sm:text-4xl">数学星球能量不足！</h2>
               <p className="mt-3 text-sm font-bold leading-6 text-slate-100 sm:text-base">
-                这次试映只走一条主线：做一道星星能量题，遇到困难可以问 Nova，最后查看今日星星报告。
+                {tutorialDone
+                  ? "继续做一个小挑战，最后查看今日星星报告。"
+                  : "Nova 已经在能量塔旁边等你啦。先去教程岛点亮第一颗星。"}
               </p>
               <div className="mt-4 rounded-[24px] border border-cyan-100/30 bg-slate-950/45 p-3">
                 <div className="mb-2 flex items-center justify-between text-xs font-black text-cyan-100">
@@ -276,10 +280,10 @@ export default function AdventurePage() {
         <Link
           className="mb-6 flex min-h-16 items-center justify-center gap-3 rounded-[30px] bg-gradient-to-r from-amber-300 via-cyan-300 to-violet-400 px-6 py-4 text-lg font-black text-slate-950 shadow-glow transition active:scale-[0.98]"
           data-testid="start-challenge"
-          href="/challenge"
+          href={challengeHref}
           onClick={handleStart}
         >
-          开始星星题
+          {tutorialDone ? "继续星星挑战" : "进入教程岛"}
           <ChevronRight size={24} />
         </Link>
         <p className="mb-2 text-center text-xs font-bold text-slate-500">Version: S1 Screening Build v0.1</p>

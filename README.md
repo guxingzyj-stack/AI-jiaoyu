@@ -1,8 +1,8 @@
 # 智学探险家
 
-当前版本：S1 Screening Build v0.1
+当前版本：S1.5 Tutorial Island RC
 
-智学探险家是一个 AI 游戏化数学学习试映版。第一季试映版把“今日冒险、题目挑战、Nova 分层提示、错题怪兽、AI 技能背包、成长报告、试映反馈”串成一个可体验的学习闭环。
+《智学探险家》是一个面向低年级孩子的 AI 游戏化数学学习试映版。本版本重点验证 5 分钟小冒险主线：孩子先跟 Nova 进入教程岛，点云朵获得第一次成功感，再完成一个简单数学小挑战，最后查看星星报告。
 
 ## 本地启动
 
@@ -25,49 +25,38 @@ npm run build
 npm run start
 ```
 
-## Zeabur 部署
-
-Zeabur 入口路径：
+## 推荐试映路径
 
 ```text
-/pilot
+/pilot → /adventure → /challenge → /report
 ```
 
-部署后访问：
-
-```text
-https://你的域名/pilot
-```
-
-## 页面入口
-
-- `/pilot`：第一季试映入口
-- `/adventure`：今日冒险大厅
-- `/challenge`：数学挑战关卡
-- `/monsters`：错题怪兽图鉴
-- `/skills`：AI 技能背包
-- `/report`：今日冒险结算
-- `/feedback`：试映反馈模板
-- `/asset-check`：美术资源加载检查
-
-## 推荐体验流程
+主线体验：
 
 1. 打开 `/pilot`
 2. 点击开始体验
-3. 查看今日冒险任务
-4. 完成一道数学挑战
-5. 使用一次 Nova 提示
-6. 查看或复盘错题怪兽
-7. 查看 AI 技能背包
-8. 查看今日冒险结算
-9. 填写试映反馈
+3. 在 `/adventure` 进入教程岛
+4. 在 `/challenge` 点击云朵，点亮第一颗星
+5. 继续云朵迷雾小冒险
+6. 查看 `/report` 今日星星报告
+
+## 页面入口
+
+- `/pilot`：教程岛试映入口
+- `/adventure`：今日冒险大厅
+- `/challenge`：教程岛首胜与云朵迷雾小冒险
+- `/report`：今日星星报告
+- `/feedback`：试映反馈
+- `/monsters`：小怪兽图鉴，保留为答错后的支线
+- `/skills`：AI 技能背包，保留为非主线页面
+- `/asset-check`：美术资源检查页
 
 ## 当前限制
 
 - 数据仅保存在当前浏览器的 localStorage
-- AI 提示为 mock AI，不接真实 OpenAI API
+- AI 回复仍为 mock 模式
 - 无登录
 - 无数据库
 - 无 OCR
-- 小题库试映版
-- 无教师端、家长端后台和支付
+- 无真实 OpenAI API 接入
+- 无教师端、家长后台和支付

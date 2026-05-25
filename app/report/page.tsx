@@ -11,7 +11,6 @@ import {
   Shield,
   Sparkles,
   Star,
-  Target,
   Zap,
   type LucideIcon
 } from "lucide-react";
@@ -27,9 +26,11 @@ export default function ReportPage() {
   const totalAttempts = progress.attempts.length;
   const correctAttempts = progress.attempts.filter((attempt) => attempt.isCorrect).length;
   const hasChallengeData = totalAttempts > 0;
-  const topWeakPoint = report.weakPoints[0];
-  const weakPointText = topWeakPoint?.knowledgePoint ?? "暂时没有薄弱点";
-  const defeatedMonsters = report.monsterSummary.defeated;
+  const hasMistake = progress.mistakes.length > 0;
+  const starsEarned = hasChallengeData ? Math.min(3, 1 + (correctAttempts > 0 ? 1 : 0) + 1) : 0;
+  const tomorrowText = hasMistake
+    ? "明天的小冒险：星星补给站"
+    : "明天 Nova 想带你挑战一颗新的能量星。";
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -51,7 +52,7 @@ export default function ReportPage() {
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute left-[-18%] top-[-12%] h-80 w-80 rounded-full bg-cyan-400/24 blur-3xl" />
         <div className="absolute right-[-22%] top-[18%] h-96 w-96 rounded-full bg-violet-500/24 blur-3xl" />
-        <div className="absolute bottom-[-18%] left-[16%] h-72 w-72 rounded-full bg-amber-300/12 blur-3xl" />
+        <div className="absolute bottom-[-18%] left-[16%] h-72 w-72 rounded-full bg-amber-300/16 blur-3xl" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_24px_24px,rgba(255,255,255,0.14)_1px,transparent_2px)] bg-[size:38px_38px] opacity-40" />
       </div>
 
@@ -70,9 +71,9 @@ export default function ReportPage() {
         </header>
 
         <section className="mb-5 overflow-hidden rounded-[34px] border border-white/15 bg-white/12 shadow-glow backdrop-blur-xl">
-          <div className="relative min-h-48 bg-gradient-to-br from-cyan-300 via-violet-400 to-amber-300 p-5 text-slate-950">
+          <div className="relative min-h-52 bg-gradient-to-br from-cyan-300 via-violet-400 to-amber-300 p-5 text-slate-950">
             <Image
-              alt="Nova 星星报告"
+              alt="Nova 庆祝"
               className="absolute bottom-0 right-0 h-40 w-40 object-contain drop-shadow-[0_18px_30px_rgba(0,0,0,0.25)] sm:h-52 sm:w-52"
               height={1254}
               priority
@@ -81,87 +82,119 @@ export default function ReportPage() {
               width={1254}
             />
             <div className="relative z-10 max-w-[72%]">
-              <p className="text-xs font-black uppercase tracking-[0.22em] opacity-75">Star Report</p>
+              <p className="text-xs font-black uppercase tracking-[0.22em] opacity-75">Star Sticker</p>
               <h1 className="mt-2 text-4xl font-black leading-tight sm:text-5xl">今日星星报告</h1>
               <p className="mt-3 text-base font-bold leading-7">
-                {hasChallengeData ? "你已经完成了一次学习冒险。" : "先完成一道星星能量题，再回来查看报告。"}
+                {hasChallengeData ? "你和 Nova 完成了一次小冒险！" : "先去找 Nova 点亮第一颗星吧。"}
               </p>
             </div>
           </div>
         </section>
 
-        <section className="mb-4 rounded-[30px] border border-emerald-200/25 bg-emerald-200/10 p-5 backdrop-blur-xl">
+        <section className="mb-4 rounded-[34px] border-4 border-amber-200/35 bg-amber-100 p-5 text-slate-950 shadow-[0_20px_50px_rgba(252,211,77,0.18)]">
           <div className="flex gap-4">
-            <div className="flex h-13 w-13 shrink-0 items-center justify-center rounded-[22px] bg-emerald-300 text-slate-950">
-              <Sparkles size={28} />
+            <div className="flex h-16 w-16 shrink-0 rotate-[-6deg] items-center justify-center rounded-[24px] bg-amber-300 shadow-[0_12px_25px_rgba(15,23,42,0.22)]">
+              <Star className="fill-amber-700 text-amber-700" size={36} />
             </div>
             <div>
               <h2 className="text-2xl font-black leading-tight">
-                {hasChallengeData ? "今天完成了一次学习冒险！" : "还没有完成学习冒险"}
+                {hasChallengeData ? "今天你点亮了能量塔！" : "还没有完成小冒险"}
               </h2>
-              <p className="mt-2 text-sm font-bold leading-6 text-slate-100">
+              <p className="mt-2 text-sm font-black leading-6">
                 {hasChallengeData
-                  ? `你做了 ${totalAttempts} 道题，答对了 ${correctAttempts} 道，收服了 ${defeatedMonsters} 只小怪兽。`
-                  : "先完成一道星星能量题，再回来查看报告。"}
+                  ? `完成了 ${totalAttempts} 个小挑战，获得 ${starsEarned} 颗星星。`
+                  : "先去找 Nova 点亮第一颗星吧。"}
               </p>
             </div>
+          </div>
+        </section>
+
+        <section className="mb-4 rounded-[30px] border border-white/15 bg-slate-950/35 p-5 backdrop-blur-xl">
+          <h2 className="text-xl font-black">星星贴纸</h2>
+          <div className="mt-4 grid grid-cols-3 gap-3">
+            <StickerStar active={progress.tutorialFirstWinDone} label="点亮第一颗星" />
+            <StickerStar active={hasChallengeData} label="完成云朵小挑战" />
+            <StickerStar active={hasChallengeData} label="查看星星报告" />
           </div>
         </section>
 
         <section className="mb-4 rounded-[30px] border border-cyan-200/20 bg-cyan-200/10 p-5 backdrop-blur-xl">
-          <h2 className="text-xl font-black">今日表现</h2>
-          <div className="mt-4 grid grid-cols-1 gap-3 min-[360px]:grid-cols-3">
-            <SimpleStat label="完成题目" value={`${totalAttempts} 道`} />
-            <SimpleStat label="答对题目" value={`${correctAttempts} 道`} />
-            <SimpleStat label="需要再练" value={weakPointText} />
-          </div>
-        </section>
-
-        <section className="mb-4 rounded-[30px] border border-amber-200/25 bg-amber-200/10 p-5 backdrop-blur-xl">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-300 text-slate-950">
-              <Target size={25} />
-            </div>
-            <div>
-              <h2 className="text-xl font-black">需要再练</h2>
-              {topWeakPoint ? (
-                <>
-                  <p className="mt-2 text-sm font-bold leading-6 text-slate-100">
-                    今天有 {topWeakPoint.mistakeCount} 次卡在：{topWeakPoint.knowledgePoint}
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-amber-50">建议明天再练 1 道同类题。</p>
-                </>
-              ) : (
-                <>
-                  <p className="mt-2 text-sm font-bold leading-6 text-slate-100">今天表现不错！</p>
-                  <p className="mt-2 text-sm leading-6 text-amber-50">明天可以挑战一道稍难一点的题。</p>
-                </>
-              )}
-            </div>
-          </div>
-        </section>
-
-        <section className="mb-5 rounded-[30px] border border-white/15 bg-slate-950/45 p-5 backdrop-blur-xl">
-          <h2 className="text-xl font-black">给家长的一句话</h2>
-          <p className="mt-2 text-sm font-bold leading-7 text-slate-100">
-            孩子今天完成了一次数学练习，并通过报告看到了需要继续练习的地方。
+          <h2 className="text-xl font-black">今日小发现</h2>
+          <p className="mt-3 text-base font-black leading-8 text-slate-100">
+            {hasMistake
+              ? "今天有一朵小云雾捣乱了，下次我们再一起看清楚。"
+              : hasChallengeData
+                ? "今天你发现：24 可以拆成 20 和 4，这样更好算。"
+                : "今天先从第一颗星开始，Nova 在等你。"}
           </p>
         </section>
 
+        <section className="mb-5 rounded-[30px] border border-violet-200/20 bg-violet-200/10 p-5 backdrop-blur-xl">
+          <h2 className="text-xl font-black">明天的小冒险</h2>
+          <p className="mt-3 text-base font-black leading-8 text-violet-50">{tomorrowText}</p>
+        </section>
+
+        <div className="mb-5 grid gap-3">
+          <Link
+            className="inline-flex min-h-13 items-center justify-center rounded-2xl bg-amber-300 px-5 text-base font-black text-slate-950"
+            data-testid="report-primary"
+            href={hasChallengeData ? "/feedback" : "/challenge"}
+          >
+            {hasChallengeData ? "填写试映反馈" : "去点亮第一颗星"}
+          </Link>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Link
+              className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-cyan-300 px-4 text-sm font-black text-slate-950"
+              href="/challenge"
+            >
+              再玩一题
+            </Link>
+            <Link
+              className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-violet-300 px-4 text-sm font-black text-slate-950"
+              href="/adventure"
+            >
+              返回冒险大厅
+            </Link>
+          </div>
+        </div>
+
+        <details className="mb-4 rounded-[28px] border border-white/15 bg-slate-950/45 p-5 backdrop-blur-xl">
+          <summary className="cursor-pointer text-lg font-black text-cyan-100">给家长看的说明</summary>
+          <div className="mt-4 grid gap-3">
+            <ParentNote
+              title="本关训练"
+              text="本关训练的是三年级两位数乘一位数中的拆分思路：把 24 拆成 20 和 4，再分别计算。"
+            />
+            <ParentNote
+              title="观察到的情况"
+              text={
+                hasChallengeData && correctAttempts > 0
+                  ? "孩子能完成本次挑战，可以继续用同类题巩固。"
+                  : hasChallengeData
+                    ? "孩子可能在乘法拆分或计算过程中卡住，建议下次再练 1 道同类题。"
+                    : "孩子还没有完成挑战，可以先从教程岛首胜开始。"
+              }
+            />
+            <ParentNote
+              title="下一步建议"
+              text="明天建议继续练一道 20 多乘一位数的小题，保持 5 分钟以内。"
+            />
+          </div>
+        </details>
+
         <details className="mb-5 rounded-[28px] border border-white/15 bg-slate-950/45 p-5 backdrop-blur-xl">
-          <summary className="cursor-pointer text-lg font-black text-cyan-100">查看更多成长细节</summary>
+          <summary className="cursor-pointer text-lg font-black text-cyan-100">查看详细数据</summary>
           <div className="mt-4 grid grid-cols-2 gap-3">
             <DetailStat icon={Sparkles} label="XP" value={String(report.overview.exp)} />
             <DetailStat icon={Coins} label="金币" value={String(report.overview.coins)} />
-            <DetailStat icon={Bot} label="AI 提示次数" value={String(report.overview.aiHelpCount)} />
-            <DetailStat icon={Shield} label="怪兽数量" value={String(report.overview.monsterCount)} />
+            <DetailStat icon={Bot} label="提示次数" value={String(report.overview.aiHelpCount)} />
+            <DetailStat icon={Shield} label="小怪兽" value={String(report.overview.monsterCount)} />
             <DetailStat icon={Gem} label="成长等级" value={`Lv.${Math.max(1, Math.floor(report.overview.exp / 100))}`} />
-            <DetailStat icon={Zap} label="正确率" value={`${report.overview.accuracy}%`} />
+            <DetailStat icon={Zap} label="答对记录" value={`${correctAttempts}/${totalAttempts}`} />
           </div>
 
           <section className="mt-5 rounded-[24px] border border-cyan-200/15 bg-cyan-200/10 p-4">
-            <h3 className="text-base font-black">AI 使用能力</h3>
-            <p className="mt-2 text-sm font-bold leading-6 text-slate-100">AI 使用能力正在成长中。</p>
+            <h3 className="text-base font-black">Nova 使用记录</h3>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               {report.aiSkillSummary.map((skill) => (
                 <article className="rounded-2xl bg-slate-950/45 p-3" key={skill.id}>
@@ -186,57 +219,44 @@ export default function ReportPage() {
               <p className="mt-2 text-sm leading-6 text-violet-50">还有小怪兽等你下次来收服。</p>
             )}
           </section>
-
-          <section className="mt-4 rounded-[24px] border border-white/10 bg-white/5 p-4">
-            <h3 className="text-base font-black">详细统计</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-200">{report.summaryText}</p>
-          </section>
         </details>
 
-        <div className="grid gap-3">
-          <Link
-            className="inline-flex min-h-13 items-center justify-center rounded-2xl bg-amber-300 px-5 text-base font-black text-slate-950"
-            data-testid="report-feedback"
-            href="/feedback"
-          >
-            填写试映反馈
-          </Link>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Link
-              className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-cyan-300 px-4 text-sm font-black text-slate-950"
-              href="/challenge"
-            >
-              再玩一题
-            </Link>
-            <Link
-              className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-violet-300 px-4 text-sm font-black text-slate-950"
-              href="/adventure"
-            >
-              返回冒险大厅
-            </Link>
-          </div>
-          <button
-            className="mx-auto inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 text-xs font-bold text-slate-300"
-            data-testid="report-reset"
-            onClick={resetData}
-            type="button"
-          >
-            <RotateCcw size={14} />
-            重置体验数据
-          </button>
-        </div>
+        <button
+          className="mx-auto inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 text-xs font-bold text-slate-300"
+          data-testid="report-reset"
+          onClick={resetData}
+          type="button"
+        >
+          <RotateCcw size={14} />
+          重置体验数据
+        </button>
         <p className="mt-4 text-center text-xs font-bold text-slate-500">Version: S1 Screening Build v0.1</p>
       </div>
     </main>
   );
 }
 
-function SimpleStat({ label, value }: { label: string; value: string }) {
+function StickerStar({ active, label }: { active: boolean; label: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-slate-950/45 p-4">
-      <p className="text-xs font-bold text-slate-300">{label}</p>
-      <p className="mt-2 break-words text-xl font-black text-white">{value}</p>
+    <div className="rounded-[24px] border border-white/10 bg-white/8 p-3 text-center">
+      <div
+        className={`mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] ${
+          active ? "bg-amber-300 text-amber-950 shadow-[0_0_28px_rgba(252,211,77,0.55)]" : "bg-slate-300 text-slate-500"
+        }`}
+      >
+        <Star className={active ? "fill-amber-700" : "fill-slate-400"} size={34} />
+      </div>
+      <p className="mt-2 text-xs font-black leading-5 text-slate-100">{label}</p>
     </div>
+  );
+}
+
+function ParentNote({ title, text }: { title: string; text: string }) {
+  return (
+    <article className="rounded-2xl border border-white/10 bg-white/5 p-4">
+      <h3 className="text-base font-black text-white">{title}</h3>
+      <p className="mt-2 text-sm font-bold leading-6 text-slate-200">{text}</p>
+    </article>
   );
 }
 
@@ -247,7 +267,7 @@ function DetailStat({ icon: Icon, label, value }: { icon: LucideIcon; label: str
         <Icon size={15} />
         {label}
       </div>
-      <p className="text-2xl font-black text-white">{value}</p>
+      <p className="break-words text-2xl font-black text-white">{value}</p>
     </div>
   );
 }

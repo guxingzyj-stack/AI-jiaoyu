@@ -28,12 +28,12 @@ export default function PilotPage() {
           <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-[24px] bg-cyan-300 text-slate-950">
             <Rocket size={34} />
           </div>
-          <p className="text-xs font-bold uppercase tracking-[0.28em] text-cyan-200">5 Minute Pilot</p>
+          <p className="text-xs font-bold uppercase tracking-[0.28em] text-cyan-200">Tutorial Island</p>
           <h1 className="mt-2 text-4xl font-black leading-tight sm:text-6xl">
-            智学探险家 · 第一季试映版
+            智学探险家 · 教程岛试映版
           </h1>
           <p className="mt-4 text-base font-bold leading-7 text-slate-100">
-            今天只需要完成一次学习冒险：做一道题，看看 Nova 怎样帮助你，最后查看星星报告。
+            今天先完成一个 5 分钟小冒险，帮 Nova 点亮数学星球。
           </p>
           <Link
             className="mt-6 inline-flex min-h-14 w-full items-center justify-center rounded-3xl bg-gradient-to-r from-amber-300 via-cyan-300 to-violet-400 px-6 text-lg font-black text-slate-950 shadow-glow sm:w-auto"
@@ -52,25 +52,25 @@ export default function PilotPage() {
               "建议使用手机体验。",
               "建议体验时间：5 分钟左右。",
               "数据只保存在当前浏览器。",
-              "体验目标不是刷题数量，而是完成一次轻冒险。"
+              "体验目标不是刷题数量，而是点亮第一颗星。"
             ]}
           />
           <InfoPanel
             icon={Target}
-            title="今天只走一条路线"
-            items={["进入今日冒险", "做一道星星能量题", "查看今日星星报告", "填写试映反馈"]}
+            title="今天的小目标"
+            items={["点亮第一颗星", "完成一个小挑战", "查看今日星星报告"]}
           />
           <InfoPanel
             icon={Sparkles}
             title="给学生看的说明"
-            items={["遇到不会的题，可以请 Nova 讲一讲。", "答错也没关系，小怪兽会帮你找到下次要练的地方。"]}
+            items={["先跟 Nova 去教程岛。", "点一下云朵，就能帮能量塔亮起来。"]}
           />
           <InfoPanel
             icon={ShieldCheck}
             title="给家长看的说明"
             items={[
-              "这是早期试映版，重点测试孩子是否愿意完成一次游戏化学习闭环。",
-              "本轮不追求做很多题，只观察孩子能不能顺畅走完主流程。"
+              "这是早期试映版，重点测试孩子是否愿意继续玩下去。",
+              "本轮先观察孩子能不能快速获得第一次成功感。"
             ]}
           />
         </section>
