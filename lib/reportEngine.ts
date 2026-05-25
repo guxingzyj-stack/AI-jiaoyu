@@ -68,7 +68,7 @@ function getWeakPoints(progress: LearningProgress): WeakPointRecord[] {
 
 function buildSummary(progress: LearningProgress, overview: ReportOverview) {
   if (progress.attempts.length === 0) {
-    return "今天还没有完成挑战。可以先从第一场数学挑战开始，遇到卡点时让 Nova 给一点思路提示。";
+    return "今天还没有点亮星星能量题。可以先从第一关开始，遇到卡点时让 Nova 给一点思路提示。";
   }
 
   const monsterText =
@@ -78,11 +78,11 @@ function buildSummary(progress: LearningProgress, overview: ReportOverview) {
   const aiText =
     overview.aiHelpCount > 0
       ? `并使用 Nova 的分步提示 ${overview.aiHelpCount} 次`
-      : "并尝试独立完成挑战";
+      : "并尝试独立点亮题目";
   const reviewText =
     overview.defeatedMonsterCount > 0
-      ? `你还击败了 ${overview.defeatedMonsterCount} 只怪兽，把错误变成了复盘成果。`
-      : "下一步可以把错题怪兽作为训练目标，完成复盘后再击败它。";
+      ? `你还收服了 ${overview.defeatedMonsterCount} 只小怪兽，把错误变成了复盘成果。`
+      : "下一步可以把错题小怪兽作为训练目标，完成复盘后再收服它。";
 
   return `今天你完成了 ${overview.completedChallenges} 次挑战，${monsterText}，${aiText}。你正在学会先思考、再求助，而不是直接看答案。${reviewText}`;
 }
@@ -116,7 +116,7 @@ function getMonsterSummary(progress: LearningProgress): MonsterReport {
 function buildTomorrowTips(weakPoints: WeakPointRecord[], monsterSummary: MonsterReport, progress: LearningProgress) {
   const targetPoint = weakPoints[0]?.knowledgePoint ?? "百分数应用题";
   const firstTask =
-    monsterSummary.active > 0 ? "先去怪兽图鉴复盘 1 只活跃怪兽。" : "先完成 1 次数学能量塔挑战。";
+    monsterSummary.active > 0 ? "先去小怪兽图鉴复盘 1 只活跃小怪兽。" : "先完成 1 次星星能量题。";
   const aiSkill =
     progress.aiHelpRecords.some((record) => record.level === 3)
       ? "明天优先使用 Level 1 和 Level 2，让 Nova 引导你自己算完。"

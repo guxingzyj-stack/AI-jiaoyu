@@ -10,18 +10,15 @@ import {
   Flame,
   Medal,
   Rocket,
-  RotateCcw,
   Shield,
   Sparkles,
   Swords,
-  Zap,
   type LucideIcon
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
   createDailyQuests,
   readDailyQuestState,
-  type DailyQuest,
   type DailyQuestState
 } from "../../lib/dailyQuestEngine";
 import { gameAssets } from "../../lib/gameAssets";
@@ -69,10 +66,10 @@ export default function AdventurePage() {
     () => Math.min(100, Math.round((student.exp / student.maxExp) * 100)),
     [student.exp, student.maxExp]
   );
-  const completedToday = dailyState.dailyQuests.filter((quest) => quest.status === "completed").length;
   const activeMonsterCount = progress.monsters.filter((monster) => monster.status === "active").length;
   const hasSkillUpgrade = calculateSkillCards(progress).some((skill) => skill.level >= 2);
-  const adventureCompleted = dailyState.dailyCompleted;
+  const experienceStarted = launches > 0 || progress.attempts.length > 0;
+  const experienceCompleted = progress.attempts.length > 0;
 
   const handleStart = () => {
     const nextLaunches = launches + 1;
@@ -119,14 +116,14 @@ export default function AdventurePage() {
             <div className="absolute inset-0 bg-gradient-to-t from-[#10145b]/95 via-[#10145b]/15 to-transparent" />
             <div className="absolute left-3 top-3 inline-flex items-center gap-2 rounded-full border border-amber-200/45 bg-slate-950/55 px-3 py-2 text-xs font-black text-amber-100 backdrop-blur">
               <Sparkles size={14} />
-              今日进度 {completedToday}/3
+              今日体验：{experienceCompleted ? "已完成" : experienceStarted ? "已开始" : "未开始"}
             </div>
             <Link
               className="absolute bottom-4 left-4 inline-flex min-h-12 items-center justify-center gap-2 rounded-[22px] bg-amber-300 px-4 text-sm font-black text-slate-950 shadow-glow"
               href="/challenge"
               onClick={handleStart}
             >
-              开始第一关
+              开始星星题
               <ChevronRight size={18} />
             </Link>
           </div>
@@ -134,17 +131,17 @@ export default function AdventurePage() {
             <div className="min-w-0">
               <h2 className="text-2xl font-black leading-tight sm:text-4xl">数学星球能量不足！</h2>
               <p className="mt-3 text-sm font-bold leading-6 text-slate-100 sm:text-base">
-                完成 3 个任务，帮助 Nova 点亮今天的星球。挑战能量塔、收集线索、追踪错题怪兽，完成一次完整学习冒险。
+                这次试映只走一条主线：做一道星星能量题，遇到困难可以问 Nova，最后查看今日星星报告。
               </p>
               <div className="mt-4 rounded-[24px] border border-cyan-100/30 bg-slate-950/45 p-3">
                 <div className="mb-2 flex items-center justify-between text-xs font-black text-cyan-100">
                   <span>星球能量 HUD</span>
-                  <span>{completedToday}/3</span>
+                  <span>{experienceCompleted ? "已完成" : experienceStarted ? "已开始" : "准备出发"}</span>
                 </div>
                 <div className="h-5 overflow-hidden rounded-full border border-cyan-100/20 bg-slate-950/65">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-violet-300 to-amber-300"
-                    style={{ width: `${Math.round((completedToday / 3) * 100)}%` }}
+                    style={{ width: `${experienceCompleted ? 100 : experienceStarted ? 45 : 15}%` }}
                   />
                 </div>
               </div>
@@ -195,16 +192,16 @@ export default function AdventurePage() {
           <div className="mt-4 grid w-full max-w-full grid-cols-1 gap-3 min-[360px]:grid-cols-2 sm:grid-cols-3">
             <StatPill icon={Coins} label="金币" value={student.coins.toLocaleString("zh-CN")} />
             <StatPill icon={Flame} label="连续学习" value={`${dailyState.streak} 天`} />
-            <StatPill icon={Medal} label="今日进度" value={`${completedToday}/3`} />
+            <StatPill icon={Medal} label="今日体验" value={experienceCompleted ? "已完成" : experienceStarted ? "已开始" : "待开始"} />
           </div>
         </section>
 
         <section className="mb-5">
           <div className="mb-4 flex items-end justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-sm font-bold text-violet-200">今日关卡任务</p>
+              <p className="text-sm font-bold text-violet-200">今日体验路线</p>
               <h2 className="mt-1 max-w-full break-words text-2xl font-black leading-tight sm:text-4xl">
-                {adventureCompleted ? "数学星球已点亮" : "完成三关，启动星球核心"}
+                {experienceCompleted ? "今天的星星题已完成" : "5 分钟走完一次学习冒险"}
               </h2>
             </div>
             <span className="hidden rounded-full border border-cyan-300/30 bg-cyan-300/10 px-4 py-2 text-sm font-bold text-cyan-100 sm:inline-flex">
@@ -213,13 +210,31 @@ export default function AdventurePage() {
           </div>
 
           <div className="grid gap-3 lg:grid-cols-3">
-            {dailyState.dailyQuests.map((quest, index) => (
-              <QuestCard key={quest.id} quest={quest} index={index} hasMonsters={progress.monsters.length > 0} />
-            ))}
+            <ExperienceStep
+              description="完成一道三年级数学题，点亮今天的第一颗星。"
+              image={gameAssets.quests.challenge}
+              index={1}
+              status={experienceCompleted ? "已完成" : "主线"}
+              title="做一道星星能量题"
+            />
+            <ExperienceStep
+              description="如果卡住，可以让 Nova 给线索或讲一讲。"
+              image={gameAssets.quests.ai_help}
+              index={2}
+              status="可选帮助"
+              title="遇到困难可以问 Nova"
+            />
+            <ExperienceStep
+              description="答题后查看星星报告，也可以把反馈发给我们。"
+              image={gameAssets.quests.monster_review}
+              index={3}
+              status="最后一步"
+              title="查看今日星星报告"
+            />
           </div>
         </section>
 
-        {adventureCompleted && (
+        {experienceCompleted && (
           <section
             className="mb-5 rounded-[30px] border border-emerald-200/25 bg-emerald-200/10 p-5 shadow-glow backdrop-blur-xl"
             data-testid="season-complete"
@@ -229,15 +244,15 @@ export default function AdventurePage() {
                 <Sparkles size={30} />
               </div>
               <div>
-                <h2 className="text-xl font-black">第一季学习冒险闭环已完成</h2>
+                <h2 className="text-xl font-black">今日星星体验已完成</h2>
                 <p className="mt-2 text-sm leading-6 text-slate-200">
-                  今天的 3 个任务已经完成。可以请家长查看今日成长报告，看看你点亮了哪些学习能力。
+                  你已经完成今天的星星能量题。可以请家长查看今日星星报告，看看你点亮了哪些学习能力。
                 </p>
                 <Link
                   className="mt-4 inline-flex min-h-11 items-center justify-center rounded-2xl bg-emerald-300 px-4 text-sm font-black text-slate-950"
                   href="/report"
                 >
-                  查看成长报告
+                  查看星星报告
                 </Link>
               </div>
             </div>
@@ -264,7 +279,7 @@ export default function AdventurePage() {
           href="/challenge"
           onClick={handleStart}
         >
-          进入能量塔挑战
+          开始星星题
           <ChevronRight size={24} />
         </Link>
         <p className="mb-2 text-center text-xs font-bold text-slate-500">Version: S1 Screening Build v0.1</p>
@@ -329,114 +344,46 @@ function StatPill({ icon: Icon, label, value }: { icon: LucideIcon; label: strin
   );
 }
 
-function QuestCard({ quest, index, hasMonsters }: { quest: DailyQuest; index: number; hasMonsters: boolean }) {
-  const visual = getQuestVisual(quest, index);
-  const Icon = visual.icon;
-  const questDone = quest.status === "completed";
-
+function ExperienceStep({
+  description,
+  image,
+  index,
+  status,
+  title
+}: {
+  description: string;
+  image: string;
+  index: number;
+  status: string;
+  title: string;
+}) {
   return (
-    <article className="group min-w-0 overflow-hidden rounded-[30px] border border-white/15 bg-slate-950/60 shadow-[0_18px_60px_rgba(0,0,0,0.24)] backdrop-blur transition hover:-translate-y-1 hover:border-cyan-200/50">
+    <article className="min-w-0 overflow-hidden rounded-[30px] border border-white/15 bg-slate-950/55 shadow-[0_18px_60px_rgba(0,0,0,0.24)] backdrop-blur">
       <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-gradient-to-br from-white/25 to-cyan-200/10">
         <Image
-          alt={visual.title}
+          alt={title}
           className="h-full w-full object-contain p-2"
-          height={visual.height}
+          height={1200}
           loading="eager"
           sizes="(max-width: 768px) 100vw, 33vw"
-          src={visual.image}
-          width={visual.width}
+          src={image}
+          width={1200}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 to-transparent" />
         <div className="absolute left-3 top-3 rounded-full bg-white/80 px-3 py-1 text-xs font-black text-slate-950">
-          第 {index + 1} 关
+          步骤 {index}
         </div>
       </div>
-      <div className={`bg-gradient-to-br ${visual.accent} p-4 text-slate-950`}>
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-black opacity-80">Quest Stage</p>
-            <h3 className="mt-1 text-xl font-black leading-tight">{visual.title}</h3>
-          </div>
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[22px] bg-white/35">
-            <Icon size={30} />
-          </div>
-        </div>
-      </div>
-
       <div className="p-4">
         <div className="flex items-center justify-between gap-3">
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-black ${
-              questDone ? "bg-emerald-300 text-slate-950" : "bg-white/10 text-slate-200"
-            }`}
-          >
-            {questDone ? "已完成" : "待挑战"}
+          <span className="rounded-full bg-cyan-300 px-3 py-1 text-xs font-black text-slate-950">
+            {status}
           </span>
-          <span className="text-xs font-black text-amber-100">
-            +{quest.rewardExp} XP / +{quest.rewardCoins} 金币
-          </span>
+          <Sparkles className="text-amber-200" size={18} />
         </div>
-        <p className="mt-3 text-sm font-bold leading-6 text-slate-200">{visual.description}</p>
-        <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800">
-          <div
-            className={`h-full rounded-full bg-gradient-to-r ${visual.accent}`}
-            style={{ width: `${questDone ? 100 : 0}%` }}
-          />
-        </div>
-        {quest.type === "monster_review" && !hasMonsters && !questDone && (
-          <p className="mt-3 text-xs font-bold leading-5 text-amber-100">
-            暂无怪兽，可先完成挑战生成错题怪兽。
-          </p>
-        )}
-        <Link
-          className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-white/10 px-4 text-sm font-black text-white hover:bg-white/15"
-          href={visual.href}
-        >
-          {questDone ? "查看战果" : visual.action}
-        </Link>
+        <h3 className="mt-3 text-xl font-black leading-tight">{title}</h3>
+        <p className="mt-2 text-sm font-bold leading-6 text-slate-200">{description}</p>
       </div>
     </article>
   );
-}
-
-function getQuestVisual(quest: DailyQuest, index: number) {
-  if (quest.type === "challenge") {
-    return {
-      icon: Zap,
-      accent: "from-cyan-300 to-blue-500",
-      title: "能量塔挑战",
-      description: "解开核心题，给数学星球补充第一格能量。",
-      action: "开始挑战",
-      href: "/challenge",
-      image: gameAssets.quests.challenge,
-      width: 1122,
-      height: 1402
-    };
-  }
-
-  if (quest.type === "ai_help") {
-    return {
-      icon: Bot,
-      accent: "from-violet-300 to-fuchsia-500",
-      title: "Nova 线索任务",
-      description: "让 Nova 给你一点线索，练习先思考、再求助。",
-      action: "去找线索",
-      href: "/challenge",
-      image: gameAssets.quests.ai_help,
-      width: 1536,
-      height: 1024
-    };
-  }
-
-  return {
-    icon: RotateCcw,
-    accent: "from-emerald-300 to-green-600",
-    title: "怪兽追踪战",
-    description: "复盘错题怪兽，把薄弱点变成新的战斗经验。",
-    action: index >= 0 ? "追踪怪兽" : quest.title,
-    href: "/monsters",
-    image: gameAssets.quests.monster_review,
-    width: 1448,
-    height: 1086
-  };
 }

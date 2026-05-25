@@ -49,8 +49,8 @@ export function createDailyQuests(): DailyQuest[] {
   return [
     {
       id: "daily-challenge",
-      title: "完成 1 次数学挑战",
-      description: "进入挑战舱，认真完成一道数学题。",
+      title: "第 1 关：星星能量题",
+      description: "完成 1 道数学题，给数学星球补充星星能量。",
       type: "challenge",
       status: "pending",
       rewardExp: 10,
@@ -58,8 +58,8 @@ export function createDailyQuests(): DailyQuest[] {
     },
     {
       id: "daily-ai-help",
-      title: "使用 1 次 Nova AI 提示",
-      description: "让 Nova 给你一点思路，而不是直接抄答案。",
+      title: "第 2 关：Nova 小帮手",
+      description: "使用 Nova 提示、Nova 检查或 Nova 复盘，学会请小帮手帮忙。",
       type: "ai_help",
       status: "pending",
       rewardExp: 5,
@@ -67,14 +67,23 @@ export function createDailyQuests(): DailyQuest[] {
     },
     {
       id: "daily-monster-review",
-      title: "复盘或击败 1 只错题怪兽",
-      description: "把一个错题怪兽变成今天的训练成果。",
+      title: "第 3 关：小怪兽/宝箱任务",
+      description: "有小怪兽就去复盘收服；没有小怪兽就领取星星宝箱。",
       type: "monster_review",
       status: "pending",
       rewardExp: 10,
       rewardCoins: 3
     }
   ];
+}
+
+function normalizeDailyQuests(quests: DailyQuest[]): DailyQuest[] {
+  const savedById = new Map(quests.map((quest) => [quest.id, quest]));
+
+  return createDailyQuests().map((quest) => ({
+    ...quest,
+    status: savedById.get(quest.id)?.status === "completed" ? ("completed" as const) : ("pending" as const)
+  }));
 }
 
 function allCompleted(quests: DailyQuest[]) {
@@ -111,10 +120,11 @@ export function readDailyQuestState(): DailyQuestState {
     return nextState;
   }
 
+  const normalizedQuests = normalizeDailyQuests(saved.dailyQuests);
   const normalizedState = {
     ...saved,
-    dailyQuests: saved.dailyQuests?.length ? saved.dailyQuests : createDailyQuests(),
-    dailyCompleted: allCompleted(saved.dailyQuests ?? []),
+    dailyQuests: normalizedQuests,
+    dailyCompleted: allCompleted(normalizedQuests),
     streak: saved.streak || student.streak || 1
   };
   writeDailyQuestState(normalizedState, { ...student, streak: normalizedState.streak }, progress);

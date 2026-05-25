@@ -116,7 +116,7 @@ export default function MonstersPage() {
     const dailyResult = applyDailyQuestCompletion("monster_review", nextStudent, nextProgress);
     updateProgress(dailyResult.progress, dailyResult.student);
     setSkillCue(
-      `复盘力经验提升，真相探测器经验提升。${dailyResult.awarded ? " 今日怪兽任务完成，奖励已领取。" : ""}`
+      `复盘力经验提升，真相探测器经验提升。${dailyResult.awarded ? " 复盘奖励已领取。" : ""}`
     );
     setReviewMonsterId(null);
     setExpandedMonsterId(monster.id);
@@ -159,7 +159,7 @@ export default function MonstersPage() {
     const dailyResult = applyDailyQuestCompletion("monster_review", nextStudent, nextProgress);
     updateProgress(dailyResult.progress, dailyResult.student);
     setSkillCue(
-      `复盘力经验提升，真相探测器经验提升。${dailyResult.awarded ? " 今日怪兽任务完成，奖励已领取。" : ""}`
+      `复盘力经验提升，真相探测器经验提升。${dailyResult.awarded ? " 复盘奖励已领取。" : ""}`
     );
   };
 
@@ -187,17 +187,24 @@ export default function MonstersPage() {
         </header>
 
         <section className="mb-5 rounded-[28px] border border-white/15 bg-white/10 p-5 shadow-glow backdrop-blur-xl">
-          <p className="text-xs font-bold uppercase tracking-[0.28em] text-cyan-200">Monster Codex</p>
-          <h1 className="mt-2 text-3xl font-black leading-tight sm:text-5xl">错题怪兽图鉴</h1>
+          <p className="text-xs font-bold uppercase tracking-[0.28em] text-cyan-200">Monster Friends</p>
+          <h1 className="mt-2 text-3xl font-black leading-tight sm:text-5xl">小怪兽图鉴</h1>
           <p className="mt-3 text-sm leading-6 text-slate-200 sm:text-base">
-            每一道错题都会变成怪兽。展开原题，完成复盘，再击败它，把薄弱点变成经验和金币。
+            每一道错题都会变成一只小怪兽。展开原题，完成复盘，再收服它，把薄弱点变成星星能量。
           </p>
 
           <div className="mt-5 grid grid-cols-1 gap-3 min-[360px]:grid-cols-3">
             <StatCard label="活跃怪兽" value={String(stats.active)} tone="text-amber-100" />
             <StatCard label="已复盘" value={String(stats.reviewed)} tone="text-cyan-100" />
-            <StatCard label="已击败" value={String(stats.defeated)} tone="text-emerald-100" />
+            <StatCard label="已收服" value={String(stats.defeated)} tone="text-emerald-100" />
           </div>
+          <Link
+            className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-amber-300 px-5 text-sm font-black text-slate-950 sm:w-auto"
+            data-testid="monsters-report-primary"
+            href="/report"
+          >
+            查看今日星星报告
+          </Link>
         </section>
 
         {skillCue && (
@@ -343,12 +350,12 @@ export default function MonstersPage() {
                         type="button"
                       >
                         <Swords size={16} />
-                        发动终结一击
+                        收服它
                       </button>
                     )}
                     {monster.status === "defeated" && (
                       <span className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-emerald-200/25 bg-emerald-200/10 px-3 text-sm font-black text-emerald-100">
-                        已击败
+                        已收服
                       </span>
                     )}
                   </div>
@@ -415,7 +422,7 @@ function StatusBadge({ status }: { status: MonsterRecord["status"] }) {
   const labels = {
     active: "活跃",
     reviewed: "已复盘",
-    defeated: "已击败"
+    defeated: "已收服"
   };
   const styles = {
     active: "bg-amber-300 text-slate-950",
@@ -437,7 +444,7 @@ function InfoBlock({ label, value }: { label: string; value: string }) {
 
 function getMonsterDeclaration(monster: MonsterRecord) {
   if (monster.type === "fog") {
-    return "它会让折扣、百分数和单位变得模糊。先说清概念，就能削弱它。";
+    return "它会让单位、题意和数字关系变得模糊。先慢慢读题，就能看清它。";
   }
 
   if (monster.type === "careless") {
@@ -449,12 +456,12 @@ function getMonsterDeclaration(monster: MonsterRecord) {
   }
 
   if (monster.type === "armor") {
-    return "它的铁甲会挡住列式方法。先写数量关系，再发起攻击。";
+    return "它的铁甲会挡住列式方法。先写数量关系，再慢慢收服它。";
   }
 
   if (monster.type === "vine") {
     return "它会缠住你的解题步骤。把过程拆成三步，就能挣脱藤蔓。";
   }
 
-  return "它来自一次还没整理好的错题。找出错因，就是击败它的第一步。";
+  return "它来自一次还没整理好的错题。找出错因，就是收服它的第一步。";
 }

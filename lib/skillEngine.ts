@@ -45,7 +45,7 @@ function lastMonsterAction(progress: LearningProgress) {
   const reviewed = progress.monsters.findLast((monster) => monster.status === "reviewed");
 
   if (defeated) {
-    return `最近击败 ${defeated.name}`;
+    return `最近收服 ${defeated.name}`;
   }
 
   if (reviewed) {
@@ -123,7 +123,7 @@ export function calculateSkillCards(progress: LearningProgress): SkillCardRecord
       icon: "🛡️",
       color: "from-amber-300 to-orange-500",
       lastAction: lastMonsterAction(progress),
-      nextTip: "完成一次怪兽复盘，再击败它，复盘力会明显成长。"
+      nextTip: "完成一次小怪兽复盘，再收服它，复盘力会明显成长。"
     }
   ];
 

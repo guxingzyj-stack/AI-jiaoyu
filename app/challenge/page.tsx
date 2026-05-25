@@ -10,7 +10,6 @@ import {
   MessageCircle,
   RotateCcw,
   Send,
-  Shield,
   Sparkles,
   Star,
   Swords,
@@ -52,10 +51,14 @@ export default function ChallengePage() {
   const [aiMessages, setAiMessages] = useState<AiTutorResponse[]>([]);
   const [aiLoadingLevel, setAiLoadingLevel] = useState<AiHelpLevel | null>(null);
   const [skillCue, setSkillCue] = useState("");
+  const [challengeMode, setChallengeMode] = useState<"normal" | "nova-check" | "nova-review">("normal");
+  const [novaCheckResult, setNovaCheckResult] = useState<AiTutorResponse | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setQuestion(selectChallengeQuestion(readProgress()));
+      const mode = new URLSearchParams(window.location.search).get("mode");
+      setChallengeMode(mode === "nova-check" || mode === "nova-review" ? mode : "normal");
     }, 0);
 
     return () => window.clearTimeout(timer);
@@ -64,11 +67,7 @@ export default function ChallengePage() {
   const isChoice = question.type === "choice";
   const canSubmit = selectedAnswer.trim().length > 0 && result === "idle";
   const aiHelpUsed = aiMessages.length;
-  const maxAiLevel = aiMessages.reduce<AiHelpLevel | 0>(
-    (max, message) => (message.level > max ? message.level : max),
-    0
-  );
-
+  const visibleAiHelpUsed = aiHelpUsed + (novaCheckResult ? 1 : 0);
   const stars = useMemo(
     () =>
       Array.from({ length: 3 }, (_, index) => (
@@ -120,10 +119,78 @@ export default function ChallengePage() {
     setAiMessages((messages) => [...messages, aiResponse].sort((a, b) => a.level - b.level));
     setSkillCue(
       level === 2
-        ? `分步追问术经验 +2，你正在学会让 Nova 一步步引导。${dailyResult.awarded ? " 今日 Nova 任务完成，奖励已领取。" : ""}`
-        : `分步追问术经验 +1，你正在学会正确使用 AI。${dailyResult.awarded ? " 今日 Nova 任务完成，奖励已领取。" : ""}`
+        ? `Nova 正在一步步帮你想。${dailyResult.awarded ? " 小帮手奖励已领取。" : ""}`
+        : `你正在学会正确使用 Nova。${dailyResult.awarded ? " 小帮手奖励已领取。" : ""}`
     );
     setAiLoadingLevel(null);
+  };
+
+  const buildNovaCheckResponse = (): AiTutorResponse => ({
+    level: 1,
+    title: "Nova 讲解完成！",
+    message: `这道题可以这样想：${question.explanation} 做“${question.knowledgePoint}”题时，先试试：${question.hint1} 再检查：${question.hint2}`,
+    encouragement: "你已经完成今天的星星能量题，可以去看看星星报告。",
+    nextAction: "查看今日星星报告。"
+  });
+
+  const buildNovaReviewResponse = (): AiTutorResponse => ({
+    level: 3,
+    title: "Nova 讲解完成！",
+    message: `别着急，小怪兽只是提醒我们这里要再练一练。正确方法是：${question.explanation}`,
+    encouragement: `下次遇到“${question.knowledgePoint}”题，可以先慢慢读题，再一步一步算。`,
+    nextAction: "可以先看看小怪兽，也可以查看今日星星报告。"
+  });
+
+  const completeNovaTask = (mode: "nova-check" | "nova-review") => {
+    if (mode === "nova-check" && novaCheckResult) {
+      return;
+    }
+
+    const createdAt = new Date().toISOString();
+    const student = readStudent();
+    const progress = readProgress();
+    const response = mode === "nova-check" ? buildNovaCheckResponse() : buildNovaReviewResponse();
+    const message = mode === "nova-check" ? "Nova 讲解了这道题" : "Nova 帮你讲解了错题复盘";
+    const attempts =
+      mode === "nova-check" && result !== "idle"
+        ? progress.attempts.map((attempt, index) =>
+            index === progress.attempts.length - 1 && attempt.questionId === question.id
+              ? { ...attempt, aiHelpUsed: attempt.aiHelpUsed + 1 }
+              : attempt
+          )
+        : progress.attempts;
+    const nextProgress: LearningProgress = {
+      ...progress,
+      attempts,
+      aiHelpRecords: [
+        ...progress.aiHelpRecords,
+        {
+          questionId: question.id,
+          level: mode === "nova-check" ? 1 : 3,
+          message,
+          fullSolutionViewed: mode === "nova-review",
+          createdAt
+        }
+      ],
+      skillTelemetry: {
+        ...progress.skillTelemetry,
+        stepAskSkillExp: progress.skillTelemetry.stepAskSkillExp + 1,
+        fullSolutionViewed: progress.skillTelemetry.fullSolutionViewed || mode === "nova-review"
+      }
+    };
+    const dailyResult = applyDailyQuestCompletion("ai_help", student, nextProgress);
+
+    saveStudentAndProgress(dailyResult.student, dailyResult.progress);
+    if (response) {
+      setNovaCheckResult(response);
+    }
+    setProgressAfterSubmit(dailyResult.progress);
+    setSkillCue(
+      mode === "nova-check"
+        ? `Nova 已经讲完这道题。${dailyResult.awarded ? " Nova 小帮手奖励已领取。" : ""}`
+        : `Nova 已经帮你复盘。${dailyResult.awarded ? " Nova 小帮手奖励已领取。" : ""}`
+    );
+    setChallengeMode("normal");
   };
 
   const submitAnswer = () => {
@@ -202,23 +269,26 @@ export default function ChallengePage() {
     setAiMessages([]);
     setAiLoadingLevel(null);
     setSkillCue("");
+    setNovaCheckResult(null);
+  };
+
+  const startNextChallenge = () => {
+    window.localStorage.removeItem(CURRENT_QUESTION_STORAGE_KEY);
+    setQuestion(selectChallengeQuestion(readProgress()));
+    resetLocalAttempt();
+    setChallengeMode("normal");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const feedbackTitle =
     result === "correct"
-      ? "攻击成功！能量塔恢复能量。"
-      : "怪兽出现！这道错题变成了一只错题怪兽。";
+      ? "点亮成功！星球能量增加啦！"
+      : "小怪兽出现啦！";
 
   const feedbackMessage =
     result === "correct"
-      ? maxAiLevel === 0
-        ? "你独立击中了能量核心，今天的数学星球亮度上升。"
-        : maxAiLevel === 3
-          ? "你完成了这次学习复盘。建议再练一道同类题，把方法变成自己的技能。"
-          : "你和 Nova 配合得不错：先得到线索，再自己发动关键一击。"
-      : maxAiLevel === 0
-        ? "别急着放弃。可以先让 Nova 给一点线索，再去怪兽图鉴复盘这道题。"
-        : "你已经尝试过 Nova 引导了。去怪兽图鉴复盘错因，就能削弱这只怪兽。";
+      ? "你完成了今天的星星能量题，可以查看今日星星报告。"
+      : "这道错题变成了一只小怪兽，去看看它哪里捣乱了。";
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#18247a] text-white">
@@ -240,7 +310,7 @@ export default function ChallengePage() {
           </Link>
           <div className="flex items-center gap-2 rounded-full border border-violet-300/25 bg-violet-300/10 px-3 py-2 text-xs font-bold text-violet-100">
             <Swords size={15} />
-            战斗关卡
+            星星关卡
           </div>
         </header>
 
@@ -307,8 +377,8 @@ export default function ChallengePage() {
                     onClick={() => setSelectedAnswer(option)}
                     type="button"
                   >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-950/80 text-sm text-cyan-100">
-                      技{String.fromCharCode(65 + index)}
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-950/80 text-sm text-cyan-100">
+                      选{String.fromCharCode(65 + index)}
                     </span>
                     {option}
                   </button>
@@ -317,7 +387,7 @@ export default function ChallengePage() {
             </div>
           ) : (
             <label className="block">
-              <span className="mb-2 block text-sm font-bold text-slate-200">输入你的攻击答案</span>
+              <span className="mb-2 block text-sm font-bold text-slate-200">输入你的点亮答案</span>
               <input
                 className="h-14 w-full rounded-[22px] border border-white/15 bg-white/10 px-4 text-lg font-black text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-200"
                 data-testid="blank-answer"
@@ -327,6 +397,29 @@ export default function ChallengePage() {
                 value={selectedAnswer}
               />
             </label>
+          )}
+
+          {challengeMode !== "normal" && result === "idle" && (
+            <div
+              className="mt-4 rounded-[28px] border border-cyan-200/25 bg-cyan-200/10 p-4"
+              data-testid={challengeMode === "nova-check" ? "nova-check-card" : "nova-review-card"}
+            >
+              <p className="text-sm font-black text-cyan-100">
+                Nova 讲解时间
+              </p>
+              <p className="mt-2 text-sm font-bold leading-6 text-slate-100">
+                {challengeMode === "nova-check"
+                  ? "你已经完成了这道题，要不要让 Nova 帮你检查一下思路？"
+                  : "刚才的小怪兽题有点难，要不要让 Nova 帮你复盘一下？"}
+              </p>
+              <button
+                className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-cyan-300 px-4 text-sm font-black text-slate-950"
+                onClick={() => completeNovaTask(challengeMode)}
+                type="button"
+              >
+                让 Nova 讲讲这道题
+              </button>
+            </div>
           )}
 
           <div className="mt-4 grid gap-3">
@@ -398,7 +491,7 @@ export default function ChallengePage() {
             type="button"
           >
             <Send size={20} />
-            提交答案，发动攻击
+            提交答案，点亮能量
           </button>
         </section>
 
@@ -436,12 +529,30 @@ export default function ChallengePage() {
                 <p className="mt-2 text-sm leading-6 text-slate-200">{feedbackMessage}</p>
                 {result === "wrong" && (
                   <p className="mt-2 rounded-2xl border border-amber-200/25 bg-amber-200/10 p-3 text-sm font-bold leading-6 text-amber-50">
-                    这道错题已经变成一只错题怪兽，去图鉴里复盘就能削弱它。
+                    这道错题已经变成一只小怪兽，去图鉴里复盘就能收服它。
                   </p>
                 )}
                 <p className="mt-3 rounded-2xl bg-slate-950/45 p-3 text-sm leading-6 text-slate-100">
-                  解析：{question.explanation}
+                  {result === "correct" ? `简短解释：${question.explanation}` : `先别急：${question.hint1}`}
                 </p>
+                {novaCheckResult && (
+                  <article
+                    className="mt-3 rounded-[1.5rem] border border-cyan-200/30 bg-cyan-200/10 p-4 shadow-[0_18px_40px_rgba(34,211,238,0.14)]"
+                    data-testid="nova-check-card"
+                  >
+                    <div className="flex items-center gap-2 text-cyan-100">
+                      <Bot size={18} />
+                      <h3 className="text-base font-black">{novaCheckResult.title}</h3>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-slate-100">{novaCheckResult.message}</p>
+                    <p className="mt-2 rounded-2xl bg-white/10 p-3 text-sm font-bold leading-6 text-cyan-50">
+                      {novaCheckResult.encouragement}
+                    </p>
+                    <p className="mt-2 text-xs font-bold uppercase tracking-[0.18em] text-cyan-100/80">
+                      下一步：{novaCheckResult.nextAction}
+                    </p>
+                  </article>
+                )}
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-sm font-bold text-slate-100">
                     <Sparkles size={15} />
@@ -455,24 +566,54 @@ export default function ChallengePage() {
                   )}
                   <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-sm font-bold text-slate-100">
                     <MessageCircle size={15} />
-                    Nova 帮助 {aiHelpUsed} 次
+                    Nova 帮助 {visibleAiHelpUsed} 次
                   </span>
                   {progressAfterSubmit && (
                     <span className="rounded-full bg-white/10 px-3 py-1 text-sm font-bold text-slate-100">
-                      今日进度 {Math.min(progressAfterSubmit.completedChallenges, 3)}/3
+                      今日星星题已完成
                     </span>
                   )}
                 </div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {result === "correct" && (
+                    <Link
+                      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-amber-300 px-4 text-sm font-black text-slate-950"
+                      data-testid="go-report-primary"
+                      href="/report"
+                    >
+                      <Sparkles size={17} />
+                      查看今日星星报告
+                    </Link>
+                  )}
                   {result === "wrong" && (
                     <Link
                       className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-amber-300 px-4 text-sm font-black text-slate-950"
-                      data-testid="go-monsters"
+                      data-testid="go-monsters-primary"
                       href="/monsters"
                     >
-                      <Shield size={17} />
-                      去怪兽图鉴
+                      <Sparkles size={17} />
+                      看看小怪兽
                     </Link>
+                  )}
+                  {!novaCheckResult && (
+                    <button
+                      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-cyan-200/25 bg-cyan-200/10 px-4 text-sm font-black text-cyan-100"
+                      data-testid="nova-explain"
+                      onClick={() => completeNovaTask(result === "correct" ? "nova-check" : "nova-review")}
+                      type="button"
+                    >
+                      <Bot size={17} />
+                      让 Nova 讲讲这道题
+                    </button>
+                  )}
+                  {novaCheckResult && (
+                    <span
+                      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-emerald-200/25 bg-emerald-200/10 px-4 text-sm font-black text-emerald-100"
+                      data-testid="nova-explained"
+                    >
+                      <Bot size={17} />
+                      Nova 已讲解
+                    </span>
                   )}
                   <Link
                     className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-cyan-300 px-4 text-sm font-black text-slate-950"
@@ -486,15 +627,15 @@ export default function ChallengePage() {
                     data-testid="go-report"
                     href="/report"
                   >
-                    查看冒险结算
+                    查看今日星星报告
                   </Link>
                   <button
                     className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-4 text-sm font-black text-slate-100"
-                    onClick={resetLocalAttempt}
+                    onClick={result === "correct" ? startNextChallenge : resetLocalAttempt}
                     type="button"
                   >
                     <RotateCcw size={17} />
-                    再试一次
+                    {result === "correct" ? "再玩一题" : "再试一次"}
                   </button>
                 </div>
               </div>
