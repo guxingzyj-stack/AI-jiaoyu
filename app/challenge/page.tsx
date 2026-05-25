@@ -14,7 +14,6 @@ import {
   Sparkles,
   Star,
   Swords,
-  Trophy,
   XCircle
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -385,124 +384,139 @@ export default function ChallengePage() {
 
   if (challengeMode === "tutorial") {
     return (
-      <main className="min-h-screen overflow-hidden bg-[#17206a] text-white">
+      <main className="min-h-screen overflow-hidden bg-[#12258a] text-white">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute left-[-20%] top-[-12%] h-80 w-80 rounded-full bg-cyan-400/25 blur-3xl" />
-          <div className="absolute right-[-26%] top-[18%] h-96 w-96 rounded-full bg-violet-500/25 blur-3xl" />
-          <div className="absolute bottom-[-18%] left-[18%] h-72 w-72 rounded-full bg-amber-300/16 blur-3xl" />
+          <div className="absolute left-[-18%] top-[-12%] h-96 w-96 rounded-full bg-cyan-300/25 blur-3xl" />
+          <div className="absolute right-[-24%] top-[12%] h-[28rem] w-[28rem] rounded-full bg-violet-500/25 blur-3xl" />
+          <div className="absolute bottom-[-18%] left-[18%] h-80 w-80 rounded-full bg-amber-300/18 blur-3xl" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_24px_24px,rgba(255,255,255,0.14)_1px,transparent_2px)] bg-[size:38px_38px] opacity-40" />
         </div>
 
-        <div className="relative mx-auto flex min-h-screen w-full max-w-3xl flex-col px-4 pb-8 pt-5 sm:px-6">
-          <header className="mb-5 flex items-center justify-between gap-3">
+        <div className="relative mx-auto flex min-h-screen w-full max-w-5xl flex-col px-3 pb-5 pt-4 sm:px-6">
+          <header className="mb-3 flex items-center justify-between gap-3">
             <Link
-              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-cyan-300/30 bg-white/5 px-3 text-sm font-bold text-cyan-100"
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-cyan-300/25 bg-slate-950/25 px-3 text-xs font-bold text-cyan-100 backdrop-blur"
               href="/adventure"
             >
-              <ArrowLeft size={16} />
+              <ArrowLeft size={14} />
               冒险大厅
             </Link>
-            <div className="flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-200/15 px-3 py-2 text-xs font-bold text-amber-100">
-              <Sparkles size={15} />
+            <div className="flex items-center gap-1.5 rounded-full border border-amber-300/30 bg-amber-200/15 px-3 py-2 text-xs font-black text-amber-100 backdrop-blur">
+              <Sparkles size={14} />
               教程岛
             </div>
           </header>
 
-          <section className="overflow-hidden rounded-[36px] border-4 border-white/20 bg-white/15 shadow-glow backdrop-blur-xl">
-            <div className="bg-gradient-to-br from-cyan-300 via-blue-400 to-violet-500 p-5 text-slate-950">
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-xs font-black uppercase tracking-[0.24em] opacity-80">Tutorial Island</p>
-                  <h1 className="mt-2 text-3xl font-black leading-tight sm:text-5xl">点亮第一颗星</h1>
+          <section className="relative min-h-[520px] overflow-hidden rounded-[36px] border border-white/15 bg-sky-300 shadow-glow sm:min-h-[600px]">
+            <Image
+              alt="教程岛背景"
+              className={`absolute inset-0 h-full w-full object-cover transition duration-500 ${
+                tutorialCloudCleared ? "brightness-110 saturate-125" : "brightness-90"
+              }`}
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, 1024px"
+              src={gameAssets.lobbyHero}
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-sky-200/15 via-indigo-500/10 to-[#11175d]/75" />
+            <div
+              className={`absolute inset-0 transition duration-500 ${
+                tutorialCloudCleared ? "bg-amber-200/15 shadow-[inset_0_0_120px_rgba(252,211,77,0.35)]" : "bg-slate-900/10"
+              }`}
+            />
+
+            <div className="absolute left-4 top-4 z-10 max-w-[68%] sm:left-6 sm:top-6">
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-100 drop-shadow">Tutorial Island</p>
+              <h1 className="mt-1 text-3xl font-black leading-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.35)] sm:text-5xl">
+                点亮第一颗星
+              </h1>
+            </div>
+
+            <div className="absolute left-[60%] top-[36%] z-[3] -translate-x-1/2 -translate-y-1/2 sm:left-[60%] sm:top-[36%]">
+              {!tutorialCloudCleared && (
+                <div className="absolute -right-14 -top-16 flex items-center gap-2 rounded-full border border-amber-200/45 bg-slate-950/35 px-3 py-1 text-xs font-black text-amber-100 shadow-lg backdrop-blur sm:-right-20">
+                  <span className="text-lg leading-none">↙</span>
+                  点这朵云
                 </div>
-                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[30px] border-2 border-white/45 bg-white/35 sm:h-32 sm:w-32">
-                  <Image
-                    alt="Nova 开心出现"
-                    className="h-full w-full object-contain p-1"
-                    height={1254}
-                    sizes="128px"
-                    src={tutorialCloudCleared ? gameAssets.novaCheer : gameAssets.novaHappy}
-                    width={1254}
-                  />
-                </div>
+              )}
+              <div
+                className={`relative flex h-28 w-28 items-center justify-center rounded-full border-[6px] transition duration-500 sm:h-36 sm:w-36 ${
+                  tutorialCloudCleared
+                    ? "border-amber-100 bg-amber-300 text-amber-950 shadow-[0_0_80px_rgba(252,211,77,0.95)]"
+                    : "border-white/45 bg-slate-100/55 text-slate-300 shadow-[0_0_34px_rgba(255,255,255,0.28)]"
+                }`}
+              >
+                <Star className={tutorialCloudCleared ? "fill-amber-700" : "fill-slate-200"} size={58} />
+                {tutorialCloudCleared && (
+                  <>
+                    <Sparkles className="absolute -right-5 -top-5 text-amber-200 drop-shadow" size={26} />
+                    <Sparkles className="absolute -bottom-3 -left-6 text-yellow-100 drop-shadow" size={20} />
+                    <Sparkles className="absolute -right-8 bottom-4 text-cyan-100 drop-shadow" size={18} />
+                  </>
+                )}
               </div>
             </div>
 
-            <div className="p-4 sm:p-5">
-              <NovaSpeechBubble
-                line={tutorialCloudCleared ? getNovaLine("success") : getNovaLine("tutorial_start")}
-                mood={tutorialCloudCleared ? "cheer" : "happy"}
+            {!tutorialCloudCleared && (
+              <button
+                aria-label="轻点云朵"
+                className="absolute left-[43%] top-[31%] z-[5] block h-32 w-52 -translate-x-1/2 border-0 bg-transparent p-0 transition duration-500 hover:scale-105 active:scale-95 sm:left-[47%] sm:top-[32%] sm:h-36 sm:w-60"
+                data-testid="tutorial-cloud-0"
+                onClick={completeTutorialFirstWin}
+                type="button"
+              >
+                <span className="absolute bottom-1 left-1/2 h-[58%] w-[78%] -translate-x-1/2 rounded-[999px] bg-white/78 shadow-[0_18px_42px_rgba(255,255,255,0.32)] backdrop-blur-[2px]" />
+                <span className="absolute bottom-[18%] left-[10%] h-[58%] w-[42%] rounded-full bg-white/72 shadow-[0_0_30px_rgba(255,255,255,0.38)] backdrop-blur-[1px]" />
+                <span className="absolute bottom-[24%] left-[32%] h-[78%] w-[46%] rounded-full bg-white/84 shadow-[0_0_34px_rgba(255,255,255,0.44)] backdrop-blur-[1px]" />
+                <span className="absolute bottom-[16%] right-[8%] h-[56%] w-[39%] rounded-full bg-white/68 shadow-[0_0_26px_rgba(255,255,255,0.34)] backdrop-blur-[1px]" />
+                <span className="absolute inset-0 rounded-full bg-white/20 blur-xl" />
+              </button>
+            )}
+
+            <div
+              className={`absolute left-[58%] top-[34%] z-[6] h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full transition duration-500 sm:left-[60%] sm:top-[36%] sm:h-32 sm:w-32 ${
+                tutorialCloudCleared
+                  ? "bg-amber-200/30 shadow-[0_0_90px_rgba(252,211,77,0.75)]"
+                  : "pointer-events-none bg-transparent"
+              }`}
+            />
+
+            <div className="absolute bottom-28 left-3 z-[6] h-32 w-32 sm:bottom-24 sm:left-8 sm:h-44 sm:w-44">
+              <Image
+                alt="Nova"
+                className="h-full w-full object-contain drop-shadow-[0_20px_32px_rgba(0,0,0,0.35)]"
+                height={1254}
+                sizes="176px"
+                src={tutorialCloudCleared ? gameAssets.novaCheer : gameAssets.novaHappy}
+                width={1254}
               />
-              <div className="relative min-h-[360px] overflow-hidden rounded-[34px] border border-cyan-200/25 bg-gradient-to-b from-sky-300 via-indigo-300 to-violet-500 p-4 text-slate-950">
-                {!tutorialCloudCleared && (
-                  <span className="absolute left-4 top-4 z-10 rounded-full bg-amber-300 px-3 py-1 text-xs font-black text-slate-950">
-                    看这里
-                  </span>
-                )}
-                <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-emerald-300/60 to-transparent" />
-                <Image
-                  alt="数学能量塔"
-                  className={`absolute bottom-8 left-1/2 h-48 w-48 -translate-x-1/2 object-contain drop-shadow-[0_22px_32px_rgba(0,0,0,0.28)] transition ${
-                    tutorialCloudCleared ? "scale-105 brightness-110" : "brightness-75"
-                  }`}
-                  height={1200}
-                  src={gameAssets.quests.challenge}
-                  width={1200}
+            </div>
+
+            <div className="absolute inset-x-3 bottom-3 z-[7] sm:inset-x-6">
+              <div className="rounded-[28px] border border-white/30 bg-slate-950/55 p-3 shadow-[0_18px_45px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+                <NovaSpeechBubble
+                  line={tutorialCloudCleared ? getNovaLine("success") : "点中间这朵云，把星星找回来！"}
+                  mood={tutorialCloudCleared ? "cheer" : "happy"}
                 />
-                <div
-                  className={`absolute right-5 top-5 flex h-16 w-16 items-center justify-center rounded-full border-4 transition ${
-                    tutorialCloudCleared
-                      ? "border-amber-100 bg-amber-300 text-amber-950 shadow-[0_0_40px_rgba(252,211,77,0.9)]"
-                      : "border-white/50 bg-slate-200 text-slate-400"
-                  }`}
-                >
-                  <Star className={tutorialCloudCleared ? "fill-amber-600" : "fill-slate-300"} size={30} />
-                </div>
-
-                {[0, 1, 2].map((cloud) => (
-                  <button
-                    className={`absolute inline-flex min-h-16 min-w-24 items-center justify-center rounded-full border border-white/70 bg-white/85 px-5 text-slate-500 shadow-[0_14px_30px_rgba(15,23,42,0.22)] transition ${
-                      tutorialCloudCleared ? "scale-75 opacity-0" : "shadow-[0_0_28px_rgba(255,255,255,0.85)] active:scale-95"
-                    } ${cloud === 0 ? "left-5 top-24" : cloud === 1 ? "right-8 top-32" : "left-1/2 top-44 -translate-x-1/2"}`}
-                    data-testid={`tutorial-cloud-${cloud}`}
-                    disabled={tutorialCloudCleared}
-                    key={cloud}
-                    onClick={completeTutorialFirstWin}
-                    type="button"
-                  >
-                    <Cloud className="fill-white" size={42} />
-                  </button>
-                ))}
-
-                <p className="absolute bottom-4 left-4 right-4 rounded-3xl border border-white/45 bg-white/80 p-3 text-center text-sm font-black text-slate-900">
-                  {tutorialCloudCleared ? "第一次点亮成功！" : "点一下云朵。"}
+                <p className="mt-2 text-center text-sm font-black text-cyan-50">
+                  {tutorialCloudCleared ? "你帮 Nova 找回第一颗星啦。" : "轻点云朵，找回第一颗星。"}
                 </p>
               </div>
 
               {tutorialCloudCleared && (
-                <section className="mt-4 rounded-[28px] border border-emerald-200/30 bg-emerald-200/10 p-4" data-testid="tutorial-success">
-                  <div className="flex gap-3">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-300 text-slate-950">
-                      <Trophy size={26} />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-black">第一次点亮成功！</h2>
-                      <p className="mt-2 text-sm font-bold leading-6 text-slate-100">
-                        你已经帮 Nova 找回了一点星星能量。
-                      </p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="rounded-full bg-white/10 px-3 py-1 text-sm font-black text-amber-100">+5 XP</span>
-                        <span className="rounded-full bg-white/10 px-3 py-1 text-sm font-black text-amber-100">+1 金币</span>
-                      </div>
-                    </div>
+                <section className="mt-3 rounded-[24px] border border-emerald-200/35 bg-emerald-200/15 p-3 text-center" data-testid="tutorial-success">
+                  <h2 className="text-2xl font-black text-white">第一次点亮成功！</h2>
+                  <div className="mt-2 flex justify-center gap-2">
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-sm font-black text-amber-100">+5 XP</span>
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-sm font-black text-amber-100">+1 金币</span>
                   </div>
                 </section>
               )}
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {tutorialCloudCleared && (
+              {tutorialCloudCleared && (
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   <button
-                    className="inline-flex min-h-13 items-center justify-center gap-2 rounded-2xl bg-amber-300 px-5 text-base font-black text-slate-950"
+                    className="inline-flex min-h-13 items-center justify-center gap-2 rounded-2xl bg-amber-300 px-5 text-base font-black text-slate-950 shadow-[0_0_32px_rgba(252,211,77,0.45)]"
                     data-testid="tutorial-continue"
                     onClick={continueAfterTutorial}
                     type="button"
@@ -510,14 +524,14 @@ export default function ChallengePage() {
                     继续小挑战
                     <Sparkles size={18} />
                   </button>
-                )}
-                <Link
-                  className="inline-flex min-h-13 items-center justify-center rounded-2xl bg-cyan-300 px-5 text-base font-black text-slate-950"
-                  href="/adventure"
-                >
-                  返回冒险大厅
-                </Link>
-              </div>
+                  <Link
+                    className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-cyan-200/90 px-5 text-sm font-black text-slate-950"
+                    href="/adventure"
+                  >
+                    返回冒险大厅
+                  </Link>
+                </div>
+              )}
             </div>
           </section>
         </div>

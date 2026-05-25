@@ -10,7 +10,7 @@ export type NovaLineScene =
 
 export const novaLines: Record<NovaLineScene, string[]> = {
   tutorial_start: ["我在这里等你！", "我们先点亮第一颗星。"],
-  cloud_intro: ["云朵挡住能量塔啦！", "我们把它们数清楚。"],
+  cloud_intro: ["云朵挡住第一颗星啦！", "轻点云朵吧。"],
   step_1: ["看，每座塔要 24 个能量块。", "这里一共有 3 座塔。"],
   step_2: ["24 可以拆成 20 和 4。", "这样算会更轻松。"],
   step_3: ["现在来选答案吧！", "别急，慢慢看。"],
