@@ -138,9 +138,9 @@ export default function ReportPage() {
           <Link
             className="inline-flex min-h-13 items-center justify-center rounded-2xl bg-amber-300 px-5 text-base font-black text-slate-950"
             data-testid="report-primary"
-            href={hasChallengeData ? "/feedback" : "/challenge"}
+            href="/challenge"
           >
-            {hasChallengeData ? "填写试映反馈" : "去点亮第一颗星"}
+            {hasChallengeData ? "再来一颗星" : "去点亮第一颗星"}
           </Link>
           <div className="grid gap-3 sm:grid-cols-2">
             <Link
@@ -179,6 +179,21 @@ export default function ReportPage() {
               title="下一步建议"
               text="明天建议继续练一道 20 多乘一位数的小题，保持 5 分钟以内。"
             />
+            <Link
+              className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-cyan-300 px-4 text-sm font-black text-slate-950"
+              href="/feedback"
+            >
+              家长填写试映反馈
+            </Link>
+            <button
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 text-xs font-bold text-slate-300"
+              data-testid="report-reset"
+              onClick={resetData}
+              type="button"
+            >
+              <RotateCcw size={14} />
+              重置体验数据
+            </button>
           </div>
         </details>
 
@@ -221,16 +236,6 @@ export default function ReportPage() {
           </section>
         </details>
 
-        <button
-          className="mx-auto inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 text-xs font-bold text-slate-300"
-          data-testid="report-reset"
-          onClick={resetData}
-          type="button"
-        >
-          <RotateCcw size={14} />
-          重置体验数据
-        </button>
-        <p className="mt-4 text-center text-xs font-bold text-slate-500">Version: S1 Screening Build v0.1</p>
       </div>
     </main>
   );

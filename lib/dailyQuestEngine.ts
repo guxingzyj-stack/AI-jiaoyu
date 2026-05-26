@@ -101,7 +101,7 @@ export function readDailyQuestState(): DailyQuestState {
       lastQuestDate: today,
       dailyQuests: createDailyQuests(),
       dailyCompleted: false,
-      streak: student.streak || 1
+      streak: student.streak ?? 0
     };
     writeDailyQuestState(initialState, student, progress);
     return initialState;
@@ -125,7 +125,7 @@ export function readDailyQuestState(): DailyQuestState {
     ...saved,
     dailyQuests: normalizedQuests,
     dailyCompleted: allCompleted(normalizedQuests),
-    streak: saved.streak || student.streak || 1
+    streak: saved.streak ?? student.streak ?? 0
   };
   writeDailyQuestState(normalizedState, { ...student, streak: normalizedState.streak }, progress);
   return normalizedState;

@@ -4,8 +4,6 @@ import Link from "next/link";
 import { Clock, Rocket, RotateCcw, ShieldCheck, Sparkles, Target } from "lucide-react";
 import { resetExperienceData } from "../../lib/dailyQuestEngine";
 
-const screeningVersion = "S1 Screening Build v0.1";
-
 export default function PilotPage() {
   const resetData = () => {
     if (window.confirm("确定要重置体验数据吗？这会清空本机的挑战、怪兽、技能和报告记录。")) {
@@ -30,10 +28,10 @@ export default function PilotPage() {
           </div>
           <p className="text-xs font-bold uppercase tracking-[0.28em] text-cyan-200">Tutorial Island</p>
           <h1 className="mt-2 text-4xl font-black leading-tight sm:text-6xl">
-            智学探险家 · 教程岛试映版
+            智学探险家 · 教程岛
           </h1>
           <p className="mt-4 text-base font-bold leading-7 text-slate-100">
-            今天先完成一个 5 分钟小冒险，帮 Nova 点亮数学星球。
+            这是一个 5 分钟数学小冒险。孩子会跟着 Nova 点亮第一颗星，完成一个小挑战，最后看到星星报告。
           </p>
           <Link
             className="mt-6 inline-flex min-h-14 w-full items-center justify-center rounded-3xl bg-gradient-to-r from-amber-300 via-cyan-300 to-violet-400 px-6 text-lg font-black text-slate-950 shadow-glow sm:w-auto"
@@ -69,16 +67,16 @@ export default function PilotPage() {
             icon={ShieldCheck}
             title="给家长看的说明"
             items={[
-              "这是早期试映版，重点测试孩子是否愿意继续玩下去。",
-              "本轮先观察孩子能不能快速获得第一次成功感。"
+              "体验时建议让孩子自己先点一遍。",
+              "家长只需要观察孩子是否能看懂提示、是否愿意继续。"
             ]}
           />
         </section>
 
-        <div className="mt-8 flex flex-col items-center gap-3">
-          <p className="text-xs font-bold text-slate-400">Version: {screeningVersion}</p>
+        <details className="mx-auto mt-8 w-full max-w-md rounded-[24px] border border-white/10 bg-white/5 p-4 text-center">
+          <summary className="cursor-pointer text-sm font-bold text-slate-300">家长工具</summary>
           <button
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 text-xs font-bold text-slate-300"
+            className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 text-xs font-bold text-slate-300"
             data-testid="pilot-reset"
             onClick={resetData}
             type="button"
@@ -86,7 +84,7 @@ export default function PilotPage() {
             <RotateCcw size={14} />
             重置体验数据
           </button>
-        </div>
+        </details>
       </div>
     </main>
   );

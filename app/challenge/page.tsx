@@ -73,7 +73,9 @@ export default function ChallengePage() {
   const [challengeMode, setChallengeMode] = useState<ChallengeMode>("normal");
   const [novaCheckResult, setNovaCheckResult] = useState<AiTutorResponse | null>(null);
   const [tutorialCloudCleared, setTutorialCloudCleared] = useState(false);
-  const [newbieStep, setNewbieStep] = useState<1 | 2 | 3>(1);
+  const [newbieStep, setNewbieStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [newbieFeedback, setNewbieFeedback] = useState("");
+  const [newbiePicked, setNewbiePicked] = useState("");
   const [pageReady, setPageReady] = useState(false);
 
   useEffect(() => {
@@ -259,9 +261,39 @@ export default function ChallengePage() {
     setQuestion(newbieQuestion);
     setTutorialCloudCleared(false);
     setNewbieStep(1);
+    setNewbieFeedback("");
+    setNewbiePicked("");
     setChallengeMode("newbie");
     window.history.replaceState(null, "", "/challenge?mode=newbie");
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const moveNewbieStep = (step: 1 | 2 | 3 | 4 | 5) => {
+    setNewbieStep(step);
+    setNewbieFeedback("");
+    setNewbiePicked("");
+  };
+
+  const pickNewbieStepAnswer = (
+    value: string,
+    correctAnswer: string,
+    correctMessage: string,
+    wrongMessage: string
+  ) => {
+    const isCorrect = value === correctAnswer;
+    setNewbiePicked(value);
+    setNewbieFeedback(isCorrect ? correctMessage : wrongMessage);
+  };
+
+  const pickNewbieFinalAnswer = (value: string) => {
+    setNewbiePicked(value);
+    setSelectedAnswer(value);
+    if (value === newbieQuestion.answer) {
+      setNewbieFeedback("");
+      submitAnswer(value);
+      return;
+    }
+    setNewbieFeedback("差一点点，60 再加 12，往 72 看看。");
   };
 
   const retryNewbieGuidance = () => {
@@ -271,15 +303,18 @@ export default function ChallengePage() {
     setProgressAfterSubmit(null);
     setNovaCheckResult(null);
     setNewbieStep(2);
+    setNewbieFeedback("");
+    setNewbiePicked("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const submitAnswer = () => {
-    if (!canSubmit || rewardApplied) {
+  const submitAnswer = (answerOverride?: string) => {
+    const finalAnswer = answerOverride ?? selectedAnswer;
+    if ((!answerOverride && !canSubmit) || rewardApplied || finalAnswer.trim().length === 0) {
       return;
     }
 
-    const isCorrect = normalizeAnswer(selectedAnswer) === normalizeAnswer(question.answer);
+    const isCorrect = normalizeAnswer(finalAnswer) === normalizeAnswer(question.answer);
     const createdAt = new Date().toISOString();
     const student = readStudent();
     const progress = readProgress();
@@ -311,7 +346,7 @@ export default function ChallengePage() {
         ...progress.attempts,
         {
           questionId: question.id,
-          selectedAnswer,
+          selectedAnswer: finalAnswer,
           isCorrect,
           knowledgePoint: question.knowledgePoint,
           aiHelpUsed,
@@ -351,6 +386,8 @@ export default function ChallengePage() {
     setAiLoadingLevel(null);
     setSkillCue("");
     setNovaCheckResult(null);
+    setNewbieFeedback("");
+    setNewbiePicked("");
   };
 
   const startNextChallenge = () => {
@@ -540,6 +577,67 @@ export default function ChallengePage() {
   }
 
   if (challengeMode === "newbie") {
+    const newbieLine =
+      result === "correct"
+        ? getNovaLine("success")
+        : newbieStep === 1
+          ? "3 座小塔，每座要 24 个能量块。"
+          : newbieStep === 2
+            ? "24 可以拆成 20 和 4。"
+            : newbieStep === 3
+              ? "先数 20 的部分。"
+              : newbieStep === 4
+                ? "再数小小的 4。"
+                : "最后把两部分合起来。";
+
+    const renderEnergyTowers = (label: string) => (
+      <div className="grid grid-cols-3 gap-2">
+        {[1, 2, 3].map((tower) => (
+          <div className="rounded-[24px] border border-white/20 bg-white/10 p-2 text-center" key={tower}>
+            <Image
+              alt={`小能量塔 ${tower}`}
+              className="mx-auto h-20 w-full object-contain sm:h-24"
+              height={1200}
+              src={gameAssets.quests.challenge}
+              width={1200}
+            />
+            <p className="rounded-full bg-amber-300 px-2 py-1 text-sm font-black text-slate-950">{label}</p>
+          </div>
+        ))}
+      </div>
+    );
+
+    const renderChoice = (
+      options: string[],
+      correctAnswer: string,
+      testPrefix: string,
+      onPick: (value: string) => void
+    ) => (
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        {options.map((option) => {
+          const active = newbiePicked === option;
+          const showCorrect = Boolean(newbieFeedback) && option === correctAnswer;
+          return (
+            <button
+              className={`min-h-14 rounded-[22px] border px-3 text-lg font-black transition active:scale-95 ${
+                showCorrect
+                  ? "border-emerald-100 bg-emerald-300 text-slate-950 shadow-glow"
+                  : active
+                    ? "border-cyan-100 bg-cyan-300 text-slate-950 shadow-glow"
+                    : "border-white/10 bg-white/8 text-white hover:border-cyan-200/50"
+              }`}
+              data-testid={`${testPrefix}-${option}`}
+              key={option}
+              onClick={() => onPick(option)}
+              type="button"
+            >
+              {option}
+            </button>
+          );
+        })}
+      </div>
+    );
+
     return (
       <main className="min-h-screen overflow-hidden bg-[#18247a] text-white">
         <div className="absolute inset-0 overflow-hidden">
@@ -571,11 +669,7 @@ export default function ChallengePage() {
                   <p className="text-xs font-black uppercase tracking-[0.24em] opacity-80">Cloud Adventure</p>
                   <h1 className="mt-2 text-3xl font-black leading-tight sm:text-5xl">云朵迷雾小冒险</h1>
                   <p className="mt-3 text-sm font-bold leading-6">
-                    {newbieStep === 1
-                      ? "太棒啦！第一颗星已经点亮了。"
-                      : newbieStep === 2
-                        ? "Nova 带你把 24 拆开看。"
-                        : "现在来点亮 3 座小能量塔。"}
+                    {result === "correct" ? "3 座小塔都亮起来啦。" : "我们一起给小塔补能量。"}
                   </p>
                 </div>
                 <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[30px] border-2 border-white/45 bg-white/35 sm:h-32 sm:w-32">
@@ -593,117 +687,105 @@ export default function ChallengePage() {
 
             <div className="p-4 sm:p-5">
               <NovaSpeechBubble
-                line={
-                  result === "correct"
-                    ? getNovaLine("success")
-                    : result === "wrong"
-                      ? getNovaLine("wrong")
-                      : newbieStep === 1
-                        ? getNovaLine("step_1")
-                        : newbieStep === 2
-                          ? getNovaLine("step_2")
-                          : getNovaLine("step_3")
-                }
-                mood={result === "correct" ? "cheer" : newbieStep === 2 || result === "wrong" ? "thinking" : "happy"}
+                line={newbieLine}
+                mood={result === "correct" ? "cheer" : newbieStep === 1 ? "happy" : "thinking"}
               />
-              {result === "idle" && newbieStep === 1 && (
-                <section className="mt-4 rounded-[32px] border border-cyan-200/25 bg-cyan-200/10 p-4" data-testid="newbie-step-1">
-                  <p className="mt-2 text-sm font-bold leading-6 text-slate-100">
-                    每座塔需要 24 个能量块，一共需要多少个呢？
-                  </p>
-                  <div className="relative mt-4 grid grid-cols-3 gap-2 rounded-[28px] border border-cyan-200/30 p-2 shadow-[0_0_34px_rgba(34,211,238,0.22)]">
-                    <span className="absolute -top-3 left-4 rounded-full bg-amber-300 px-3 py-1 text-xs font-black text-slate-950">
-                      看这里
+
+              {result === "idle" && (
+                <section className="mt-4 rounded-[32px] border border-cyan-200/25 bg-cyan-200/10 p-4" data-testid={`newbie-step-${newbieStep}`}>
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <span className="rounded-full bg-amber-300 px-3 py-1 text-xs font-black text-slate-950">
+                      第 {newbieStep} 步 / 5
                     </span>
-                    {[1, 2, 3].map((tower) => (
-                      <div className="rounded-[24px] border border-white/20 bg-white/10 p-2 text-center" key={tower}>
-                        <Image
-                          alt={`小能量塔 ${tower}`}
-                          className="mx-auto h-24 w-full object-contain"
-                          height={1200}
-                          src={gameAssets.quests.challenge}
-                          width={1200}
-                        />
-                        <p className="rounded-full bg-amber-300 px-2 py-1 text-sm font-black text-slate-950">24</p>
+                    <span className="text-xs font-bold text-cyan-100">你来帮 Nova 选</span>
+                  </div>
+
+                  {newbieStep === 1 && (
+                    <>
+                      <p className="text-xl font-black leading-8">你先猜一猜，一共大约是多少？</p>
+                      <div className="mt-4 rounded-[28px] border border-cyan-200/30 p-2 shadow-[0_0_34px_rgba(34,211,238,0.22)]">
+                        {renderEnergyTowers("24")}
                       </div>
-                    ))}
-                  </div>
-                  <button
-                    className="mt-4 inline-flex min-h-13 w-full items-center justify-center rounded-2xl bg-amber-300 px-5 text-base font-black text-slate-950"
-                    data-testid="newbie-step-1-next"
-                    onClick={() => setNewbieStep(2)}
-                    type="button"
-                  >
-                    我知道啦，继续
-                  </button>
-                </section>
-              )}
+                      {renderChoice(["50", "72", "100"], "72", "newbie-guess", (value) =>
+                        pickNewbieStepAnswer(value, "72", "你的感觉很准！", "没关系，我们一起拆开看。")
+                      )}
+                      {newbieFeedback && (
+                        <NewbieStepFeedback message={newbieFeedback} onContinue={() => moveNewbieStep(2)} />
+                      )}
+                    </>
+                  )}
 
-              {result === "idle" && newbieStep === 2 && (
-                <section className="mt-4 rounded-[32px] border border-violet-200/25 bg-violet-200/10 p-4" data-testid="newbie-step-2">
-                  <div className="relative mt-2 grid gap-3 rounded-[28px] border border-violet-200/30 p-2 shadow-[0_0_34px_rgba(196,181,253,0.22)] sm:grid-cols-2">
-                    <span className="absolute -top-3 left-4 rounded-full bg-amber-300 px-3 py-1 text-xs font-black text-slate-950">
-                      看这里
-                    </span>
-                    <div className="rounded-[26px] bg-slate-950/45 p-4 text-center">
-                      <p className="text-sm font-bold text-cyan-100">20</p>
-                      <p className="mt-2 text-3xl font-black text-white">20 × 3 = ?</p>
-                    </div>
-                    <div className="rounded-[26px] bg-slate-950/45 p-4 text-center">
-                      <p className="text-sm font-bold text-amber-100">4</p>
-                      <p className="mt-2 text-3xl font-black text-white">4 × 3 = ?</p>
-                    </div>
-                  </div>
-                  <button
-                    className="mt-4 inline-flex min-h-13 w-full items-center justify-center rounded-2xl bg-amber-300 px-5 text-base font-black text-slate-950"
-                    data-testid="newbie-step-2-next"
-                    onClick={() => setNewbieStep(3)}
-                    type="button"
-                  >
-                    开始点亮能量
-                  </button>
-                </section>
-              )}
+                  {newbieStep === 2 && (
+                    <>
+                      <p className="text-xl font-black leading-8">24 可以拆成 20 和 4 两部分。</p>
+                      <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-[28px] border border-violet-200/30 p-4 shadow-[0_0_34px_rgba(196,181,253,0.22)]">
+                        <EnergyBlock label="20" tone="cyan" />
+                        <span className="text-3xl font-black text-amber-200">+</span>
+                        <EnergyBlock label="4" tone="amber" />
+                      </div>
+                      <button
+                        className="mt-4 inline-flex min-h-13 w-full items-center justify-center rounded-2xl bg-amber-300 px-5 text-base font-black text-slate-950"
+                        data-testid="newbie-step-2-next"
+                        onClick={() => moveNewbieStep(3)}
+                        type="button"
+                      >
+                        先数 20 的部分
+                      </button>
+                    </>
+                  )}
 
-              {result === "idle" && newbieStep === 3 && (
-                <section className="mt-4 rounded-[32px] border border-amber-200/25 bg-amber-200/10 p-4" data-testid="newbie-step-3">
-                  <p className="text-xl font-black leading-8">3 座小能量塔一共需要多少个能量块？</p>
-                  <div className="relative mt-4 grid gap-3 rounded-[28px] border border-amber-200/30 p-2 shadow-[0_0_34px_rgba(252,211,77,0.2)]">
-                    <span className="absolute -top-3 left-4 rounded-full bg-amber-300 px-3 py-1 text-xs font-black text-slate-950">
-                      看这里
-                    </span>
-                    {newbieQuestion.options?.map((option, index) => {
-                      const active = selectedAnswer === option;
-                      return (
-                        <button
-                          className={`flex min-h-14 items-center gap-3 rounded-[22px] border px-4 text-left font-black transition ${
-                            active
-                              ? "border-cyan-200 bg-cyan-300 text-slate-950 shadow-glow"
-                              : "border-white/10 bg-white/5 text-slate-100 hover:border-cyan-200/50"
-                          }`}
-                          data-testid={`newbie-option-${index}`}
-                          key={option}
-                          onClick={() => setSelectedAnswer(option)}
-                          type="button"
-                        >
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-950/80 text-sm text-cyan-100">
-                            {String.fromCharCode(65 + index)}
-                          </span>
-                          {option}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <button
-                    className="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-[28px] bg-gradient-to-r from-amber-300 via-cyan-300 to-violet-400 px-6 py-3 text-lg font-black text-slate-950 shadow-glow transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-                    data-testid="newbie-submit"
-                    disabled={!canSubmit}
-                    onClick={submitAnswer}
-                    type="button"
-                  >
-                    <Send size={20} />
-                    提交答案，点亮能量
-                  </button>
+                  {newbieStep === 3 && (
+                    <>
+                      <p className="text-xl font-black leading-8">
+                        3 座塔，每座先放 20 个能量块，一共有多少个？
+                      </p>
+                      <div className="mt-4 rounded-[28px] border border-cyan-200/30 p-2">
+                        {renderEnergyTowers("20")}
+                      </div>
+                      {renderChoice(["40", "60", "80"], "60", "newbie-20", (value) =>
+                        pickNewbieStepAnswer(value, "60", "数对啦，20、40、60。", "看，20、40、60，数三次就是 60。")
+                      )}
+                      {newbieFeedback && (
+                        <NewbieStepFeedback message={newbieFeedback} onContinue={() => moveNewbieStep(4)} />
+                      )}
+                    </>
+                  )}
+
+                  {newbieStep === 4 && (
+                    <>
+                      <p className="text-xl font-black leading-8">
+                        每座塔还差 4 个小能量块，3 座塔一共还差多少个？
+                      </p>
+                      <div className="mt-4 rounded-[28px] border border-amber-200/30 p-2">
+                        {renderEnergyTowers("4")}
+                      </div>
+                      {renderChoice(["7", "12", "16"], "12", "newbie-4", (value) =>
+                        pickNewbieStepAnswer(value, "12", "很好，4、8、12。", "4、8、12，数三次就是 12。")
+                      )}
+                      {newbieFeedback && (
+                        <NewbieStepFeedback message={newbieFeedback} onContinue={() => moveNewbieStep(5)} />
+                      )}
+                    </>
+                  )}
+
+                  {newbieStep === 5 && (
+                    <>
+                      <p className="text-xl font-black leading-8">最后把两部分合起来。</p>
+                      <div className="mt-4 rounded-[28px] border border-amber-200/30 bg-slate-950/35 p-5 text-center shadow-[0_0_34px_rgba(252,211,77,0.2)]">
+                        <span className="text-3xl font-black text-cyan-100">60</span>
+                        <span className="mx-3 text-3xl font-black text-amber-200">+</span>
+                        <span className="text-3xl font-black text-cyan-100">12</span>
+                        <span className="mx-3 text-3xl font-black text-white">=</span>
+                        <span className="text-3xl font-black text-white">?</span>
+                      </div>
+                      {renderChoice(["62", "72", "82"], "72", "newbie-final", pickNewbieFinalAnswer)}
+                      {newbieFeedback && (
+                        <div className="mt-4 rounded-2xl border border-amber-200/25 bg-amber-200/10 p-3 text-sm font-black leading-6 text-amber-50">
+                          {newbieFeedback}
+                        </div>
+                      )}
+                    </>
+                  )}
                 </section>
               )}
 
@@ -726,11 +808,11 @@ export default function ChallengePage() {
                     </div>
                     <div>
                       <h2 className="text-xl font-black">
-                        {result === "correct" ? "点亮成功！3 座能量塔亮起来啦！" : "小云雾又出现啦！"}
+                        {result === "correct" ? "点亮成功！" : "小云雾又出现啦！"}
                       </h2>
                       <p className="mt-2 text-sm leading-6 text-slate-200">
                         {result === "correct"
-                          ? "你学会了把 24 拆成 20 和 4，再分别计算。"
+                          ? "你把 24 拆成 20 和 4，帮 3 座小塔都补好了能量。"
                           : "别急，Nova 可以带你再看一遍。"}
                       </p>
                     </div>
@@ -1006,7 +1088,7 @@ export default function ChallengePage() {
             className="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-[28px] bg-gradient-to-r from-amber-300 via-cyan-300 to-violet-400 px-6 py-3 text-lg font-black text-slate-950 shadow-glow transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
             data-testid="submit-answer"
             disabled={!canSubmit}
-            onClick={submitAnswer}
+            onClick={() => submitAnswer()}
             type="button"
           >
             <Send size={20} />
@@ -1196,5 +1278,35 @@ function AiHelpButton({
       <Bot size={18} />
       {loading ? "Nova 正在分析能量波..." : label}
     </button>
+  );
+}
+
+function EnergyBlock({ label, tone }: { label: string; tone: "cyan" | "amber" }) {
+  return (
+    <div
+      className={`rounded-[26px] border p-5 text-center shadow-[0_0_28px_rgba(255,255,255,0.12)] ${
+        tone === "cyan"
+          ? "border-cyan-100/40 bg-cyan-200/20 text-cyan-50"
+          : "border-amber-100/40 bg-amber-200/20 text-amber-50"
+      }`}
+    >
+      <div className="mx-auto mb-2 h-12 w-12 rounded-2xl bg-white/20 shadow-glow" />
+      <p className="text-4xl font-black">{label}</p>
+    </div>
+  );
+}
+
+function NewbieStepFeedback({ message, onContinue }: { message: string; onContinue: () => void }) {
+  return (
+    <div className="mt-4 rounded-2xl border border-emerald-200/25 bg-emerald-200/10 p-3">
+      <p className="text-sm font-black leading-6 text-emerald-50">{message}</p>
+      <button
+        className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-amber-300 px-4 text-sm font-black text-slate-950"
+        onClick={onContinue}
+        type="button"
+      >
+        我明白了，继续
+      </button>
+    </div>
   );
 }

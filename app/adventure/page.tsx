@@ -50,6 +50,7 @@ export default function AdventurePage() {
     streak: defaultStudent.streak
   }));
   const [launches, setLaunches] = useState(0);
+  const [pageReady, setPageReady] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -57,6 +58,7 @@ export default function AdventurePage() {
       setProgress(readProgress());
       setDailyState(readDailyQuestState());
       setLaunches(Number(window.localStorage.getItem(LAUNCHES_STORAGE_KEY) ?? 0));
+      setPageReady(true);
     }, 0);
 
     return () => window.clearTimeout(timer);
@@ -72,12 +74,68 @@ export default function AdventurePage() {
   const experienceStarted = launches > 0 || progress.attempts.length > 0;
   const experienceCompleted = progress.attempts.length > 0;
   const challengeHref = tutorialDone ? "/challenge" : "/challenge?mode=tutorial";
+  const heroHref = experienceCompleted ? "/report" : challengeHref;
+  const heroButtonLabel = experienceCompleted ? "查看今日星星报告" : "继续小冒险";
+  const heroTitle = experienceCompleted ? "今天的小冒险完成啦！" : "第一颗星已经亮啦，继续帮 Nova 点亮能量塔。";
+  const heroDescription = experienceCompleted
+    ? "你已经完成今天的小挑战，可以去看看星星报告。"
+    : "继续完成云朵迷雾小冒险，把 3 座小塔都点亮。";
+  const heroHudLabel = experienceCompleted ? "已完成" : "继续中";
+  const heroHudPercent = experienceCompleted ? 100 : 55;
 
   const handleStart = () => {
     const nextLaunches = launches + 1;
     setLaunches(nextLaunches);
     window.localStorage.setItem(LAUNCHES_STORAGE_KEY, String(nextLaunches));
   };
+
+  if (pageReady && !tutorialDone) {
+    return (
+      <main className="min-h-screen overflow-hidden bg-[#17206a] text-white">
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute left-[-24%] top-[-12%] h-96 w-96 rounded-full bg-cyan-400/25 blur-3xl" />
+          <div className="absolute right-[-30%] top-[12%] h-[28rem] w-[28rem] rounded-full bg-violet-600/30 blur-3xl" />
+          <div className="absolute bottom-[-18%] left-[16%] h-80 w-80 rounded-full bg-amber-300/12 blur-3xl" />
+        </div>
+
+        <div className="relative mx-auto flex min-h-screen w-full max-w-3xl flex-col justify-center px-4 py-6 sm:px-6">
+          <section className="overflow-hidden rounded-[38px] border border-white/15 bg-white/12 shadow-glow backdrop-blur-xl">
+            <div className="relative min-h-[560px] overflow-hidden sm:min-h-[640px]">
+              <Image
+                alt="数学星球冒险"
+                className="absolute inset-0 h-full w-full object-cover"
+                fill
+                priority
+                sizes="(max-width: 768px) 100vw, 768px"
+                src={gameAssets.lobbyHero}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#10145b]/95 via-[#10145b]/15 to-transparent" />
+              <Image
+                alt="Nova"
+                className="absolute bottom-28 left-1/2 h-48 w-48 -translate-x-1/2 object-contain drop-shadow-[0_24px_38px_rgba(0,0,0,0.35)] sm:h-56 sm:w-56"
+                height={1254}
+                priority
+                src={gameAssets.novaHappy}
+                width={1254}
+              />
+              <div className="absolute inset-x-4 bottom-5 rounded-[30px] border border-white/20 bg-slate-950/60 p-5 text-center backdrop-blur-xl">
+                <h1 className="text-3xl font-black leading-tight">Nova 在数学星球等你。</h1>
+                <Link
+                  className="mt-5 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[26px] bg-amber-300 px-5 text-lg font-black text-slate-950 shadow-glow"
+                  data-testid="start-challenge"
+                  href="/challenge?mode=tutorial"
+                  onClick={handleStart}
+                >
+                  开始冒险
+                  <ChevronRight size={22} />
+                </Link>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#17206a] text-white">
@@ -93,9 +151,7 @@ export default function AdventurePage() {
       <div className="relative mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 pb-24 pt-5 sm:px-6 lg:px-8">
         <header className="mb-5 flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-200">
-              智学探险家 · 第一季试映版
-            </p>
+            <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-200">智学探险家</p>
             <h1 className="mt-2 text-3xl font-black leading-tight sm:text-5xl">
               今日冒险：点亮数学星球
             </h1>
@@ -122,30 +178,26 @@ export default function AdventurePage() {
             </div>
             <Link
               className="absolute bottom-4 left-4 inline-flex min-h-12 items-center justify-center gap-2 rounded-[22px] bg-amber-300 px-4 text-sm font-black text-slate-950 shadow-glow"
-              href={challengeHref}
+              href={heroHref}
               onClick={handleStart}
             >
-              {tutorialDone ? "继续星星挑战" : "进入教程岛"}
+              {heroButtonLabel}
               <ChevronRight size={18} />
             </Link>
           </div>
           <div className="grid gap-4 p-4 sm:p-6 lg:grid-cols-[1fr_220px] lg:items-center">
             <div className="min-w-0">
-              <h2 className="text-2xl font-black leading-tight sm:text-4xl">数学星球能量不足！</h2>
-              <p className="mt-3 text-sm font-bold leading-6 text-slate-100 sm:text-base">
-                {tutorialDone
-                  ? "继续做一个小挑战，最后查看今日星星报告。"
-                  : "Nova 已经在能量塔旁边等你啦。先去教程岛点亮第一颗星。"}
-              </p>
+              <h2 className="text-2xl font-black leading-tight sm:text-4xl">{heroTitle}</h2>
+              <p className="mt-3 text-sm font-bold leading-6 text-slate-100 sm:text-base">{heroDescription}</p>
               <div className="mt-4 rounded-[24px] border border-cyan-100/30 bg-slate-950/45 p-3">
                 <div className="mb-2 flex items-center justify-between text-xs font-black text-cyan-100">
                   <span>星球能量 HUD</span>
-                  <span>{experienceCompleted ? "已完成" : experienceStarted ? "已开始" : "准备出发"}</span>
+                  <span>{heroHudLabel}</span>
                 </div>
                 <div className="h-5 overflow-hidden rounded-full border border-cyan-100/20 bg-slate-950/65">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-violet-300 to-amber-300"
-                    style={{ width: `${experienceCompleted ? 100 : experienceStarted ? 45 : 15}%` }}
+                    style={{ width: `${heroHudPercent}%` }}
                   />
                 </div>
               </div>
@@ -229,7 +281,7 @@ export default function AdventurePage() {
               title="遇到困难可以问 Nova"
             />
             <ExperienceStep
-              description="答题后查看星星报告，也可以把反馈发给我们。"
+              description="答题后查看星星报告。"
               image={gameAssets.quests.monster_review}
               index={3}
               status="最后一步"
@@ -250,7 +302,7 @@ export default function AdventurePage() {
               <div>
                 <h2 className="text-xl font-black">今日星星体验已完成</h2>
                 <p className="mt-2 text-sm leading-6 text-slate-200">
-                  你已经完成今天的星星能量题。可以请家长查看今日星星报告，看看你点亮了哪些学习能力。
+                  你已经完成今天的星星能量题。可以请家长查看今日星星报告。
                 </p>
                 <Link
                   className="mt-4 inline-flex min-h-11 items-center justify-center rounded-2xl bg-emerald-300 px-4 text-sm font-black text-slate-950"
@@ -280,13 +332,20 @@ export default function AdventurePage() {
         <Link
           className="mb-6 flex min-h-16 items-center justify-center gap-3 rounded-[30px] bg-gradient-to-r from-amber-300 via-cyan-300 to-violet-400 px-6 py-4 text-lg font-black text-slate-950 shadow-glow transition active:scale-[0.98]"
           data-testid="start-challenge"
-          href={challengeHref}
+          href={heroHref}
           onClick={handleStart}
         >
-          {tutorialDone ? "继续星星挑战" : "进入教程岛"}
+          {heroButtonLabel}
           <ChevronRight size={24} />
         </Link>
-        <p className="mb-2 text-center text-xs font-bold text-slate-500">Version: S1 Screening Build v0.1</p>
+        {experienceCompleted && (
+          <Link
+            className="mb-6 flex min-h-12 items-center justify-center gap-2 rounded-[24px] border border-white/15 bg-white/5 px-5 text-sm font-black text-slate-100"
+            href="/challenge"
+          >
+            再来一颗星
+          </Link>
+        )}
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-10 w-screen max-w-full overflow-hidden border-t border-white/10 bg-[#090d22]/90 px-3 py-2 backdrop-blur-xl">

@@ -84,12 +84,12 @@ export const LAUNCHES_STORAGE_KEY = "zx_adventurer_launches";
 export const PROGRESS_STORAGE_KEY = "zx_adventurer_progress";
 
 export const defaultStudent: StudentProfile = {
-  nickname: "星河小队长",
-  level: 7,
-  exp: 680,
+  nickname: "星星新手",
+  level: 1,
+  exp: 0,
   maxExp: 1000,
-  coins: 1280,
-  streak: 5
+  coins: 0,
+  streak: 0
 };
 
 export const defaultProgress: LearningProgress = {
