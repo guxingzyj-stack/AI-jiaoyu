@@ -129,6 +129,12 @@ export default function AdventurePage() {
                   开始冒险
                   <ChevronRight size={22} />
                 </Link>
+                <Link
+                  className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-[24px] border border-cyan-200/40 bg-cyan-200/15 px-5 text-sm font-black text-cyan-50"
+                  href="/adventure/multiples-sea"
+                >
+                  开始倍数海新岛探险
+                </Link>
               </div>
             </div>
           </section>
@@ -337,6 +343,12 @@ export default function AdventurePage() {
         >
           {heroButtonLabel}
           <ChevronRight size={24} />
+        </Link>
+        <Link
+          className="mb-6 flex min-h-14 items-center justify-center rounded-[28px] border border-cyan-200/35 bg-cyan-200/12 px-5 py-4 text-base font-black text-cyan-50 shadow-glow"
+          href="/adventure/multiples-sea"
+        >
+          开始倍数海新岛探险
         </Link>
         {experienceCompleted && (
           <Link
