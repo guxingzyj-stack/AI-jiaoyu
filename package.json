@@ -8,6 +8,7 @@
     "start": "next start",
     "check": "eslint . && tsc --noEmit",
     "typecheck": "tsc --noEmit",
+    "audit:assets": "node scripts/audit-assets.mjs",
     "generate:multiples-sea-assets": "node scripts/generate-multiples-sea-assets.mjs"
   },
   "dependencies": {

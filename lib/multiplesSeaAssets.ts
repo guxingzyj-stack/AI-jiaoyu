@@ -1,7 +1,8 @@
 export const multiplesSeaAssets = {
   mapBackground: "/assets/multiples-sea/map-background.png",
   beachBackground: "/assets/multiples-sea/beach-background.png",
-  stoneQuestionBackground: "/assets/multiples-sea/stone-question-background.png",
+  // Stone-question uses the beach scene until a dedicated background is generated.
+  stoneQuestionBackground: "/assets/multiples-sea/beach-background.png",
   islandVictoryBackground: "/assets/multiples-sea/island-victory-background.png",
   towerBackground: "/assets/multiples-sea/tower-background.png",
   truthBackground: "/assets/multiples-sea/truth-background.png",
