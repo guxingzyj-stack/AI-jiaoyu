@@ -12,6 +12,7 @@ import {
   Swords
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import BottomNav from "../../components/BottomNav";
 import { applyDailyQuestCompletion } from "../../lib/dailyQuestEngine";
 import { gameAssets } from "../../lib/gameAssets";
 import { ensureMonstersForMistakes, getMonsterVisual } from "../../lib/monsterEngine";
@@ -89,7 +90,7 @@ export default function MonstersPage() {
 
     const nextProgress: LearningProgress = {
       ...progress,
-      exp: Math.min(student.maxExp, progress.exp + 10),
+      exp: progress.exp + 10,
       monsters: progress.monsters.map((item) =>
         item.id === monster.id
           ? {
@@ -129,7 +130,7 @@ export default function MonstersPage() {
 
     const nextProgress: LearningProgress = {
       ...progress,
-      exp: Math.min(student.maxExp, progress.exp + 20),
+      exp: progress.exp + 20,
       coins: progress.coins + 5,
       monsters: progress.monsters.map((item) =>
         item.id === monster.id
@@ -172,7 +173,7 @@ export default function MonstersPage() {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.055)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.055)_1px,transparent_1px)] bg-[size:34px_34px] [mask-image:linear-gradient(to_bottom,black,transparent_88%)]" />
       </div>
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 pb-10 pt-5 sm:px-6 lg:px-8">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 pb-24 pt-5 sm:px-6 lg:px-8">
         <header className="mb-5 flex items-center justify-between gap-3">
           <Link
             className="inline-flex min-h-10 items-center gap-2 rounded-full border border-cyan-300/30 bg-white/5 px-3 text-sm font-bold text-cyan-100"
@@ -405,6 +406,7 @@ export default function MonstersPage() {
           </section>
         )}
       </div>
+      <BottomNav />
     </main>
   );
 }

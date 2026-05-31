@@ -26,6 +26,7 @@ import { ensureMonstersForMistakes } from "../../lib/monsterEngine";
 import type { AiTutorResponse } from "../../lib/mockAiTutor";
 import { getNovaLine } from "../../lib/novaLines";
 import { CURRENT_QUESTION_STORAGE_KEY, selectChallengeQuestion } from "../../lib/questionRotation";
+import { trackEvent } from "../../lib/telemetry";
 import {
   defaultStudent,
   normalizeAnswer,
@@ -160,6 +161,13 @@ export default function ChallengePage() {
         : `你正在学会正确使用 Nova。${dailyResult.awarded ? " 小帮手奖励已领取。" : ""}`
     );
     setAiLoadingLevel(null);
+    trackEvent("challenge_ai_help", {
+      questionId: question.id,
+      knowledgePoint: question.knowledgePoint,
+      level,
+      fullSolutionViewed: level === 3,
+      questAwarded: dailyResult.awarded
+    });
   };
 
   const buildNovaCheckResponse = (): AiTutorResponse => ({
@@ -228,6 +236,12 @@ export default function ChallengePage() {
         : `Nova 已经帮你复盘。${dailyResult.awarded ? " Nova 小帮手奖励已领取。" : ""}`
     );
     setChallengeMode("normal");
+    trackEvent("challenge_nova_task", {
+      questionId: question.id,
+      knowledgePoint: question.knowledgePoint,
+      mode,
+      questAwarded: dailyResult.awarded
+    });
   };
 
   const completeTutorialFirstWin = () => {
@@ -241,7 +255,7 @@ export default function ChallengePage() {
     const nextProgress: LearningProgress = {
       ...progress,
       tutorialFirstWinDone: true,
-      exp: shouldAward ? Math.min(student.maxExp, progress.exp + 5) : progress.exp,
+      exp: shouldAward ? progress.exp + 5 : progress.exp,
       coins: shouldAward ? progress.coins + 1 : progress.coins
     };
     const nextStudent = {
@@ -364,10 +378,9 @@ export default function ChallengePage() {
     const nextStudent = {
       ...defaultStudent,
       ...student,
-      exp: Math.min(student.maxExp, nextProgress.exp),
+      exp: nextProgress.exp,
       coins: nextProgress.coins
     };
-    nextProgress.exp = nextStudent.exp;
 
     const dailyResult = applyDailyQuestCompletion("challenge", nextStudent, nextProgress);
     saveStudentAndProgress(dailyResult.student, dailyResult.progress);
@@ -375,6 +388,15 @@ export default function ChallengePage() {
     setProgressAfterSubmit(dailyResult.progress);
     setResult(isCorrect ? "correct" : "wrong");
     setRewardApplied(true);
+    trackEvent("challenge_answer_submit", {
+      questionId: question.id,
+      knowledgePoint: question.knowledgePoint,
+      difficulty: question.difficulty,
+      isCorrect,
+      aiHelpUsed,
+      challengeMode,
+      firstClear: isCorrect && !alreadyCompletedThisQuestion
+    });
   };
 
   const resetLocalAttempt = () => {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Gem, Sparkles, TrendingUp } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import BottomNav from "../../components/BottomNav";
 import { gameAssets } from "../../lib/gameAssets";
 import { defaultProgress, readProgress } from "../../lib/learningProgress";
 import { calculateSkillCards, type SkillCardRecord } from "../../lib/skillEngine";
@@ -33,7 +34,7 @@ export default function SkillsPage() {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.055)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.055)_1px,transparent_1px)] bg-[size:34px_34px] [mask-image:linear-gradient(to_bottom,black,transparent_88%)]" />
       </div>
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 pb-10 pt-5 sm:px-6 lg:px-8">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 pb-24 pt-5 sm:px-6 lg:px-8">
         <header className="mb-5 flex items-center justify-between gap-3">
           <Link
             className="inline-flex min-h-10 items-center gap-2 rounded-full border border-cyan-300/30 bg-white/5 px-3 text-sm font-bold text-cyan-100"
@@ -75,6 +76,7 @@ export default function SkillsPage() {
           查看今日成长报告
         </Link>
       </div>
+      <BottomNav />
     </main>
   );
 }

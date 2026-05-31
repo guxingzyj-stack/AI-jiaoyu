@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import BottomNav from "../../components/BottomNav";
 import {
   ArrowLeft,
   Bot,
@@ -17,7 +18,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { resetExperienceData } from "../../lib/dailyQuestEngine";
 import { gameAssets } from "../../lib/gameAssets";
-import { defaultProgress, readProgress } from "../../lib/learningProgress";
+import { computeLevel, defaultProgress, readProgress } from "../../lib/learningProgress";
 import { buildGrowthReport } from "../../lib/reportEngine";
 
 export default function ReportPage() {
@@ -56,7 +57,7 @@ export default function ReportPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_24px_24px,rgba(255,255,255,0.14)_1px,transparent_2px)] bg-[size:38px_38px] opacity-40" />
       </div>
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-3xl flex-col px-4 pb-10 pt-5 sm:px-6">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-3xl flex-col px-4 pb-24 pt-5 sm:px-6">
         <header className="mb-5 flex items-center justify-between gap-3">
           <Link
             className="inline-flex min-h-10 items-center gap-2 rounded-full border border-cyan-300/30 bg-white/5 px-3 text-sm font-bold text-cyan-100"
@@ -204,7 +205,7 @@ export default function ReportPage() {
             <DetailStat icon={Coins} label="金币" value={String(report.overview.coins)} />
             <DetailStat icon={Bot} label="提示次数" value={String(report.overview.aiHelpCount)} />
             <DetailStat icon={Shield} label="小怪兽" value={String(report.overview.monsterCount)} />
-            <DetailStat icon={Gem} label="成长等级" value={`Lv.${Math.max(1, Math.floor(report.overview.exp / 100))}`} />
+            <DetailStat icon={Gem} label="成长等级" value={`Lv.${computeLevel(report.overview.exp).level}`} />
             <DetailStat icon={Zap} label="答对记录" value={`${correctAttempts}/${totalAttempts}`} />
           </div>
 
@@ -237,6 +238,7 @@ export default function ReportPage() {
         </details>
 
       </div>
+      <BottomNav />
     </main>
   );
 }

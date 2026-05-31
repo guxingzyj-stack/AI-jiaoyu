@@ -3,19 +3,17 @@
 import Link from "next/link";
 import Image from "next/image";
 import {
-  BarChart3,
   Bot,
   ChevronRight,
   Coins,
   Flame,
   Medal,
   Rocket,
-  Shield,
   Sparkles,
-  Swords,
   type LucideIcon
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import BottomNav from "../../components/BottomNav";
 import {
   createDailyQuests,
   readDailyQuestState,
@@ -23,7 +21,9 @@ import {
 } from "../../lib/dailyQuestEngine";
 import { gameAssets } from "../../lib/gameAssets";
 import {
+  EXP_PER_LEVEL,
   LAUNCHES_STORAGE_KEY,
+  computeLevel,
   defaultProgress,
   defaultStudent,
   readProgress,
@@ -31,14 +31,6 @@ import {
   type LearningProgress,
   type StudentProfile
 } from "../../lib/learningProgress";
-import { calculateSkillCards } from "../../lib/skillEngine";
-
-const navItems = [
-  { label: "挑战", icon: Swords, active: true },
-  { label: "怪兽", icon: Shield, active: false },
-  { label: "技能", icon: Sparkles, active: false },
-  { label: "报告", icon: BarChart3, active: false }
-];
 
 export default function AdventurePage() {
   const [student, setStudent] = useState<StudentProfile>(defaultStudent);
@@ -64,12 +56,8 @@ export default function AdventurePage() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  const expPercent = useMemo(
-    () => Math.min(100, Math.round((student.exp / student.maxExp) * 100)),
-    [student.exp, student.maxExp]
-  );
-  const activeMonsterCount = progress.monsters.filter((monster) => monster.status === "active").length;
-  const hasSkillUpgrade = calculateSkillCards(progress).some((skill) => skill.level >= 2);
+  const levelInfo = useMemo(() => computeLevel(student.exp), [student.exp]);
+  const expPercent = levelInfo.percent;
   const tutorialDone = progress.tutorialFirstWinDone;
   const experienceStarted = launches > 0 || progress.attempts.length > 0;
   const experienceCompleted = progress.attempts.length > 0;
@@ -128,6 +116,13 @@ export default function AdventurePage() {
                 >
                   开始冒险
                   <ChevronRight size={22} />
+                </Link>
+                <Link
+                  className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[24px] border border-violet-200/40 bg-gradient-to-r from-violet-500/30 via-cyan-400/25 to-amber-300/25 px-5 text-sm font-black text-white"
+                  data-testid="enter-map"
+                  href="/map"
+                >
+                  🪐 进入星球地图
                 </Link>
                 <Link
                   className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-[24px] border border-cyan-200/40 bg-cyan-200/15 px-5 text-sm font-black text-cyan-50"
@@ -244,7 +239,7 @@ export default function AdventurePage() {
               </div>
               <div className="mt-2 flex items-center justify-between text-xs text-slate-300">
                 <span>
-                  经验 {student.exp}/{student.maxExp}
+                  经验 {levelInfo.expIntoLevel}/{EXP_PER_LEVEL}
                 </span>
                 <span>{expPercent}%</span>
               </div>
@@ -345,6 +340,14 @@ export default function AdventurePage() {
           <ChevronRight size={24} />
         </Link>
         <Link
+          className="mb-4 flex min-h-16 items-center justify-center gap-3 rounded-[30px] border border-violet-200/35 bg-gradient-to-r from-violet-500/30 via-cyan-400/25 to-amber-300/25 px-6 py-4 text-lg font-black text-white shadow-glow transition active:scale-[0.98]"
+          data-testid="enter-map"
+          href="/map"
+        >
+          🪐 进入星球地图
+          <ChevronRight size={22} />
+        </Link>
+        <Link
           className="mb-6 flex min-h-14 items-center justify-center rounded-[28px] border border-cyan-200/35 bg-cyan-200/12 px-5 py-4 text-base font-black text-cyan-50 shadow-glow"
           href="/adventure/multiples-sea"
         >
@@ -360,49 +363,7 @@ export default function AdventurePage() {
         )}
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-10 w-screen max-w-full overflow-hidden border-t border-white/10 bg-[#090d22]/90 px-3 py-2 backdrop-blur-xl">
-        <div className="mx-auto grid w-full max-w-[calc(100vw-24px)] grid-cols-4 gap-1.5 sm:max-w-md sm:gap-2">
-          {navItems.map((item, index) => {
-            const Icon = item.icon;
-            const className = `relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl text-xs font-bold ${
-              item.active
-                ? "bg-cyan-300 text-slate-950"
-                : "text-slate-300 hover:bg-white/10 hover:text-white"
-            }`;
-            const content = (
-              <>
-                <Icon size={20} />
-                {item.label}
-                {index === 1 && activeMonsterCount > 0 && (
-                  <span className="absolute right-2 top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-300 px-1 text-[11px] font-black text-slate-950">
-                    {activeMonsterCount}
-                  </span>
-                )}
-                {index === 2 && hasSkillUpgrade && (
-                  <span className="absolute right-1 top-1 rounded-full bg-emerald-300 px-1.5 py-0.5 text-[10px] font-black text-slate-950">
-                    升级
-                  </span>
-                )}
-              </>
-            );
-
-            return index === 1 || index === 2 || index === 3 ? (
-              <Link
-                className={className}
-                data-testid={index === 1 ? "nav-monsters" : index === 2 ? "nav-skills" : "nav-report"}
-                href={index === 1 ? "/monsters" : index === 2 ? "/skills" : "/report"}
-                key={item.label}
-              >
-                {content}
-              </Link>
-            ) : (
-              <button className={className} key={item.label} type="button">
-                {content}
-              </button>
-            );
-          })}
-        </div>
-      </nav>
+      <BottomNav />
     </main>
   );
 }

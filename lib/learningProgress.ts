@@ -108,6 +108,23 @@ export const defaultProgress: LearningProgress = {
   }
 };
 
+// 统一的等级体系：经验值是“累计总经验”，永不清零、永不封顶。
+// 每 EXP_PER_LEVEL 点经验升 1 级；展示进度条用“当前等级内的经验 / EXP_PER_LEVEL”。
+export const EXP_PER_LEVEL = 100;
+
+export function computeLevel(totalExp: number) {
+  const safeExp = Math.max(0, Math.floor(totalExp));
+  const level = Math.floor(safeExp / EXP_PER_LEVEL) + 1;
+  const expIntoLevel = safeExp % EXP_PER_LEVEL;
+
+  return {
+    level,
+    expIntoLevel,
+    expForNextLevel: EXP_PER_LEVEL,
+    percent: Math.round((expIntoLevel / EXP_PER_LEVEL) * 100)
+  };
+}
+
 export function normalizeAnswer(answer: string) {
   return answer.trim().replace(/\s+/g, "").replace("＝", "=").replace("，", ",");
 }
@@ -137,11 +154,14 @@ export function readStudent(): StudentProfile {
     coins: savedStudent.coins
   });
 
+  const exp = savedProgress.exp ?? savedStudent.exp;
+
   return {
     ...defaultStudent,
     ...savedStudent,
-    exp: savedProgress.exp ?? savedStudent.exp,
-    coins: savedProgress.coins ?? savedStudent.coins
+    exp,
+    coins: savedProgress.coins ?? savedStudent.coins,
+    level: computeLevel(exp).level
   };
 }
 
@@ -172,6 +192,14 @@ export function readProgress(): LearningProgress {
 }
 
 export function saveStudentAndProgress(student: StudentProfile, progress: LearningProgress) {
-  writeJson(STUDENT_STORAGE_KEY, student);
+  // progress 是 exp/coins 的唯一真相源；student 上的这几个字段始终从 progress 派生，
+  // 这样任何调用方传入的过期 student.exp/coins 都不会造成两份数据漂移。
+  const syncedStudent: StudentProfile = {
+    ...student,
+    exp: progress.exp,
+    coins: progress.coins,
+    level: computeLevel(progress.exp).level
+  };
+  writeJson(STUDENT_STORAGE_KEY, syncedStudent);
   writeJson(PROGRESS_STORAGE_KEY, progress);
 }

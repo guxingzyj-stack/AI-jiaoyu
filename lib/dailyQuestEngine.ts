@@ -163,7 +163,7 @@ export function applyDailyQuestCompletion(
 
   const nextProgress = {
     ...progress,
-    exp: Math.min(student.maxExp, progress.exp + quest.rewardExp),
+    exp: progress.exp + quest.rewardExp,
     coins: progress.coins + quest.rewardCoins
   };
   const nextStudent = {
