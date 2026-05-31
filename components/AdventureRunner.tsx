@@ -720,22 +720,22 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
       case "reflection":
         return (
           <div className="flex h-full flex-col lg:block lg:h-full">
-            <div className="relative h-[190px] w-full shrink-0 overflow-hidden bg-cover bg-center sm:h-[220px] lg:absolute lg:inset-0 lg:aspect-auto lg:h-full" style={sceneStyle(config.assets.notebook)}>
+            <div className="relative h-[250px] w-full shrink-0 overflow-hidden bg-cover bg-center sm:h-[280px] lg:absolute lg:inset-0 lg:aspect-auto lg:h-full" style={sceneStyle(config.assets.notebook)}>
               <div className="absolute left-4 top-4 z-20 rounded-[22px] border border-cyan-200/25 bg-blue-950/58 px-4 py-3 shadow-[0_0_24px_rgba(34,211,238,0.16)] backdrop-blur-md sm:left-6 sm:top-6">
                 <p className="text-xs font-black tracking-[0.2em] text-cyan-200">{config.copy.reflectionEyebrow}</p>
                 <h2 className="mt-1 max-w-[280px] text-xl font-black leading-7 text-white drop-shadow-[0_0_18px_rgba(103,232,249,0.38)] lg:max-w-none lg:text-2xl">选一张贴纸，完成今天的探险</h2>
               </div>
             </div>
-            <div className="relative z-20 mx-auto -mt-5 w-full max-w-5xl p-3 pt-0 sm:p-4 sm:pt-0 lg:absolute lg:inset-x-[4%] lg:top-[17%] lg:bottom-[4%] lg:mt-0 lg:p-0">
+            <div className="relative z-20 mx-auto -mt-8 w-full max-w-5xl p-3 pt-0 sm:-mt-10 sm:p-4 sm:pt-0 lg:absolute lg:inset-x-[4%] lg:top-[17%] lg:bottom-[4%] lg:mt-0 lg:p-0">
               <div className="grid gap-5 lg:grid-cols-[260px_1fr]">
-                <div className="grid self-start gap-3 rounded-[24px] border border-amber-200/25 bg-blue-950/70 p-3 shadow-[0_0_24px_rgba(252,211,77,0.12)] backdrop-blur-sm lg:rounded-[28px] lg:bg-blue-950/45">
-                  <p className="px-1 text-base font-black text-amber-100 lg:text-sm">点一张你最喜欢的贴纸</p>
+                <div className="mx-auto grid w-full max-w-[320px] self-start rounded-[24px] border border-amber-200/25 bg-blue-950/68 p-3 shadow-[0_0_24px_rgba(252,211,77,0.12)] backdrop-blur-sm lg:mx-0 lg:max-w-none lg:gap-3 lg:rounded-[28px] lg:bg-blue-950/45">
+                  <p className="mb-2 px-1 text-center text-sm font-black text-amber-100 lg:mb-0 lg:text-left">点一张你最喜欢的贴纸</p>
                   <StickerButton dataTestId="reflection-pattern" isSelected={selectedReflection === "pattern"} onClick={() => chooseReflection("pattern")}>{stickerLabel("pattern", "🔢 找规律")}</StickerButton>
                   <StickerButton isSelected={selectedReflection === "ask_nova"} onClick={() => chooseReflection("ask_nova")}>{stickerLabel("ask_nova", "🤔 问 Nova")}</StickerButton>
                   <StickerButton isSelected={selectedReflection === "island_light"} onClick={() => chooseReflection("island_light")}>{stickerLabel("island_light", "✨ 点亮新岛")}</StickerButton>
                   {session.truthDetectorSuccess && <StickerButton isSelected={selectedReflection === "not_blind_trust"} onClick={() => chooseReflection("not_blind_trust")}>{stickerLabel("not_blind_trust", "🔍 不全信 Nova")}</StickerButton>}
                 </div>
-                <div className="min-h-32 rounded-[28px] border border-amber-200/30 bg-[linear-gradient(135deg,rgba(255,245,210,0.14),rgba(30,41,124,0.34))] p-4 shadow-[0_0_40px_rgba(252,211,77,0.14)] backdrop-blur-[2px] lg:min-h-0 lg:rounded-[34px] lg:p-6">
+                <div className="mx-auto min-h-28 w-full max-w-[340px] rounded-[28px] border border-amber-200/30 bg-[linear-gradient(135deg,rgba(255,245,210,0.14),rgba(30,41,124,0.34))] p-4 shadow-[0_0_40px_rgba(252,211,77,0.14)] backdrop-blur-[2px] lg:mx-0 lg:min-h-0 lg:max-w-none lg:rounded-[34px] lg:p-6">
                   {selectedReflection ? (
                     <div className="flex h-full flex-col items-center justify-center text-center">
                       <div className="hidden rotate-[-6deg] rounded-[30px] border border-amber-200/45 bg-amber-100/18 px-8 py-5 text-7xl shadow-[0_0_32px_rgba(252,211,77,0.24)] sm:block">⭐</div>
@@ -749,7 +749,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
                           reflectionText
                         )}
                       </p>
-                      <div className="mt-4">
+                      <div className="mt-4 w-full max-w-[260px]">
                         <GameButton dataTestId="complete-button" onClick={completeAdventure}>完成今天的探险</GameButton>
                       </div>
                     </div>
@@ -847,7 +847,7 @@ function SoftButton({ children, dataTestId, onClick }: { children: ReactNode; da
 
 function StickerButton({ children, dataTestId, isSelected, onClick }: { children: ReactNode; dataTestId?: string; isSelected?: boolean; onClick: () => void }) {
   return (
-    <button aria-pressed={isSelected} className={`min-h-16 rotate-[-1deg] rounded-[22px] border px-5 py-4 text-left text-base font-black shadow-[0_0_18px_rgba(252,211,77,0.12)] transition hover:-translate-y-0.5 hover:shadow-[0_0_28px_rgba(252,211,77,0.24)] focus:outline-none focus:ring-4 focus:ring-amber-200/40 active:scale-95 even:rotate-[1deg] lg:min-h-0 lg:rounded-[20px] lg:px-4 lg:py-3 lg:text-sm ${isSelected ? "border-amber-100 bg-gradient-to-br from-amber-200/46 to-yellow-500/34 text-white ring-4 ring-amber-200/35" : "border-amber-200/40 bg-gradient-to-br from-amber-100/22 to-violet-700/42 text-amber-50"}`} data-testid={dataTestId} onClick={onClick} type="button">
+    <button aria-pressed={isSelected} className={`mx-auto mb-2 min-h-14 w-full max-w-[260px] rotate-[-2deg] rounded-[24px] border px-4 py-3 text-center text-base font-black shadow-[0_0_18px_rgba(252,211,77,0.12)] transition hover:-translate-y-0.5 hover:shadow-[0_0_28px_rgba(252,211,77,0.24)] focus:outline-none focus:ring-4 focus:ring-amber-200/40 active:scale-95 even:rotate-[2deg] last:mb-0 lg:mx-0 lg:mb-0 lg:min-h-0 lg:max-w-none lg:rotate-[-1deg] lg:rounded-[20px] lg:px-4 lg:py-3 lg:text-left lg:text-sm lg:even:rotate-[1deg] ${isSelected ? "border-amber-100 bg-gradient-to-br from-amber-200/46 to-yellow-500/34 text-white ring-4 ring-amber-200/35" : "border-amber-200/40 bg-gradient-to-br from-amber-100/22 to-violet-700/42 text-amber-50"}`} data-testid={dataTestId} onClick={onClick} type="button">
       {children}
     </button>
   );
