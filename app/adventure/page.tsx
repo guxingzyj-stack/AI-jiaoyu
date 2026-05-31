@@ -343,6 +343,7 @@ function ParentTestLinks() {
         <TestLink href="/map">进入星球地图</TestLink>
         <TestLink href="/adventure/multiples-sea">直接进入倍数海</TestLink>
         <TestLink href="/adventure/forest-island">直接进入森林岛</TestLink>
+        <TestLink href="/adventure/forest-rpg">测试：森林 RPG 原型</TestLink>
         <TestLink href="/report">查看星星报告</TestLink>
       </div>
     </details>
