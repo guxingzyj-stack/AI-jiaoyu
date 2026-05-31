@@ -102,6 +102,19 @@ export type AdventureConfig = {
   reflectionStickers: Record<ReflectionChoice, string>;
   // 复盘贴纸按钮的中文标签；留空则用引擎默认（找规律/问 Nova/点亮新岛/不全信 Nova）。
   reflectionStickerLabels?: Record<ReflectionChoice, string>;
+
+  // Nova 求助文案覆写（make-ten 关卡用；全部留空时走引擎默认 + 倍数海原“+step 规律选择器”）。
+  // 提供 l1Stone/l1Tower 时，对应题目的 L1 改为“引导卡”而非加几选择器；
+  // L2/L3 的正文仍来自 feedback.helpL2*/helpL3*，这里只补标题与菜单按钮文案。
+  help?: {
+    menuL1Label?: string; // 菜单里进入 L1 的按钮，默认“我看到一些规律”
+    l1TitleStone?: string; // 第一题 L1 卡片标题
+    l1TitleTower?: string; // 第二题 L1 卡片标题
+    l1Stone?: string; // 第一题 L1 引导卡正文（提供则启用引导卡模式）
+    l1Tower?: string; // 第二题 L1 引导卡正文
+    l2Title?: string; // L2 卡片标题（两题共用）
+    l3Title?: string; // L3 卡片标题（两题共用）
+  };
   feedback?: {
     stoneCorrect?: string;
     stoneWrongFirst?: string;
@@ -284,12 +297,12 @@ export const forestIslandConfig: AdventureConfig = {
     towerCorrectAll: "你找到了！6 和 4 正好凑成 10。",
     towerWrongFirst: "再看看这两个数加起来是不是 10。",
     towerSecondWrong: "可以问问 Nova，看看哪一对果子合起来是 10。",
-    helpL2Stone: "看，7 后面是 8、9、10。数一数还差几步？",
-    helpL2Tower: "看三对果子：6 和 4 合起来是 10，7 和 2 是 9，8 和 3 是 11。",
-    helpL3NoStarStone: "灵感星用完啦，但我还能陪你数：8、9、10，还差 3 颗。",
-    helpL3NoStarTower: "灵感星用完啦，但我还能陪你看：哪一对合起来正好是 10？",
-    helpL3AnswerStone: "答案是 3。7 再加 3，就能凑成 10。",
-    helpL3AnswerTower: "答案是 6 和 4。6 加 4 正好是 10。",
+    helpL2Stone: "从 7 开始数：8、9、10。数一数，一共补了几颗？",
+    helpL2Tower: "6 和 4 合起来是 10。再看看其他两对是不是也等于 10。",
+    helpL3NoStarStone: "灵感星用完啦。我们先一起数：8、9、10，看看补了几颗。",
+    helpL3NoStarTower: "灵感星用完啦。我们先看看：哪一对果子合起来正好是 10？",
+    helpL3AnswerStone: "还差 3 颗。因为 7 + 3 = 10。",
+    helpL3AnswerTower: "选择 6 和 4。因为 6 + 4 = 10。",
     truthOptionA: "A 凑成10只看合起来是不是10",
     truthThinkAgain: "再看看刚才的能量果：6 和 4 合起来是 10。",
     truthSuccess: "你抓到我啦！凑成 10 只要合起来是 10，不管数字大还是小。"
@@ -306,6 +319,16 @@ export const forestIslandConfig: AdventureConfig = {
     ask_nova: "我会问 Nova",
     island_light: "我点亮了森林",
     not_blind_trust: "我学会了不全信 Nova"
+  },
+
+  help: {
+    menuL1Label: "先自己看一看",
+    l1TitleStone: "先自己看一看",
+    l1TitleTower: "先看看每一对",
+    l1Stone: "树上已经有 7 颗能量果。你可以从 7 往后数到 10，看看走了几步。",
+    l1Tower: "把每一对加起来，看哪一对正好等于 10。",
+    l2Title: "Nova 给一点提示",
+    l3Title: "Nova 直接告诉你"
   },
 
   stageTitles: {

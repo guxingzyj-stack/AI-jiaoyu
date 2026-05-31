@@ -210,7 +210,9 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
 
   const startL1 = () => {
     setHelpStep("l1");
-    setHelpFeedback("");
+    // make-ten 关卡的 L1 是“引导卡”：进入时直接放出该题的引导文案；否则保持空（走 +step 选择器）。
+    const l1Text = session.currentQuestion === "stone" ? config.help?.l1Stone : config.help?.l1Tower;
+    setHelpFeedback(l1Text ?? "");
     updateSession("help_l1", (prev) => ({ ...prev, l1Count: prev.l1Count + 1 }));
   };
 
@@ -340,6 +342,9 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
   // 复盘贴纸标签：关卡可覆写（森林岛走“我会凑成10”等），否则用默认。
   const stickerLabel = (choice: ReflectionChoice, fallback: string) =>
     config.reflectionStickerLabels?.[choice] ?? fallback;
+  // Nova 求助 L1：make-ten 关卡提供 l1 文案时改为“引导卡”，否则走默认的 +step 规律选择器。
+  const helpL1AsGuidance = Boolean(session.currentQuestion === "stone" ? config.help?.l1Stone : config.help?.l1Tower);
+  const helpL1Title = session.currentQuestion === "stone" ? config.help?.l1TitleStone : config.help?.l1TitleTower;
 
   // 该关主题渐变写进 CSS 变量，供 sceneStyle / StageFrame 在缺图时统一引用。
   const rootStyle = config.fallbackScene
@@ -523,26 +528,37 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
               {helpStep === "menu" && (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <SoftButton onClick={returnToQuestion}>我已经想到了</SoftButton>
-                  <SoftButton onClick={startL1}>我看到一些规律</SoftButton>
+                  <SoftButton onClick={startL1}>{config.help?.menuL1Label ?? "我看到一些规律"}</SoftButton>
                   <SoftButton onClick={startL2}>我完全不懂</SoftButton>
                   <SoftButton onClick={confirmL3}>请直接告诉我</SoftButton>
                 </div>
               )}
               {helpStep === "l1" && (
-                <div className="grid gap-4">
-                  <p className="text-center text-xl font-black text-cyan-50">你看到的规律像哪一个？</p>
-                  <div className="grid grid-cols-3 gap-3">
-                    {stepOptions.map((s) => (
-                      <SoftButton key={s} onClick={() => chooseL1Pattern(s)}>+{s}</SoftButton>
-                    ))}
-                    <SoftButton onClick={() => chooseL1Pattern("other")}>其他</SoftButton>
+                helpL1AsGuidance ? (
+                  <div className="grid gap-4">
+                    {helpL1Title && <p className="text-center text-xl font-black text-cyan-50">{helpL1Title}</p>}
+                    <HelpCard text={helpFeedback} />
+                    <GameButton onClick={returnToQuestion}>{config.copy.helpReturnLabel ?? "回到数字路"}</GameButton>
                   </div>
-                  {helpFeedback && <HelpCard text={helpFeedback} />}
-                  {helpFeedback && <GameButton onClick={returnToQuestion}>{config.copy.helpReturnLabel ?? "回到数字路"}</GameButton>}
-                </div>
+                ) : (
+                  <div className="grid gap-4">
+                    <p className="text-center text-xl font-black text-cyan-50">你看到的规律像哪一个？</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      {stepOptions.map((s) => (
+                        <SoftButton key={s} onClick={() => chooseL1Pattern(s)}>+{s}</SoftButton>
+                      ))}
+                      <SoftButton onClick={() => chooseL1Pattern("other")}>其他</SoftButton>
+                    </div>
+                    {helpFeedback && <HelpCard text={helpFeedback} />}
+                    {helpFeedback && <GameButton onClick={returnToQuestion}>{config.copy.helpReturnLabel ?? "回到数字路"}</GameButton>}
+                  </div>
+                )
               )}
               {(helpStep === "l2" || helpStep === "l3_answer") && (
                 <div className="grid gap-4">
+                  {(helpStep === "l3_answer" ? config.help?.l3Title : config.help?.l2Title) && (
+                    <p className="text-center text-xl font-black text-cyan-50">{helpStep === "l3_answer" ? config.help?.l3Title : config.help?.l2Title}</p>
+                  )}
                   <HelpCard text={helpFeedback} />
                   <GameButton onClick={returnToQuestion}>{config.copy.helpReturnLabel ?? "回到数字路"}</GameButton>
                 </div>
