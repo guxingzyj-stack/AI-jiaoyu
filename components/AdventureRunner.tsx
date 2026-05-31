@@ -11,6 +11,7 @@ import {
   initialAdventureSession
 } from "../lib/adventures";
 import { markIslandCompleted, readAdventureProgress } from "../lib/adventureProgress";
+import { getAdventureCompletionCount, incrementAdventureCompletionCount } from "../lib/adventureRewards";
 import { resolveIslandConfig } from "../lib/adventureQuestionPools";
 import { readProgress, readStudent, saveStudentAndProgress } from "../lib/learningProgress";
 import {
@@ -45,7 +46,9 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
   const [answerFeedback, setAnswerFeedback] = useState("");
   const [helpStep, setHelpStep] = useState<"menu" | "l1" | "l2" | "l3_confirm" | "l3_answer">("menu");
   const [helpFeedback, setHelpFeedback] = useState("");
+  const [completionCount, setCompletionCount] = useState(0);
   const rescue = config.forestRescue;
+  const usedNovaHelp = session.l1Count + session.l2Count + session.l3Count > 0;
 
   const preloadAssets = useMemo(
     () => Array.from(new Set(Object.values(config.assets).filter(Boolean) as string[])),
@@ -67,6 +70,11 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setConfig(resolveIslandConfig(baseConfig));
   }, [baseConfig]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCompletionCount(getAdventureCompletionCount(config.islandId));
+  }, [config.islandId]);
 
   // 两段不同步长，用于“别过度概括”的对照 + 生成 L1 选项按钮。
   const stepOptions = useMemo(() => {
@@ -94,12 +102,17 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
 
   const novaLine = useMemo(() => {
     if (session.stage === "map_intro" && rescue) return rescue.entry.novaLine;
+    if ((session.stage === "reflection" || session.stage === "complete") && rescue) {
+      if (session.truthDetectorSuccess) return rescue.novaEncouragement.detectedTruth;
+      if (usedNovaHelp) return rescue.novaEncouragement.usedHelp;
+      return rescue.novaEncouragement.default;
+    }
     if (session.stage === "help_menu") {
       return session.currentQuestion === "stone" ? config.novaLines.helpStone : config.novaLines.helpTower;
     }
     if (session.stage === "truth_question") return notice;
     return config.novaLines[session.stage];
-  }, [config, notice, rescue, session.currentQuestion, session.stage]);
+  }, [config, notice, rescue, session.currentQuestion, session.stage, session.truthDetectorSuccess, usedNovaHelp]);
 
   const currentGoal = session.stage === "beach_observe" && rescue ? rescue.observe.goal : config.goals[session.stage];
 
@@ -315,6 +328,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
       });
       logEvent("adventure_reward_granted");
     }
+    setCompletionCount(incrementAdventureCompletionCount(config.islandId));
     updateSession("complete_adventure", (prev) => ({ ...prev, completed: true, stage: "complete" }));
   };
 
@@ -335,7 +349,6 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
 
   const jumpNumbers = [...config.stone.sequence, String(config.stone.answer)];
   const jumpHighlight = String(config.stone.answer);
-  const usedNovaHelp = session.l1Count + session.l2Count + session.l3Count > 0;
   const isMakeTen = config.kind === "make-ten";
   const defaultReflectionChoice: ReflectionChoice = session.truthDetectorSuccess ? "not_blind_trust" : usedNovaHelp ? "ask_nova" : "pattern";
   const selectedReflectionChoice = session.reflectionChoice ?? defaultReflectionChoice;
@@ -784,6 +797,11 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
                     <ResultLine label={config.copy.secondChallengeLabel} value={rescue?.completeResults.secondChallenge ?? config.copy.secondChallengeValue ?? "已点亮"} />
                     <ResultLine label="真相探测器" value={rescue?.completeResults.truthDetector ?? (session.truthDetectorSuccess ? "已识破" : session.truthDetectorOpened ? "已尝试" : "下次再试")} />
                   </div>
+                  {rescue?.completionCount && completionCount > 0 && (
+                    <p className="mt-3 rounded-[18px] border border-amber-200/30 bg-amber-300/10 px-3 py-2 text-center text-xs font-black text-amber-100 lg:text-sm">
+                      {rescue.completionCount.prefix}{completionCount}{rescue.completionCount.suffix}
+                    </p>
+                  )}
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <Link className="inline-flex h-9 items-center justify-center rounded-[16px] border border-cyan-200/35 bg-cyan-300/20 px-2 text-xs font-black text-cyan-50 transition active:scale-95 lg:h-10 lg:rounded-[18px] lg:px-4 lg:text-sm" href="/adventure">回到地图</Link>
                     <button className="inline-flex h-9 items-center justify-center rounded-[16px] bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 px-2 text-xs font-black text-slate-950 shadow-[0_0_20px_rgba(252,211,77,0.4)] transition active:scale-95 lg:h-10 lg:rounded-[18px] lg:px-4 lg:text-sm" data-testid={rescue ? "reset-forest" : "reset-multiples"} onClick={resetAdventure} type="button">{rescue?.retryButton ?? "再玩一次"}</button>

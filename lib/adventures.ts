@@ -145,6 +145,10 @@ export type AdventureConfig = {
       collectButton: string;
       summary: string;
     };
+    completionCount?: {
+      prefix: string;
+      suffix: string;
+    };
     nextRoundLine: string;
     retryButton: string;
   };
@@ -435,7 +439,7 @@ export const forestIslandConfig: AdventureConfig = {
     reflectionEyebrow: "探险笔记本",
     reflectionTitle: "今天最酷的发现是什么？",
     completeEyebrow: "森林岛纪念卡",
-    completeTitle: "今日探险完成",
+    completeTitle: "森林岛点亮成功",
     firstChallengeLabel: "能量果",
     secondChallengeLabel: "森林小路",
     jumpButton: "继续探索森林",
@@ -465,7 +469,7 @@ export const forestIslandConfig: AdventureConfig = {
       victory: "能量树亮起来了一点！"
     },
     secondQuestion: {
-      treasureTitle: "森林宝箱打开啦",
+      treasureTitle: "找宝箱钥匙",
       description: "找出能凑成 10 的一对能量果，宝箱就会发光。",
       correct: "宝箱发光啦，这一对正好凑成 10。",
       wrongFirst: "再试一对，看看合起来是不是 10。",
@@ -493,7 +497,11 @@ export const forestIslandConfig: AdventureConfig = {
       prompt: "今天你最厉害的一招是什么？",
       badgeEyebrow: "今日星章",
       collectButton: "收下今日星章",
-      summary: "今天的救援发现已经收进探险笔记。"
+      summary: "这枚星章已收入你的星章册。"
+    },
+    completionCount: {
+      prefix: "森林岛第 ",
+      suffix: " 次点亮"
     },
     nextRoundLine: "下一轮题目会变哦。",
     retryButton: "挑战新题目"
