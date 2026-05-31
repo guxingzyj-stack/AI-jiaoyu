@@ -83,6 +83,16 @@ export type AdventureConfig = {
     novaThinking: string;
   };
 
+  // 题型表达方式：默认 "number-path"（数字路/找规律，如倍数海）；
+  // "make-ten" 走凑成10/数字组合的渲染（如拆分森林），让两岛在视觉上明显不同。
+  // 仅影响渲染分支，不改变 7-Beat 状态机。
+  kind?: "number-path" | "make-ten";
+  // make-ten 关卡专用：Beat 3 显示 have + ? = target（还差几颗用 stone.answer）；
+  // Beat 4 胜利显示 have + answer = target。
+  makeTen?: { have: number; target: number };
+  // make-ten 关卡 Beat 5 的目标数（配对题“凑成几”），配对卡复用 towerSteps[0].options。
+  pairTarget?: number;
+
   // 数学内容
   stone: SequenceQuestion & { step: number }; // Beat 3：第一条简单数字路
   towerSteps: SequenceQuestion[]; // Beat 5：三段连续、更难的数字路
@@ -90,6 +100,8 @@ export type AdventureConfig = {
   truthStatement: string; // Beat 6：Nova 故意说错（把 stone.step 概括到所有数字路）
 
   reflectionStickers: Record<ReflectionChoice, string>;
+  // 复盘贴纸按钮的中文标签；留空则用引擎默认（找规律/问 Nova/点亮新岛/不全信 Nova）。
+  reflectionStickerLabels?: Record<ReflectionChoice, string>;
   feedback?: {
     stoneCorrect?: string;
     stoneWrongFirst?: string;
@@ -132,6 +144,14 @@ export type AdventureConfig = {
     completeTitle: string;
     firstChallengeLabel: string; // 纪念卡上第一关结果行标签，如“石头规律”
     secondChallengeLabel: string; // 纪念卡上第二关结果行标签，如“倍数塔”
+    // 以下均为可选，留空时用引擎默认值（保持倍数海原样）。
+    jumpButton?: string; // Beat 4 胜利按钮，默认“登上新岛”
+    towerEyebrow?: string; // Beat 5 场景眉标，默认“数字路机关”
+    towerContinue?: string; // Beat 5 答对后的继续按钮，默认“继续”
+    helpReturnLabel?: string; // Nova 帮助里的返回按钮，默认“回到数字路”
+    islandResultLabel?: string; // 纪念卡第一行标签，默认“新岛屿”
+    firstChallengeValue?: string; // 纪念卡第一关结果值，默认“已发现”
+    secondChallengeValue?: string; // 纪念卡第二关结果值，默认“已点亮”
   };
 };
 
@@ -248,6 +268,10 @@ export const forestIslandConfig: AdventureConfig = {
     ...forestIslandAssets
   },
 
+  kind: "make-ten",
+  makeTen: { have: 7, target: 10 },
+  pairTarget: 10,
+
   stone: { sequence: ["7", "8", "9", "10"], answer: 3, options: [2, 3, 4], step: 1 },
   towerSteps: [{ sequence: ["6", "4", "10"], answer: "6 和 4", options: ["6 和 4", "7 和 2", "8 和 3"] }],
   towerStep: 10,
@@ -276,6 +300,12 @@ export const forestIslandConfig: AdventureConfig = {
     ask_nova: "你今天学会了问 Nova。卡住时，可以说出自己已经看到了什么。",
     island_light: "你今天点亮了森林树屋！能量果把森林小路照亮了。",
     not_blind_trust: "你今天打开了真相探测器！Nova 说错时，你能自己检查。"
+  },
+  reflectionStickerLabels: {
+    pattern: "我会凑成10",
+    ask_nova: "我会问 Nova",
+    island_light: "我点亮了森林",
+    not_blind_trust: "我学会了不全信 Nova"
   },
 
   stageTitles: {
@@ -338,7 +368,14 @@ export const forestIslandConfig: AdventureConfig = {
     completeEyebrow: "森林岛纪念卡",
     completeTitle: "今日探险完成",
     firstChallengeLabel: "能量果",
-    secondChallengeLabel: "森林树屋"
+    secondChallengeLabel: "森林小路",
+    jumpButton: "继续探索森林",
+    towerEyebrow: "森林树屋",
+    towerContinue: "继续看看 Nova 的发现",
+    helpReturnLabel: "回到题目",
+    islandResultLabel: "森林岛",
+    firstChallengeValue: "已凑成10",
+    secondChallengeValue: "已打开"
   }
 };
 export const adventureConfigs: Record<string, AdventureConfig> = {

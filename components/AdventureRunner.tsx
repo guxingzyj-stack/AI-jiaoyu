@@ -336,6 +336,10 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
 
   const jumpNumbers = [...config.stone.sequence, String(config.stone.answer)];
   const jumpHighlight = String(config.stone.answer);
+  const isMakeTen = config.kind === "make-ten";
+  // 复盘贴纸标签：关卡可覆写（森林岛走“我会凑成10”等），否则用默认。
+  const stickerLabel = (choice: ReflectionChoice, fallback: string) =>
+    config.reflectionStickerLabels?.[choice] ?? fallback;
 
   // 该关主题渐变写进 CSS 变量，供 sceneStyle / StageFrame 在缺图时统一引用。
   const rootStyle = config.fallbackScene
@@ -458,10 +462,18 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
                 <h2 className="mt-1 text-xl font-black text-white drop-shadow-[0_0_18px_rgba(103,232,249,0.38)] lg:text-2xl">{config.copy.observeTitle}</h2>
               </div>
             </div>
-            <div className="flex flex-1 items-center justify-center gap-4 p-4 lg:absolute lg:inset-x-[7%] lg:bottom-[17%] lg:flex-none lg:items-end lg:p-0 xl:gap-6">
-              {config.stone.sequence.map((num) => (
-                <StoneButton key={num} onClick={() => setNotice("它轻轻亮了一下。")}>{num}</StoneButton>
-              ))}
+            <div className="flex flex-1 items-center justify-center gap-3 p-4 lg:absolute lg:inset-x-[7%] lg:bottom-[17%] lg:flex-none lg:items-end lg:justify-center lg:gap-4 lg:p-0 xl:gap-5">
+              {isMakeTen && config.makeTen ? (
+                <div className="flex max-w-[300px] flex-wrap items-center justify-center gap-2 sm:max-w-none">
+                  {Array.from({ length: config.makeTen.have }).map((_, i) => (
+                    <span className="h-9 w-9 rounded-full bg-amber-300 shadow-[0_0_14px_rgba(252,211,77,0.7)] ring-2 ring-amber-100/60 lg:h-11 lg:w-11" key={`fruit-${i}`} />
+                  ))}
+                </div>
+              ) : (
+                config.stone.sequence.map((num) => (
+                  <StoneButton key={num} onClick={() => setNotice("它轻轻亮了一下。")}>{num}</StoneButton>
+                ))
+              )}
               <button className="relative flex h-16 w-20 items-center justify-center rounded-full border border-amber-100/35 bg-amber-300/18 text-3xl font-black text-white shadow-[0_0_30px_rgba(252,211,77,0.5)] ring-4 ring-amber-200/35 backdrop-blur-[1px] transition hover:scale-105 active:scale-95" data-testid="stone-mystery" onClick={() => goStage("stone_question", "open_stone_question")} type="button">
                 ?
               </button>
@@ -479,8 +491,12 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
                 <h2 className="mt-1 text-xl font-black text-white drop-shadow-[0_0_18px_rgba(103,232,249,0.38)] lg:text-2xl">{config.copy.stoneTitle}</h2>
               </div>
             </div>
-            <div className="mx-4 mt-4 max-w-3xl rounded-[30px] border border-cyan-300/25 bg-blue-950/56 p-4 shadow-[0_0_26px_rgba(34,211,238,0.14)] backdrop-blur-sm lg:absolute lg:left-1/2 lg:top-[30%] lg:mx-0 lg:mt-0 lg:w-[min(680px,82%)] lg:-translate-x-1/2">
-              <NumberRoad numbers={[...config.stone.sequence, "?"]} />
+            <div className="mx-4 mt-4 max-w-3xl rounded-[30px] border border-cyan-300/25 bg-blue-950/56 p-4 shadow-[0_0_26px_rgba(34,211,238,0.14)] backdrop-blur-sm lg:absolute lg:left-1/2 lg:top-[28%] lg:mx-0 lg:mt-0 lg:w-[min(680px,82%)] lg:-translate-x-1/2">
+              {isMakeTen && config.makeTen ? (
+                <MakeTenView have={config.makeTen.have} need={Number(config.stone.answer)} target={config.makeTen.target} />
+              ) : (
+                <NumberRoad numbers={[...config.stone.sequence, "?"]} />
+              )}
             </div>
             {!answerFeedback && (
               <div className="mt-5 flex flex-wrap justify-center gap-5 p-2 lg:absolute lg:bottom-[20%] lg:left-1/2 lg:mt-0 lg:p-0 lg:-translate-x-1/2">
@@ -522,13 +538,13 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
                     <SoftButton onClick={() => chooseL1Pattern("other")}>其他</SoftButton>
                   </div>
                   {helpFeedback && <HelpCard text={helpFeedback} />}
-                  {helpFeedback && <GameButton onClick={returnToQuestion}>回到数字路</GameButton>}
+                  {helpFeedback && <GameButton onClick={returnToQuestion}>{config.copy.helpReturnLabel ?? "回到数字路"}</GameButton>}
                 </div>
               )}
               {(helpStep === "l2" || helpStep === "l3_answer") && (
                 <div className="grid gap-4">
                   <HelpCard text={helpFeedback} />
-                  <GameButton onClick={returnToQuestion}>回到数字路</GameButton>
+                  <GameButton onClick={returnToQuestion}>{config.copy.helpReturnLabel ?? "回到数字路"}</GameButton>
                 </div>
               )}
               {helpStep === "l3_confirm" && (
@@ -555,15 +571,21 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
                 <h2 className="mt-1 text-xl font-black text-white drop-shadow-[0_0_18px_rgba(103,232,249,0.38)] lg:text-2xl">{config.copy.jumpTitle}</h2>
               </div>
             </div>
-            <div className="flex flex-1 items-center justify-center gap-3 p-3 text-xl font-black lg:absolute lg:bottom-[24%] lg:left-[11%] lg:right-[28%] lg:flex-none lg:justify-between lg:p-0">
-              {jumpNumbers.map((num, index) => (
-                <span className={`animate-pulse rounded-full px-3 py-2 text-base shadow-[0_0_24px_rgba(252,211,77,0.55)] sm:px-4 sm:py-3 sm:text-xl ${num === jumpHighlight ? "bg-amber-300 text-slate-950 ring-4 ring-amber-100/60" : "bg-blue-950/72 text-cyan-50 ring-2 ring-cyan-200/25"}`} key={`${num}-${index}`} style={{ animationDelay: `${index * 120}ms` }}>
-                  {num}
-                </span>
-              ))}
-            </div>
+            {isMakeTen && config.makeTen ? (
+              <div className="flex flex-1 items-center justify-center p-3 lg:absolute lg:inset-x-0 lg:bottom-[22%] lg:flex-none lg:justify-center lg:p-0">
+                <MakeTenView have={config.makeTen.have} need={Number(config.stone.answer)} target={config.makeTen.target} solved />
+              </div>
+            ) : (
+              <div className="flex flex-1 items-center justify-center gap-3 p-3 text-xl font-black lg:absolute lg:bottom-[24%] lg:left-[11%] lg:right-[28%] lg:flex-none lg:justify-between lg:p-0">
+                {jumpNumbers.map((num, index) => (
+                  <span className={`animate-pulse rounded-full px-3 py-2 text-base shadow-[0_0_24px_rgba(252,211,77,0.55)] sm:px-4 sm:py-3 sm:text-xl ${num === jumpHighlight ? "bg-amber-300 text-slate-950 ring-4 ring-amber-100/60" : "bg-blue-950/72 text-cyan-50 ring-2 ring-cyan-200/25"}`} key={`${num}-${index}`} style={{ animationDelay: `${index * 120}ms` }}>
+                    {num}
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="flex justify-center pb-4 lg:absolute lg:bottom-7 lg:left-1/2 lg:pb-0 lg:-translate-x-1/2">
-              <GameButton dataTestId="island-enter" onClick={() => updateSession("enter_island", (prev) => ({ ...prev, stage: "tower_question", currentQuestion: "tower" }))}>登上新岛</GameButton>
+              <GameButton dataTestId="island-enter" onClick={() => updateSession("enter_island", (prev) => ({ ...prev, stage: "tower_question", currentQuestion: "tower" }))}>{config.copy.jumpButton ?? "登上新岛"}</GameButton>
             </div>
           </div>
         );
@@ -576,22 +598,42 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
           answerFeedback.startsWith("塔亮") ||
           answerFeedback.startsWith("第");
         const litSegments = session.towerStep + (towerCorrect ? 1 : 0);
+        // make-ten 不分段，去掉“第X段/共Y段”后缀，避免数字路语义混进森林岛。
+        const towerTitle = isMakeTen
+          ? config.copy.towerTitlePrefix
+          : `${config.copy.towerTitlePrefix}（第${session.towerStep + 1}段 / 共${config.towerSteps.length}段）`;
         return (
-          <QuestionStage asset={config.assets.tower} title={`${config.copy.towerTitlePrefix}（第${session.towerStep + 1}段 / 共${config.towerSteps.length}段）`} feedback={answerFeedback} showContinue={towerCorrect} onContinue={advanceTower}>
-            <div className="absolute left-1/2 top-[14px] z-20 flex -translate-x-1/2 gap-2 lg:top-[6%]">
-              {config.towerSteps.map((_, i) => (
-                <span className={`h-2.5 w-8 rounded-full transition ${i < litSegments ? "bg-amber-300 shadow-[0_0_14px_rgba(252,211,77,0.7)]" : "bg-blue-950/60 ring-1 ring-cyan-200/25"}`} key={i} />
-              ))}
-            </div>
-            <div className="absolute left-1/2 top-[90px] -translate-x-1/2 flex flex-col items-center gap-[6px] lg:top-[17%]">
-              {[...towerStep.sequence, "?"].map((num, index) => (
-                <span className="flex h-[64px] w-[64px] items-center justify-center rounded-full border border-cyan-200/40 bg-blue-950/65 text-[26px] font-black text-white shadow-[0_0_16px_rgba(34,211,238,0.38)] lg:h-[70px] lg:w-[70px] lg:text-[31px]" key={`${num}-${index}`}>{num}</span>
-              ))}
-            </div>
-            {!towerCorrect && (
-              <div className="mt-[370px] flex flex-wrap justify-center gap-3 lg:absolute lg:bottom-[9%] lg:left-1/2 lg:mt-0 lg:-translate-x-1/2 lg:gap-4">
-                <OptionGrid options={towerStep.options} testPrefix="tower-answer" onChoose={answerTower} small />
-              </div>
+          <QuestionStage asset={config.assets.tower} continueLabel={config.copy.towerContinue} eyebrow={config.copy.towerEyebrow ?? "数字路机关"} title={towerTitle} feedback={answerFeedback} showContinue={towerCorrect} onContinue={advanceTower}>
+            {isMakeTen ? (
+              <>
+                <div className="absolute left-1/2 top-[64px] z-20 -translate-x-1/2 rounded-[24px] border border-emerald-200/40 bg-blue-950/65 px-6 py-3 text-center shadow-[0_0_22px_rgba(110,231,183,0.22)] backdrop-blur-sm lg:top-[15%]">
+                  <p className="text-xs font-black tracking-[0.18em] text-emerald-200">目标</p>
+                  <p className="mt-1 text-2xl font-black text-white lg:text-3xl">凑成 {config.pairTarget ?? config.towerStep} 颗能量果</p>
+                </div>
+                {!towerCorrect && (
+                  <div className="absolute bottom-[11%] left-1/2 flex w-[min(720px,92%)] -translate-x-1/2 flex-wrap justify-center gap-3 lg:gap-4">
+                    <OptionGrid options={towerStep.options} testPrefix="tower-answer" onChoose={answerTower} />
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="absolute left-1/2 top-[14px] z-20 flex -translate-x-1/2 gap-2 lg:top-[6%]">
+                  {config.towerSteps.map((_, i) => (
+                    <span className={`h-2.5 w-8 rounded-full transition ${i < litSegments ? "bg-amber-300 shadow-[0_0_14px_rgba(252,211,77,0.7)]" : "bg-blue-950/60 ring-1 ring-cyan-200/25"}`} key={i} />
+                  ))}
+                </div>
+                <div className="absolute left-1/2 top-[90px] -translate-x-1/2 flex flex-col items-center gap-[6px] lg:top-[17%]">
+                  {[...towerStep.sequence, "?"].map((num, index) => (
+                    <span className="flex h-[64px] w-[64px] items-center justify-center rounded-full border border-cyan-200/40 bg-blue-950/65 text-[26px] font-black text-white shadow-[0_0_16px_rgba(34,211,238,0.38)] lg:h-[70px] lg:w-[70px] lg:text-[31px]" key={`${num}-${index}`}>{num}</span>
+                  ))}
+                </div>
+                {!towerCorrect && (
+                  <div className="mt-[370px] flex flex-wrap justify-center gap-3 lg:absolute lg:bottom-[9%] lg:left-1/2 lg:mt-0 lg:-translate-x-1/2 lg:gap-4">
+                    <OptionGrid options={towerStep.options} testPrefix="tower-answer" onChoose={answerTower} small />
+                  </div>
+                )}
+              </>
             )}
           </QuestionStage>
         );
@@ -639,10 +681,10 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
             <div className="mx-auto w-full max-w-5xl p-4 lg:absolute lg:inset-x-[4%] lg:top-[17%] lg:bottom-[4%] lg:p-0">
               <div className="grid gap-5 lg:grid-cols-[260px_1fr]">
                 <div className="grid self-start gap-3 rounded-[28px] border border-amber-200/25 bg-blue-950/45 p-3 shadow-[0_0_24px_rgba(252,211,77,0.12)] backdrop-blur-sm">
-                  <StickerButton dataTestId="reflection-pattern" onClick={() => chooseReflection("pattern")}>🔢 找规律</StickerButton>
-                  <StickerButton onClick={() => chooseReflection("ask_nova")}>🤔 问 Nova</StickerButton>
-                  <StickerButton onClick={() => chooseReflection("island_light")}>✨ 点亮新岛</StickerButton>
-                  {session.truthDetectorSuccess && <StickerButton onClick={() => chooseReflection("not_blind_trust")}>🔍 不全信 Nova</StickerButton>}
+                  <StickerButton dataTestId="reflection-pattern" onClick={() => chooseReflection("pattern")}>{stickerLabel("pattern", "🔢 找规律")}</StickerButton>
+                  <StickerButton onClick={() => chooseReflection("ask_nova")}>{stickerLabel("ask_nova", "🤔 问 Nova")}</StickerButton>
+                  <StickerButton onClick={() => chooseReflection("island_light")}>{stickerLabel("island_light", "✨ 点亮新岛")}</StickerButton>
+                  {session.truthDetectorSuccess && <StickerButton onClick={() => chooseReflection("not_blind_trust")}>{stickerLabel("not_blind_trust", "🔍 不全信 Nova")}</StickerButton>}
                 </div>
                 <div className="min-h-48 rounded-[34px] border border-amber-200/30 bg-[linear-gradient(135deg,rgba(255,245,210,0.14),rgba(30,41,124,0.34))] p-6 shadow-[0_0_40px_rgba(252,211,77,0.14)] backdrop-blur-[2px] lg:min-h-0">
                   {selectedReflection ? (
@@ -688,9 +730,9 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
                 </div>
                 <div className="rounded-[34px] border border-cyan-300/25 bg-blue-950/62 p-4 shadow-[0_0_30px_rgba(34,211,238,0.12)] backdrop-blur-md">
                   <div className="grid gap-2">
-                    <ResultLine label="新岛屿" value="已点亮" />
-                    <ResultLine label={config.copy.firstChallengeLabel} value="已发现" />
-                    <ResultLine label={config.copy.secondChallengeLabel} value="已点亮" />
+                    <ResultLine label={config.copy.islandResultLabel ?? "新岛屿"} value="已点亮" />
+                    <ResultLine label={config.copy.firstChallengeLabel} value={config.copy.firstChallengeValue ?? "已发现"} />
+                    <ResultLine label={config.copy.secondChallengeLabel} value={config.copy.secondChallengeValue ?? "已点亮"} />
                     <ResultLine label="真相探测器" value={session.truthDetectorSuccess ? "已识破" : session.truthDetectorOpened ? "已尝试" : "下次再试"} />
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-2">
@@ -726,12 +768,12 @@ function StageFrame({ asset, children, eyebrow, title }: { asset?: string; child
   );
 }
 
-function QuestionStage({ asset, children, feedback, onContinue, showContinue, title }: { asset?: string; children: ReactNode; feedback: string; onContinue: () => void; showContinue: boolean; title: string }) {
+function QuestionStage({ asset, children, continueLabel, eyebrow = "数字路机关", feedback, onContinue, showContinue, title }: { asset?: string; children: ReactNode; continueLabel?: string; eyebrow?: string; feedback: string; onContinue: () => void; showContinue: boolean; title: string }) {
   return (
-    <StageFrame asset={asset} eyebrow="数字路机关" title={title}>
+    <StageFrame asset={asset} eyebrow={eyebrow} title={title}>
       {children}
       {feedback && <div className="absolute bottom-[19%] left-1/2 w-[min(760px,82%)] -translate-x-1/2 rounded-[26px] border border-amber-200/35 bg-blue-950/78 p-4 text-center text-base font-black leading-7 text-amber-100 shadow-[0_0_24px_rgba(252,211,77,0.16)] backdrop-blur-md">{feedback}</div>}
-      {showContinue && <div className="absolute bottom-[8%] left-1/2 flex -translate-x-1/2 justify-center"><GameButton onClick={onContinue}>继续</GameButton></div>}
+      {showContinue && <div className="absolute bottom-[8%] left-1/2 flex -translate-x-1/2 justify-center"><GameButton onClick={onContinue}>{continueLabel ?? "继续"}</GameButton></div>}
     </StageFrame>
   );
 }
@@ -773,6 +815,38 @@ function NumberRoad({ numbers }: { numbers: string[] }) {
           {index < numbers.length - 1 && <span className="text-2xl font-black text-cyan-200/80">→</span>}
         </span>
       ))}
+    </div>
+  );
+}
+
+// 凑成10题的可视化：已亮的果子（have 颗）+ 空位（target-have 个），配合 have + ? = target。
+// solved=true 时空位变成发光的新果子、问号换成答案，用于 Beat 4 胜利（7 + 3 = 10）。
+function MakeTenView({ have, target, need, solved }: { have: number; target: number; need: number; solved?: boolean }) {
+  const gap = Math.max(0, target - have);
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <div className="flex max-w-[420px] flex-wrap items-center justify-center gap-2">
+        {Array.from({ length: have }).map((_, i) => (
+          <span className="h-7 w-7 rounded-full bg-amber-300 shadow-[0_0_12px_rgba(252,211,77,0.7)] ring-2 ring-amber-100/60 lg:h-9 lg:w-9" key={`have-${i}`} />
+        ))}
+        {Array.from({ length: gap }).map((_, i) => (
+          <span
+            className={solved
+              ? "h-7 w-7 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.75)] ring-2 ring-emerald-100/60 lg:h-9 lg:w-9"
+              : "h-7 w-7 rounded-full border-2 border-dashed border-cyan-100/55 bg-blue-950/40 lg:h-9 lg:w-9"}
+            key={`gap-${i}`}
+          />
+        ))}
+      </div>
+      <div className="flex items-center gap-3 text-3xl font-black lg:text-4xl">
+        <span className="rounded-2xl bg-amber-300/90 px-4 py-2 text-slate-950">{have}</span>
+        <span className="text-cyan-200">+</span>
+        <span className={solved
+          ? "rounded-2xl bg-emerald-300/90 px-4 py-2 text-emerald-950"
+          : "rounded-2xl border-2 border-dashed border-cyan-100/60 bg-blue-950/50 px-4 py-2 text-cyan-100"}>{solved ? need : "?"}</span>
+        <span className="text-cyan-200">=</span>
+        <span className="rounded-2xl bg-emerald-300/90 px-4 py-2 text-emerald-950">{target}</span>
+      </div>
     </div>
   );
 }
