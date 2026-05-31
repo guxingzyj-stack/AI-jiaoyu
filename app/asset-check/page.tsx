@@ -135,7 +135,7 @@ export default function AssetCheckPage() {
                           </p>
                         )}
 
-                        {item.path === "/assets/game/lobby-hero.png" && loaded && (
+                        {item.path === "/assets/game/lobby-hero.webp" && loaded && (
                           <p className="rounded-2xl border border-cyan-200/20 bg-cyan-200/10 p-3 text-xs font-bold leading-5 text-cyan-50">
                             主视觉检查：适合作为纯游戏大厅主视觉。若后续图片包含 UI 文字或按钮，请重新生成纯插画版本。
                           </p>

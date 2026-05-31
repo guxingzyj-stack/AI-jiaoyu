@@ -1,14 +1,14 @@
 export const multiplesSeaAssets = {
-  mapBackground: "/assets/multiples-sea/map-background.png",
-  beachBackground: "/assets/multiples-sea/beach-background.png",
+  mapBackground: "/assets/multiples-sea/map-background.webp",
+  beachBackground: "/assets/multiples-sea/beach-background.webp",
   // Stone-question uses the beach scene until a dedicated background is generated.
-  stoneQuestionBackground: "/assets/multiples-sea/beach-background.png",
-  islandVictoryBackground: "/assets/multiples-sea/island-victory-background.png",
-  towerBackground: "/assets/multiples-sea/tower-background.png",
-  truthBackground: "/assets/multiples-sea/truth-background.png",
-  notebookBackground: "/assets/multiples-sea/notebook-background.png",
-  completeBackground: "/assets/multiples-sea/complete-background.png",
-  novaGuide: "/assets/multiples-sea/nova-guide.png",
-  novaHappy: "/assets/multiples-sea/nova-happy.png",
-  novaThinking: "/assets/multiples-sea/nova-thinking.png"
+  stoneQuestionBackground: "/assets/multiples-sea/beach-background.webp",
+  islandVictoryBackground: "/assets/multiples-sea/island-victory-background.webp",
+  towerBackground: "/assets/multiples-sea/tower-background.webp",
+  truthBackground: "/assets/multiples-sea/truth-background.webp",
+  notebookBackground: "/assets/multiples-sea/notebook-background.webp",
+  completeBackground: "/assets/multiples-sea/complete-background.webp",
+  novaGuide: "/assets/multiples-sea/nova-guide.webp",
+  novaHappy: "/assets/multiples-sea/nova-happy.webp",
+  novaThinking: "/assets/multiples-sea/nova-thinking.webp"
 };

@@ -1,20 +1,20 @@
 import type { MonsterType } from "./learningProgress";
 
-export const GAME_ASSET_VERSION = "s1e10-2";
+export const GAME_ASSET_VERSION = "s1e10-3";
 
 function asset(path: string) {
   return `${path}?v=${GAME_ASSET_VERSION}`;
 }
 
 export const gameAssets = {
-  lobbyHero: asset("/assets/game/lobby-hero.png"),
+  lobbyHero: asset("/assets/game/lobby-hero.webp"),
   novaHappy: asset("/assets/characters/nova-happy.png"),
   novaThinking: asset("/assets/characters/nova-thinking.png"),
   novaCheer: asset("/assets/characters/nova-cheer.png"),
   quests: {
-    challenge: asset("/assets/quests/energy-tower.png"),
-    ai_help: asset("/assets/quests/nova-clue.png"),
-    monster_review: asset("/assets/quests/monster-tracking.png")
+    challenge: asset("/assets/quests/energy-tower.webp"),
+    ai_help: asset("/assets/quests/nova-clue.webp"),
+    monster_review: asset("/assets/quests/monster-tracking.webp")
   },
   monsters: {
     careless: asset("/assets/monsters/careless-monster.png"),
@@ -35,7 +35,7 @@ export const gameAssets = {
 export const assetCheckGroups = [
   {
     group: "game",
-    items: [{ label: "lobby-hero", path: "/assets/game/lobby-hero.png", src: gameAssets.lobbyHero }]
+    items: [{ label: "lobby-hero", path: "/assets/game/lobby-hero.webp", src: gameAssets.lobbyHero }]
   },
   {
     group: "characters",
@@ -48,9 +48,9 @@ export const assetCheckGroups = [
   {
     group: "quests",
     items: [
-      { label: "energy-tower", path: "/assets/quests/energy-tower.png", src: gameAssets.quests.challenge },
-      { label: "nova-clue", path: "/assets/quests/nova-clue.png", src: gameAssets.quests.ai_help },
-      { label: "monster-tracking", path: "/assets/quests/monster-tracking.png", src: gameAssets.quests.monster_review }
+      { label: "energy-tower", path: "/assets/quests/energy-tower.webp", src: gameAssets.quests.challenge },
+      { label: "nova-clue", path: "/assets/quests/nova-clue.webp", src: gameAssets.quests.ai_help },
+      { label: "monster-tracking", path: "/assets/quests/monster-tracking.webp", src: gameAssets.quests.monster_review }
     ]
   },
   {
