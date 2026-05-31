@@ -13,7 +13,6 @@ import {
   type LucideIcon
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import BottomNav from "../../components/BottomNav";
 import {
   createDailyQuests,
   readDailyQuestState,
@@ -61,9 +60,8 @@ export default function AdventurePage() {
   const tutorialDone = progress.tutorialFirstWinDone;
   const experienceStarted = launches > 0 || progress.attempts.length > 0;
   const experienceCompleted = progress.attempts.length > 0;
-  const challengeHref = tutorialDone ? "/challenge" : "/challenge?mode=tutorial";
-  const heroHref = experienceCompleted ? "/report" : challengeHref;
-  const heroButtonLabel = experienceCompleted ? "查看今日星星报告" : "继续小冒险";
+  const heroHref = "/map";
+  const heroButtonLabel = "开始今天的冒险";
   const heroTitle = experienceCompleted ? "今天的小冒险完成啦！" : "第一颗星已经亮啦，继续帮 Nova 点亮能量塔。";
   const heroDescription = experienceCompleted
     ? "你已经完成今天的小挑战，可以去看看星星报告。"
@@ -111,25 +109,13 @@ export default function AdventurePage() {
                 <Link
                   className="mt-5 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[26px] bg-amber-300 px-5 text-lg font-black text-slate-950 shadow-glow"
                   data-testid="start-challenge"
-                  href="/challenge?mode=tutorial"
+                  href="/map"
                   onClick={handleStart}
                 >
-                  开始冒险
+                  开始今天的冒险
                   <ChevronRight size={22} />
                 </Link>
-                <Link
-                  className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[24px] border border-violet-200/40 bg-gradient-to-r from-violet-500/30 via-cyan-400/25 to-amber-300/25 px-5 text-sm font-black text-white"
-                  data-testid="enter-map"
-                  href="/map"
-                >
-                  🪐 进入星球地图
-                </Link>
-                <Link
-                  className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-[24px] border border-cyan-200/40 bg-cyan-200/15 px-5 text-sm font-black text-cyan-50"
-                  href="/adventure/multiples-sea"
-                >
-                  开始倍数海新岛探险
-                </Link>
+                <ParentTestLinks />
               </div>
             </div>
           </section>
@@ -149,7 +135,7 @@ export default function AdventurePage() {
         <div className="absolute inset-x-0 top-56 h-px rotate-[7deg] bg-gradient-to-r from-transparent via-violet-200/30 to-transparent" />
       </div>
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 pb-24 pt-5 sm:px-6 lg:px-8">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 pb-8 pt-5 sm:px-6 lg:px-8">
         <header className="mb-5 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-200">智学探险家</p>
@@ -331,7 +317,7 @@ export default function AdventurePage() {
         </section>
 
         <Link
-          className="mb-6 flex min-h-16 items-center justify-center gap-3 rounded-[30px] bg-gradient-to-r from-amber-300 via-cyan-300 to-violet-400 px-6 py-4 text-lg font-black text-slate-950 shadow-glow transition active:scale-[0.98]"
+          className="mb-4 flex min-h-16 items-center justify-center gap-3 rounded-[30px] bg-gradient-to-r from-amber-300 via-cyan-300 to-violet-400 px-6 py-4 text-lg font-black text-slate-950 shadow-glow transition active:scale-[0.98]"
           data-testid="start-challenge"
           href={heroHref}
           onClick={handleStart}
@@ -339,32 +325,36 @@ export default function AdventurePage() {
           {heroButtonLabel}
           <ChevronRight size={24} />
         </Link>
-        <Link
-          className="mb-4 flex min-h-16 items-center justify-center gap-3 rounded-[30px] border border-violet-200/35 bg-gradient-to-r from-violet-500/30 via-cyan-400/25 to-amber-300/25 px-6 py-4 text-lg font-black text-white shadow-glow transition active:scale-[0.98]"
-          data-testid="enter-map"
-          href="/map"
-        >
-          🪐 进入星球地图
-          <ChevronRight size={22} />
-        </Link>
-        <Link
-          className="mb-6 flex min-h-14 items-center justify-center rounded-[28px] border border-cyan-200/35 bg-cyan-200/12 px-5 py-4 text-base font-black text-cyan-50 shadow-glow"
-          href="/adventure/multiples-sea"
-        >
-          开始倍数海新岛探险
-        </Link>
-        {experienceCompleted && (
-          <Link
-            className="mb-6 flex min-h-12 items-center justify-center gap-2 rounded-[24px] border border-white/15 bg-white/5 px-5 text-sm font-black text-slate-100"
-            href="/challenge"
-          >
-            再来一颗星
-          </Link>
-        )}
+        <ParentTestLinks />
       </div>
-
-      <BottomNav />
     </main>
+  );
+}
+
+function ParentTestLinks() {
+  return (
+    <details className="mt-4 rounded-[22px] border border-white/10 bg-slate-950/25 px-4 py-3 text-left text-sm text-slate-200">
+      <summary className="cursor-pointer text-center text-xs font-black text-cyan-100/80">
+        家长 / 测试入口
+      </summary>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <TestLink href="/map">进入星球地图</TestLink>
+        <TestLink href="/adventure/multiples-sea">直接进入倍数海</TestLink>
+        <TestLink href="/adventure/forest-island">直接进入森林岛</TestLink>
+        <TestLink href="/report">查看星星报告</TestLink>
+      </div>
+    </details>
+  );
+}
+
+function TestLink({ children, href }: { children: string; href: string }) {
+  return (
+    <Link
+      className="inline-flex min-h-10 items-center justify-center rounded-[18px] border border-cyan-200/20 bg-cyan-200/8 px-3 text-xs font-black text-cyan-50/80 transition hover:bg-cyan-200/14 active:scale-95"
+      href={href}
+    >
+      {children}
+    </Link>
   );
 }
 
