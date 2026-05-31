@@ -622,9 +622,9 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
           <QuestionStage asset={config.assets.tower} continueLabel={config.copy.towerContinue} eyebrow={config.copy.towerEyebrow ?? "数字路机关"} title={towerTitle} feedback={answerFeedback} showContinue={towerCorrect} onContinue={advanceTower}>
             {isMakeTen ? (
               <>
-                <div className="absolute left-1/2 top-[64px] z-20 -translate-x-1/2 rounded-[24px] border border-emerald-200/40 bg-blue-950/65 px-6 py-3 text-center shadow-[0_0_22px_rgba(110,231,183,0.22)] backdrop-blur-sm lg:top-[15%]">
-                  <p className="text-xs font-black tracking-[0.18em] text-emerald-200">目标</p>
-                  <p className="mt-1 text-2xl font-black text-white lg:text-3xl">凑成 {config.pairTarget ?? config.towerStep} 颗能量果</p>
+                <div className="absolute left-1/2 top-[38%] z-20 -translate-x-1/2 -translate-y-1/2 rounded-[30px] border border-emerald-200/45 bg-blue-950/70 px-9 py-6 text-center shadow-[0_0_32px_rgba(110,231,183,0.3)] backdrop-blur-sm lg:top-[44%]">
+                  <p className="text-sm font-black tracking-[0.2em] text-emerald-200 lg:text-base">目标</p>
+                  <p className="mt-2 text-3xl font-black text-white lg:text-[2.6rem] lg:leading-tight">凑成 {config.pairTarget ?? config.towerStep} 颗能量果</p>
                 </div>
                 {!towerCorrect && (
                   <div className="absolute bottom-[11%] left-1/2 flex w-[min(720px,92%)] -translate-x-1/2 flex-wrap justify-center gap-3 lg:gap-4">
