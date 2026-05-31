@@ -42,7 +42,7 @@ export default function ReportPage() {
   }, []);
 
   const resetData = () => {
-    if (window.confirm("确定要重置体验数据吗？这会清空本机的挑战、怪兽、技能和报告记录。")) {
+    if (window.confirm("确定要重新开始体验吗？这会清空本机的挑战、怪兽、技能和报告记录。")) {
       resetExperienceData();
       window.location.href = "/pilot";
     }
@@ -193,13 +193,13 @@ export default function ReportPage() {
               type="button"
             >
               <RotateCcw size={14} />
-              重置体验数据
+              重新开始体验
             </button>
           </div>
         </details>
 
         <details className="mb-5 rounded-[28px] border border-white/15 bg-slate-950/45 p-5 backdrop-blur-xl">
-          <summary className="cursor-pointer text-lg font-black text-cyan-100">查看详细数据</summary>
+          <summary className="cursor-pointer text-lg font-black text-cyan-100">查看星星记录</summary>
           <div className="mt-4 grid grid-cols-2 gap-3">
             <DetailStat icon={Sparkles} label="XP" value={String(report.overview.exp)} />
             <DetailStat icon={Coins} label="金币" value={String(report.overview.coins)} />
@@ -278,3 +278,4 @@ function DetailStat({ icon: Icon, label, value }: { icon: LucideIcon; label: str
     </div>
   );
 }
+

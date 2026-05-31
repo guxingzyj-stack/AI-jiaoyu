@@ -6,7 +6,7 @@ import { resetExperienceData } from "../../lib/dailyQuestEngine";
 
 export default function PilotPage() {
   const resetData = () => {
-    if (window.confirm("确定要重置体验数据吗？这会清空本机的挑战、怪兽、技能和报告记录。")) {
+    if (window.confirm("确定要重新开始体验吗？这会清空本机的挑战、怪兽、技能和报告记录。")) {
       resetExperienceData();
       window.location.href = "/adventure";
     }
@@ -49,7 +49,7 @@ export default function PilotPage() {
             items={[
               "建议使用手机体验。",
               "建议体验时间：5 分钟左右。",
-              "数据只保存在当前浏览器。",
+              "学习记录只保存在当前浏览器。",
               "体验目标不是刷题数量，而是点亮第一颗星。"
             ]}
           />
@@ -82,7 +82,7 @@ export default function PilotPage() {
             type="button"
           >
             <RotateCcw size={14} />
-            重置体验数据
+            重新开始体验
           </button>
         </details>
       </div>
@@ -109,3 +109,4 @@ function InfoPanel({ icon: Icon, title, items }: { icon: typeof Sparkles; title:
     </article>
   );
 }
+
