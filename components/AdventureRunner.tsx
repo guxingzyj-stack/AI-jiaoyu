@@ -480,22 +480,41 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
                 <h2 className="mt-1 text-xl font-black text-white drop-shadow-[0_0_18px_rgba(103,232,249,0.38)] lg:text-2xl">{config.copy.observeTitle}</h2>
               </div>
             </div>
-            <div className="flex flex-1 items-center justify-center gap-3 p-4 lg:absolute lg:inset-x-[7%] lg:bottom-[17%] lg:flex-none lg:items-end lg:justify-center lg:gap-4 lg:p-0 xl:gap-5">
-              {isMakeTen && config.makeTen ? (
-                <div className="flex max-w-[300px] flex-wrap items-center justify-center gap-2 sm:max-w-none">
+            {isMakeTen && config.makeTen ? (
+              <div className="flex w-full flex-col items-center gap-3 p-4 text-center lg:absolute lg:inset-x-[6%] lg:bottom-[8%] lg:gap-3 lg:p-0">
+                <div className="rounded-full border border-emerald-200/45 bg-blue-950/72 px-5 py-2 text-base font-black text-emerald-100 shadow-[0_0_20px_rgba(110,231,183,0.22)] backdrop-blur-sm lg:text-lg">
+                  目标：凑满 {config.makeTen.target} 颗能量果
+                </div>
+                <div className="flex max-w-[360px] flex-wrap items-center justify-center gap-2 sm:max-w-none">
                   {Array.from({ length: config.makeTen.have }).map((_, i) => (
                     <span className="h-9 w-9 rounded-full bg-amber-300 shadow-[0_0_14px_rgba(252,211,77,0.7)] ring-2 ring-amber-100/60 lg:h-11 lg:w-11" key={`fruit-${i}`} />
                   ))}
+                  {Array.from({ length: Math.max(0, config.makeTen.target - config.makeTen.have) }).map((_, i) => (
+                    <span className="h-9 w-9 rounded-full border-2 border-dashed border-emerald-100/45 bg-blue-950/30 lg:h-11 lg:w-11" key={`empty-${i}`} />
+                  ))}
+                  <button
+                    aria-label="还差几颗，进入题目"
+                    className="ml-1 flex h-12 w-12 items-center justify-center rounded-full border border-amber-100/45 bg-amber-300/20 text-2xl font-black text-white shadow-[0_0_24px_rgba(252,211,77,0.5)] ring-4 ring-amber-200/30 backdrop-blur-[1px] transition hover:scale-105 active:scale-95 lg:h-14 lg:w-14"
+                    data-testid="stone-mystery"
+                    onClick={() => goStage("stone_question", "open_stone_question")}
+                    type="button"
+                  >
+                    ?
+                  </button>
                 </div>
-              ) : (
-                config.stone.sequence.map((num) => (
+                <p className="text-sm font-black text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.7)] lg:text-base">数一数，还差几颗能量果？</p>
+                <GameButton dataTestId="forest-observe-start" onClick={() => goStage("stone_question", "open_stone_question")}>帮能量树补果子</GameButton>
+              </div>
+            ) : (
+              <div className="flex flex-1 items-center justify-center gap-3 p-4 lg:absolute lg:inset-x-[7%] lg:bottom-[17%] lg:flex-none lg:items-end lg:justify-center lg:gap-4 lg:p-0 xl:gap-5">
+                {config.stone.sequence.map((num) => (
                   <StoneButton key={num} onClick={() => setNotice("它轻轻亮了一下。")}>{num}</StoneButton>
-                ))
-              )}
-              <button className="relative flex h-16 w-20 items-center justify-center rounded-full border border-amber-100/35 bg-amber-300/18 text-3xl font-black text-white shadow-[0_0_30px_rgba(252,211,77,0.5)] ring-4 ring-amber-200/35 backdrop-blur-[1px] transition hover:scale-105 active:scale-95" data-testid="stone-mystery" onClick={() => goStage("stone_question", "open_stone_question")} type="button">
-                ?
-              </button>
-            </div>
+                ))}
+                <button className="relative flex h-16 w-20 items-center justify-center rounded-full border border-amber-100/35 bg-amber-300/18 text-3xl font-black text-white shadow-[0_0_30px_rgba(252,211,77,0.5)] ring-4 ring-amber-200/35 backdrop-blur-[1px] transition hover:scale-105 active:scale-95" data-testid="stone-mystery" onClick={() => goStage("stone_question", "open_stone_question")} type="button">
+                  ?
+                </button>
+              </div>
+            )}
           </div>
         );
 
