@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { mapAssets } from "../../lib/mapAssets";
@@ -166,9 +167,11 @@ export default function MapPage() {
           {/* 外层负责朝向翻转，内层负责动效，避免 transform 互相覆盖。 */}
           <span className="block transition-transform duration-300" style={{ transform: `scaleX(${facing})` }}>
             {mapAssets.heroIdle ? (
-              <img
+              <Image
                 alt="你的角色"
                 src={walking && mapAssets.heroWalk ? mapAssets.heroWalk : mapAssets.heroIdle}
+                width={80}
+                height={80}
                 className={`h-20 w-20 object-contain drop-shadow-[0_8px_14px_rgba(0,0,0,0.55)] ${heroAnim}`}
               />
             ) : (
