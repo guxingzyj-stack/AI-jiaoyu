@@ -447,16 +447,20 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
                 <p className="text-[10px] font-black tracking-[0.18em] text-cyan-200">{config.copy.mapEyebrow}</p>
                 <h2 className="mt-0.5 text-base font-black text-white drop-shadow-[0_0_18px_rgba(103,232,249,0.38)]">{rescue?.entry.title ?? config.copy.mapTitle}</h2>
               </div>
-              <span className="absolute right-[8%] top-[9%] z-20 rounded-full border border-amber-200/40 bg-blue-950/60 px-3 py-1 text-xs font-black text-amber-100 shadow-[0_0_22px_rgba(252,211,77,0.24)] sm:px-4 sm:py-2 sm:text-sm lg:right-[13%] lg:top-[8%]">NEW</span>
-              <button
-                aria-label="去看看新岛"
-                className="absolute right-[6%] top-[16%] h-20 w-24 rounded-full border border-amber-200/45 bg-amber-300/10 shadow-[0_0_46px_rgba(252,211,77,0.48)] ring-4 ring-amber-200/15 transition hover:scale-105 hover:bg-amber-300/18 focus:outline-none focus:ring-4 focus:ring-amber-200/60 active:scale-95 lg:right-[10%] lg:top-[12%] lg:h-36 lg:w-44"
-                onClick={() => { playClickSound(); goStage("beach_observe", "go_new_island"); }}
-                type="button"
-              />
+              {!rescue && (
+                <>
+                  <span className="absolute right-[8%] top-[9%] z-20 rounded-full border border-amber-200/40 bg-blue-950/60 px-3 py-1 text-xs font-black text-amber-100 shadow-[0_0_22px_rgba(252,211,77,0.24)] sm:px-4 sm:py-2 sm:text-sm lg:right-[13%] lg:top-[8%]">NEW</span>
+                  <button
+                    aria-label="去看看新岛"
+                    className="absolute right-[6%] top-[16%] h-20 w-24 rounded-full border border-amber-200/45 bg-amber-300/10 shadow-[0_0_46px_rgba(252,211,77,0.48)] ring-4 ring-amber-200/15 transition hover:scale-105 hover:bg-amber-300/18 focus:outline-none focus:ring-4 focus:ring-amber-200/60 active:scale-95 lg:right-[10%] lg:top-[12%] lg:h-36 lg:w-44"
+                    onClick={() => { playClickSound(); goStage("beach_observe", "go_new_island"); }}
+                    type="button"
+                  />
+                </>
+              )}
             </div>
             <div className="flex flex-1 flex-col items-center justify-center gap-3 p-4 text-center lg:absolute lg:inset-x-0 lg:bottom-8 lg:flex-row lg:items-center lg:justify-center lg:gap-3 lg:px-8 lg:p-0">
-              <GameButton dataTestId="multiples-start" onClick={() => goStage("beach_observe", "go_new_island")}>{rescue?.entry.primaryButton ?? config.copy.mapButton}</GameButton>
+              <GameButton dataTestId={rescue ? "forest-start" : "multiples-start"} onClick={() => goStage("beach_observe", rescue ? "go_forest_rescue" : "go_new_island")}>{rescue?.entry.primaryButton ?? config.copy.mapButton}</GameButton>
             </div>
           </div>
         );
@@ -465,7 +469,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
         return (
           <div className="flex h-full flex-col lg:block lg:h-full">
             <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden bg-cover bg-center lg:absolute lg:inset-0 lg:aspect-auto lg:h-full" style={sceneStyle(config.assets.beach)}>
-              <SeaGlow />
+              {!isMakeTen && <SeaGlow />}
               <div className="absolute left-4 top-4 z-20 rounded-[22px] border border-cyan-200/25 bg-blue-950/58 px-4 py-3 shadow-[0_0_24px_rgba(34,211,238,0.16)] backdrop-blur-md sm:left-6 sm:top-6">
                 <p className="text-xs font-black tracking-[0.2em] text-cyan-200">{config.copy.observeEyebrow}</p>
                 <h2 className="mt-1 text-xl font-black text-white drop-shadow-[0_0_18px_rgba(103,232,249,0.38)] lg:text-2xl">{config.copy.observeTitle}</h2>
@@ -519,7 +523,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
         return (
           <div className="flex h-full flex-col lg:block lg:h-full">
             <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden bg-cover bg-center lg:absolute lg:inset-0 lg:aspect-auto lg:h-full" style={sceneStyle(config.assets.stoneQuestion)}>
-              <SeaGlow />
+              {!isMakeTen && <SeaGlow />}
               <div className="absolute left-4 top-4 z-20 rounded-[22px] border border-cyan-200/25 bg-blue-950/58 px-4 py-3 shadow-[0_0_24px_rgba(34,211,238,0.16)] backdrop-blur-md sm:left-6 sm:top-6">
                 <p className="text-xs font-black tracking-[0.2em] text-cyan-200">{config.copy.stoneEyebrow}</p>
                 <h2 className="mt-1 text-xl font-black text-white drop-shadow-[0_0_18px_rgba(103,232,249,0.38)] lg:text-2xl">{config.copy.stoneTitle}</h2>
@@ -610,7 +614,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
         return (
           <div className="flex h-full flex-col lg:block lg:h-full">
             <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden bg-cover bg-center lg:absolute lg:inset-0 lg:aspect-auto lg:h-full" style={sceneStyle(config.assets.islandVictory)}>
-              <SeaGlow />
+              {!isMakeTen && <SeaGlow />}
               <Celebrate />
               <div className="absolute left-4 top-4 z-20 rounded-[22px] border border-cyan-200/25 bg-blue-950/58 px-4 py-3 shadow-[0_0_24px_rgba(34,211,238,0.16)] backdrop-blur-md sm:left-6 sm:top-6">
                 <p className="text-xs font-black tracking-[0.2em] text-cyan-200">{config.copy.jumpEyebrow}</p>
@@ -782,7 +786,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <Link className="inline-flex h-9 items-center justify-center rounded-[16px] border border-cyan-200/35 bg-cyan-300/20 px-2 text-xs font-black text-cyan-50 transition active:scale-95 lg:h-10 lg:rounded-[18px] lg:px-4 lg:text-sm" href="/adventure">回到地图</Link>
-                    <button className="inline-flex h-9 items-center justify-center rounded-[16px] bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 px-2 text-xs font-black text-slate-950 shadow-[0_0_20px_rgba(252,211,77,0.4)] transition active:scale-95 lg:h-10 lg:rounded-[18px] lg:px-4 lg:text-sm" data-testid="reset-multiples" onClick={resetAdventure} type="button">{rescue?.retryButton ?? "再玩一次"}</button>
+                    <button className="inline-flex h-9 items-center justify-center rounded-[16px] bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 px-2 text-xs font-black text-slate-950 shadow-[0_0_20px_rgba(252,211,77,0.4)] transition active:scale-95 lg:h-10 lg:rounded-[18px] lg:px-4 lg:text-sm" data-testid={rescue ? "reset-forest" : "reset-multiples"} onClick={resetAdventure} type="button">{rescue?.retryButton ?? "再玩一次"}</button>
                     <Link className="col-span-2 inline-flex h-9 items-center justify-center rounded-[16px] border border-violet-200/35 bg-violet-400/25 px-2 text-xs font-black text-violet-50 transition active:scale-95 lg:col-span-1 lg:h-10 lg:rounded-[18px] lg:px-4 lg:text-sm" href="/report">查看星星报告</Link>
                   </div>
                   {rescue?.nextRoundLine && <p className="mt-3 text-center text-xs font-black text-amber-100 lg:text-sm">{rescue.nextRoundLine}</p>}
