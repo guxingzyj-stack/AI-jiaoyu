@@ -156,8 +156,8 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
       setAnswerFeedback(config.feedback?.stoneWrongFirst ?? `差一点！再看看 ${seq[0]} 到 ${seq[1]}、${seq[1]} 到 ${seq[2]}，中间都隔了几？`);
       return;
     }
+    updateSession("stone_second_try", (prev) => ({ ...prev, wrongAttemptsStone: prev.wrongAttemptsStone + 1 }));
     setAnswerFeedback(config.feedback?.stoneSecondWrong ?? "我们一起想一想？");
-    updateSession("stone_second_try_help", (prev) => ({ ...prev, wrongAttemptsStone: prev.wrongAttemptsStone + 1, currentQuestion: "stone", stage: "help_menu" }));
   };
 
   const answerTower = (answer: number | string) => {
@@ -178,8 +178,8 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
       setAnswerFeedback(config.feedback?.towerWrongFirst ?? `再看看 ${step.sequence.join("、")}，每次多了几个？`);
       return;
     }
+    updateSession("tower_second_try", (prev) => ({ ...prev, wrongAttemptsTower: prev.wrongAttemptsTower + 1 }));
     setAnswerFeedback(config.feedback?.towerSecondWrong ?? "我们可以请 Nova 一起想。");
-    updateSession("tower_second_try_help", (prev) => ({ ...prev, wrongAttemptsTower: prev.wrongAttemptsTower + 1, currentQuestion: "tower", stage: "help_menu" }));
   };
 
   const advanceTower = () => {
@@ -483,6 +483,11 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
         );
 
       case "stone_question":
+        {
+          const stoneCorrect =
+            answerFeedback === config.feedback?.stoneCorrect ||
+            answerFeedback.startsWith("哇") ||
+            answerFeedback.startsWith("对啦");
         return (
           <div className="flex h-full flex-col lg:block lg:h-full">
             <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden bg-cover bg-center lg:absolute lg:inset-0 lg:aspect-auto lg:h-full" style={sceneStyle(config.assets.stoneQuestion)}>
@@ -499,23 +504,24 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
                 <NumberRoad numbers={[...config.stone.sequence, "?"]} />
               )}
             </div>
-            {!answerFeedback && (
+            {!stoneCorrect && (
               <div className="mt-5 flex flex-wrap justify-center gap-5 p-2 lg:absolute lg:bottom-[20%] lg:left-1/2 lg:mt-0 lg:p-0 lg:-translate-x-1/2">
                 <OptionGrid options={config.stone.options} testPrefix="stone-answer" onChoose={answerStone} small />
               </div>
             )}
             {answerFeedback && (
-              <p className="mx-4 mt-4 rounded-[26px] border border-amber-200/35 bg-blue-950/78 p-4 text-center text-base font-black leading-7 text-amber-100 shadow-[0_0_24px_rgba(252,211,77,0.16)] backdrop-blur-md lg:absolute lg:bottom-[20%] lg:left-1/2 lg:mx-0 lg:mt-0 lg:w-[min(760px,82%)] lg:-translate-x-1/2">
+              <p className="pointer-events-none mx-4 mt-4 rounded-[26px] border border-amber-200/35 bg-blue-950/78 p-4 text-center text-base font-black leading-7 text-amber-100 shadow-[0_0_24px_rgba(252,211,77,0.16)] backdrop-blur-md lg:absolute lg:bottom-[31%] lg:left-1/2 lg:mx-0 lg:mt-0 lg:w-[min(760px,82%)] lg:-translate-x-1/2">
                 {answerFeedback}
               </p>
             )}
-            {(answerFeedback === config.feedback?.stoneCorrect || answerFeedback.startsWith("哇")) && (
+            {stoneCorrect && (
               <div className="flex justify-center p-4 lg:absolute lg:bottom-[8%] lg:left-1/2 lg:p-0 lg:-translate-x-1/2">
                 <GameButton onClick={() => goStage("island_jump", "stone_to_island_jump")}>继续</GameButton>
               </div>
             )}
           </div>
         );
+        }
 
       case "help_menu":
         return (
@@ -770,7 +776,7 @@ function QuestionStage({ asset, children, continueLabel, eyebrow = "数字路机
   return (
     <StageFrame asset={asset} eyebrow={eyebrow} title={title}>
       {children}
-      {feedback && <div className="absolute bottom-[19%] left-1/2 w-[min(760px,82%)] -translate-x-1/2 rounded-[26px] border border-amber-200/35 bg-blue-950/78 p-4 text-center text-base font-black leading-7 text-amber-100 shadow-[0_0_24px_rgba(252,211,77,0.16)] backdrop-blur-md">{feedback}</div>}
+      {feedback && <div className="pointer-events-none absolute bottom-[25%] left-1/2 w-[min(760px,82%)] -translate-x-1/2 rounded-[26px] border border-amber-200/35 bg-blue-950/78 p-4 text-center text-base font-black leading-7 text-amber-100 shadow-[0_0_24px_rgba(252,211,77,0.16)] backdrop-blur-md lg:bottom-[22%]">{feedback}</div>}
       {showContinue && <div className="absolute bottom-[8%] left-1/2 flex -translate-x-1/2 justify-center"><GameButton onClick={onContinue}>{continueLabel ?? "继续"}</GameButton></div>}
     </StageFrame>
   );
