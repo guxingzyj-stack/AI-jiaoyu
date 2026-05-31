@@ -11,6 +11,7 @@ import {
   initialAdventureSession
 } from "../lib/adventures";
 import { markIslandCompleted, readAdventureProgress } from "../lib/adventureProgress";
+import { resolveIslandConfig } from "../lib/adventureQuestionPools";
 import { readProgress, readStudent, saveStudentAndProgress } from "../lib/learningProgress";
 import { getReflection } from "../lib/reflection";
 import { REFLECTION_CHOICE_LABELS } from "../lib/reflectionPrompt";
@@ -29,7 +30,10 @@ function sceneStyle(asset?: string): CSSProperties {
     : { background: SCENE_BG_VAR };
 }
 
-export default function AdventureRunner({ config }: { config: AdventureConfig }) {
+export default function AdventureRunner({ config: baseConfig }: { config: AdventureConfig }) {
+  // 进入关卡时从题库抽一组题（基础配置 + 本轮覆盖）。初始用 baseConfig 以避免 SSR/水合不一致，
+  // 挂载后在客户端解析出实际题目；「再玩一次」也会重新抽题（优先避开上一轮）。
+  const [config, setConfig] = useState<AdventureConfig>(baseConfig);
   const [session, setSession] = useState<AdventureSession>(initialAdventureSession);
   const [notice, setNotice] = useState("Nova 正陪你一起探险。");
   const [answerFeedback, setAnswerFeedback] = useState("");
@@ -54,6 +58,14 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
       image.src = src;
     });
   }, [preloadAssets]);
+
+  // 挂载后在客户端抽取本轮题目（题目在 Beat 3 才出现，挂载时解析不会被用户看到切换）。
+  // 这里刻意在 effect 里 setState：抽题依赖 localStorage + 随机，必须在客户端挂载后做，
+  // 否则 SSR/静态预渲染会与客户端抽到的题不一致（水合报错）。
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setConfig(resolveIslandConfig(baseConfig));
+  }, [baseConfig]);
 
   // 两段不同步长，用于“别过度概括”的对照 + 生成 L1 选项按钮。
   const stepOptions = useMemo(() => {
@@ -324,6 +336,7 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
   };
 
   const resetAdventure = () => {
+    setConfig(resolveIslandConfig(baseConfig)); // 再玩一次重新抽题，优先避开上一轮
     setSession(initialAdventureSession);
     setNotice("Nova 正陪你一起探险。");
     setAnswerFeedback("");
