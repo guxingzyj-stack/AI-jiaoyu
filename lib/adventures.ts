@@ -102,6 +102,44 @@ export type AdventureConfig = {
   reflectionStickers: Record<ReflectionChoice, string>;
   // 复盘贴纸按钮的中文标签；留空则用引擎默认（找规律/问 Nova/点亮新岛/不全信 Nova）。
   reflectionStickerLabels?: Record<ReflectionChoice, string>;
+  forestRescue?: {
+    entry: {
+      title: string;
+      novaLine: string;
+      primaryButton: string;
+    };
+    observe: {
+      goal: string;
+    };
+    firstQuestion: {
+      correct: string;
+      wrongFirst: string;
+      wrongSecond: string;
+      victory: string;
+    };
+    secondQuestion: {
+      treasureTitle: string;
+      description: string;
+      correct: string;
+      wrongFirst: string;
+      wrongSecond: string;
+      button: string;
+    };
+    reflectionBadges: Record<ReflectionChoice, string>;
+    completeResults: {
+      island: string;
+      firstChallenge: string;
+      secondChallenge: string;
+      truthDetector: string;
+    };
+    novaEncouragement: {
+      default: string;
+      usedHelp: string;
+      detectedTruth: string;
+    };
+    nextRoundLine: string;
+    retryButton: string;
+  };
 
   // Nova 求助文案覆写（make-ten 关卡用；全部留空时走引擎默认 + 倍数海原“+step 规律选择器”）。
   // 提供 l1Stone/l1Tower 时，对应题目的 L1 改为“引导卡”而非加几选择器；
@@ -333,7 +371,7 @@ export const forestIslandConfig: AdventureConfig = {
 
   stageTitles: {
     map_intro: "星球地图",
-    beach_observe: "拆分森林",
+    beach_observe: "能量树救援",
     stone_question: "能量果问题",
     help_menu: "问问 Nova",
     island_jump: "点亮森林",
@@ -373,11 +411,11 @@ export const forestIslandConfig: AdventureConfig = {
   },
 
   copy: {
-    routeTitle: "拆分森林探险",
+    routeTitle: "森林岛：能量树救援",
     mapEyebrow: "数学星球地图",
-    mapTitle: "发现拆分森林",
+    mapTitle: "森林岛：能量树救援",
     mapButton: "去能量树看看",
-    observeEyebrow: "拆分森林",
+    observeEyebrow: "能量树救援",
     observeTitle: "树上已有 7 颗能量果",
     stoneEyebrow: "凑成10",
     stoneTitle: "还差几颗能量果？",
@@ -399,10 +437,53 @@ export const forestIslandConfig: AdventureConfig = {
     islandResultLabel: "森林岛",
     firstChallengeValue: "已凑成10",
     secondChallengeValue: "已打开"
+  },
+
+  forestRescue: {
+    entry: {
+      title: "森林岛：能量树救援",
+      novaLine: "能量树快睡着了，我们一起帮它补满 10 颗能量果。",
+      primaryButton: "去救援能量树"
+    },
+    observe: {
+      goal: "能量树快睡着了，帮它补满 10 颗能量果，让森林重新发光。"
+    },
+    firstQuestion: {
+      correct: "能量果补对啦！",
+      wrongFirst: "差一点，再数数还差几颗。",
+      wrongSecond: "没关系，我们从已有的能量果数到 10。",
+      victory: "能量树亮起来了一点！"
+    },
+    secondQuestion: {
+      treasureTitle: "森林宝箱打开啦",
+      description: "找出能凑成 10 的一对能量果，宝箱就会发光。",
+      correct: "宝箱发光啦，这一对正好凑成 10。",
+      wrongFirst: "再试一对，看看合起来是不是 10。",
+      wrongSecond: "可以让 Nova 给一点线索，再找一次。",
+      button: "打开森林宝箱"
+    },
+    reflectionBadges: {
+      pattern: "凑成10星章",
+      ask_nova: "小小提问家",
+      island_light: "森林点灯员",
+      not_blind_trust: "我没有全信 Nova"
+    },
+    completeResults: {
+      island: "森林岛重新发光",
+      firstChallenge: "能量树补满 10 颗能量果",
+      secondChallenge: "森林宝箱找到凑十配对",
+      truthDetector: "检查 Nova 的说法"
+    },
+    novaEncouragement: {
+      default: "你自己把能量树救醒了，森林正在发光。",
+      usedHelp: "你会在卡住时问清楚问题，这也是很棒的探险本领。",
+      detectedTruth: "你没有全信 Nova，而是自己检查了一遍。真厉害！"
+    },
+    nextRoundLine: "下一轮题目会换一组能量果，再来会遇到新组合。",
+    retryButton: "挑战新题目"
   }
 };
 export const adventureConfigs: Record<string, AdventureConfig> = {
   [multiplesSeaConfig.islandId]: multiplesSeaConfig,
   [forestIslandConfig.islandId]: forestIslandConfig
 };
-

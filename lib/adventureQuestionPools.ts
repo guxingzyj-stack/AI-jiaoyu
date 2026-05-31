@@ -118,19 +118,27 @@ function resolveMultiplesSea(base: AdventureConfig): AdventureConfig {
 // ===== 森林岛（凑成10 / 数字组合）=====
 type ForestStoneSeed = { have: number; target: number };
 const forestStonePool: ForestStoneSeed[] = [
+  { have: 1, target: 10 },
+  { have: 2, target: 10 },
+  { have: 3, target: 10 },
+  { have: 4, target: 10 },
+  { have: 5, target: 10 },
   { have: 6, target: 10 },
   { have: 7, target: 10 },
   { have: 8, target: 10 },
-  { have: 5, target: 10 },
   { have: 9, target: 10 }
 ];
 
 type ForestPairSeed = { a: number; b: number };
 const forestPairPool: ForestPairSeed[] = [
+  { a: 1, b: 9 },
+  { a: 2, b: 8 },
+  { a: 3, b: 7 },
+  { a: 4, b: 6 },
+  { a: 5, b: 5 },
   { a: 6, b: 4 },
   { a: 7, b: 3 },
   { a: 8, b: 2 },
-  { a: 5, b: 5 },
   { a: 9, b: 1 }
 ];
 
