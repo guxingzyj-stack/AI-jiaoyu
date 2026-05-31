@@ -3,6 +3,8 @@ import path from "node:path";
 import OpenAI from "openai";
 
 const force = process.argv.includes("--force");
+const onlyArg = process.argv.find((arg) => arg.startsWith("--only=") || arg.startsWith("--asset="));
+const only = onlyArg?.split("=")[1]?.trim();
 const model = process.env.IMAGE_MODEL || "gpt-image-2";
 const outputDir = path.join(process.cwd(), "public", "assets", "multiples-sea");
 const preferredSize = "2048x1152";
@@ -137,13 +139,21 @@ async function generateWithRetry(openai, asset) {
 async function main() {
   ensureApiKey();
   fs.mkdirSync(outputDir, { recursive: true });
+  const selectedAssets = only
+    ? assets.filter((asset) => asset.filename === only || asset.filename.replace(/\.png$/i, "") === only)
+    : assets;
+
+  if (only && selectedAssets.length === 0) {
+    throw new Error(`No multiples-sea asset matched --only=${only}. Use a filename such as tower-background.png.`);
+  }
 
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   console.log(`[multiples-sea-assets] model=${model}`);
   console.log(`[multiples-sea-assets] outputDir=${outputDir}`);
   console.log(`[multiples-sea-assets] force=${force}`);
+  console.log(`[multiples-sea-assets] only=${only || "all"}`);
 
-  for (const asset of assets) {
+  for (const asset of selectedAssets) {
     const outputPath = path.join(outputDir, asset.filename);
     if (fs.existsSync(outputPath) && !force) {
       console.log(`[skip] ${asset.filename} already exists. Use --force to overwrite.`);
