@@ -75,7 +75,9 @@ export default function AdventurePage() {
     window.localStorage.setItem(LAUNCHES_STORAGE_KEY, String(nextLaunches));
   };
 
-  if (pageReady && !tutorialDone) {
+  const alwaysShowEntryCard = true;
+
+  if (alwaysShowEntryCard || (pageReady && !tutorialDone)) {
     return (
       <main className="min-h-screen overflow-hidden bg-[#17206a] text-white">
         <div className="absolute inset-0 overflow-hidden">
