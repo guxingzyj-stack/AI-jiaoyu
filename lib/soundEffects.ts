@@ -65,43 +65,46 @@ function playSequence(tones: Tone[], gap = 0.055) {
 }
 
 export function playClickSound() {
-  playTone({ duration: 0.07, frequency: 660, gain: 0.018, type: "triangle" });
+  playTone({ duration: 0.07, frequency: 720, gain: 0.023, type: "triangle" });
 }
 
 export function playCorrectSound() {
   playSequence([
-    { duration: 0.08, frequency: 660, gain: 0.028, type: "triangle" },
-    { duration: 0.11, frequency: 880, gain: 0.032, type: "sine" }
-  ]);
+    { duration: 0.08, frequency: 740, gain: 0.045, type: "triangle" },
+    { duration: 0.1, frequency: 932, gain: 0.052, type: "triangle" },
+    { duration: 0.13, frequency: 1174, gain: 0.045, type: "sine" }
+  ], 0.05);
 }
 
 export function playWrongSound() {
   playSequence([
-    { duration: 0.1, frequency: 260, gain: 0.018, type: "sine" },
-    { duration: 0.13, frequency: 210, gain: 0.014, type: "sine" }
+    { duration: 0.12, frequency: 250, gain: 0.016, type: "sine" },
+    { duration: 0.16, frequency: 205, gain: 0.012, type: "sine" }
   ], 0.07);
 }
 
 export function playRewardSound() {
   playSequence([
-    { duration: 0.08, frequency: 740, gain: 0.028, type: "triangle" },
-    { duration: 0.08, frequency: 988, gain: 0.03, type: "triangle" },
-    { duration: 0.16, frequency: 1318, gain: 0.026, type: "sine" }
-  ], 0.06);
+    { duration: 0.08, frequency: 784, gain: 0.048, type: "triangle" },
+    { duration: 0.08, frequency: 1046, gain: 0.054, type: "triangle" },
+    { duration: 0.08, frequency: 1318, gain: 0.052, type: "triangle" },
+    { duration: 0.18, frequency: 1568, gain: 0.046, type: "sine" }
+  ], 0.055);
 }
 
 export function playCompleteSound() {
   playSequence([
-    { duration: 0.09, frequency: 523, gain: 0.026, type: "triangle" },
-    { duration: 0.09, frequency: 659, gain: 0.028, type: "triangle" },
-    { duration: 0.09, frequency: 784, gain: 0.03, type: "triangle" },
-    { duration: 0.18, frequency: 1046, gain: 0.026, type: "sine" }
-  ], 0.07);
+    { duration: 0.1, frequency: 523, gain: 0.044, type: "triangle" },
+    { duration: 0.1, frequency: 659, gain: 0.048, type: "triangle" },
+    { duration: 0.1, frequency: 784, gain: 0.052, type: "triangle" },
+    { duration: 0.12, frequency: 1046, gain: 0.052, type: "triangle" },
+    { duration: 0.22, frequency: 1318, gain: 0.044, type: "sine" }
+  ], 0.065);
 }
 
 export function playNovaSound() {
   playSequence([
-    { duration: 0.07, frequency: 880, gain: 0.018, type: "sine" },
-    { duration: 0.1, frequency: 1174, gain: 0.018, type: "triangle" }
+    { duration: 0.07, frequency: 880, gain: 0.017, type: "sine" },
+    { duration: 0.1, frequency: 1174, gain: 0.017, type: "triangle" }
   ], 0.055);
 }
