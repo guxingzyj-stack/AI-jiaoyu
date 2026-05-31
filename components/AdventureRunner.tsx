@@ -1,20 +1,17 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { type CSSProperties, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, type ReactNode, useEffect, useMemo, useState } from "react";
 import {
   type AdventureConfig,
   type AnswerOption,
   type AdventureSession,
   type AdventureStage,
-  type ReflectionChoice,
   initialAdventureSession
 } from "../lib/adventures";
 import { markIslandCompleted, readAdventureProgress } from "../lib/adventureProgress";
 import { resolveIslandConfig } from "../lib/adventureQuestionPools";
 import { readProgress, readStudent, saveStudentAndProgress } from "../lib/learningProgress";
-import { getReflection } from "../lib/reflection";
-import { REFLECTION_CHOICE_LABELS } from "../lib/reflectionPrompt";
 import { trackEvent } from "../lib/telemetry";
 
 // 无美术资源时退回的渐变背景（asset-light 关卡用）。各关可用 config.fallbackScene
@@ -39,12 +36,6 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
   const [answerFeedback, setAnswerFeedback] = useState("");
   const [helpStep, setHelpStep] = useState<"menu" | "l1" | "l2" | "l3_confirm" | "l3_answer">("menu");
   const [helpFeedback, setHelpFeedback] = useState("");
-  const [selectedReflection, setSelectedReflection] = useState<ReflectionChoice | null>(null);
-  // Beat 7 真 AI 复盘：贴纸文案改为向 /api/reflect 取（无 key/失败回落静态文案）。
-  const [reflectionText, setReflectionText] = useState<string | null>(null);
-  const [reflectionLoading, setReflectionLoading] = useState(false);
-  // 防竞态：快速换贴纸时只采用最后一次请求的结果。
-  const reflectionReqId = useRef(0);
 
   const preloadAssets = useMemo(
     () => Array.from(new Set(Object.values(config.assets).filter(Boolean) as string[])),
@@ -290,34 +281,6 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
     setNotice(choice === "a" ? (config.feedback?.truthSuccess ?? `哇，你抓到我啦！可能是+${config.stone.step}，也可能是+${config.towerStep}。`) : "那我们继续看看今天学到了什么吧。");
   };
 
-  const chooseReflection = (choice: ReflectionChoice) => {
-    setSelectedReflection(choice);
-    updateSession("reflection_choice", (prev) => ({ ...prev, reflectionChoice: choice }));
-
-    const seed = config.reflectionStickers[choice];
-    const reqId = reflectionReqId.current + 1;
-    reflectionReqId.current = reqId;
-    setReflectionLoading(true);
-    setReflectionText(null);
-
-    void getReflection({
-      islandName: config.copy.routeTitle,
-      choice,
-      choiceLabel: REFLECTION_CHOICE_LABELS[choice],
-      stoneStep: config.stone.step,
-      towerStep: config.towerStep,
-      truthDetectorSuccess: session.truthDetectorSuccess,
-      seed
-    }).then((result) => {
-      // 只采用最后一次点击的结果，避免快速换贴纸时旧请求覆盖新文案。
-      if (reflectionReqId.current !== reqId) return;
-      setReflectionText(result.text);
-      setReflectionLoading(false);
-      logEvent("reflection_ai_loaded");
-      trackEvent("reflection_ai_source", { levelId: config.levelId, choice, source: result.source });
-    });
-  };
-
   const completeAdventure = () => {
     // 首次完成本岛探险才并入主进度（默默加经验/金币），重玩不再重复发放。
     const alreadyCompleted = readAdventureProgress().completedIslands.includes(config.islandId);
@@ -342,19 +305,20 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
     setAnswerFeedback("");
     setHelpStep("menu");
     setHelpFeedback("");
-    setSelectedReflection(null);
-    setReflectionText(null);
-    setReflectionLoading(false);
-    reflectionReqId.current += 1; // 丢弃任何在途的复盘请求
     logEvent("reset_adventure", initialAdventureSession);
   };
 
   const jumpNumbers = [...config.stone.sequence, String(config.stone.answer)];
   const jumpHighlight = String(config.stone.answer);
   const isMakeTen = config.kind === "make-ten";
-  // 复盘贴纸标签：关卡可覆写（森林岛走“我会凑成10”等），否则用默认。
-  const stickerLabel = (choice: ReflectionChoice, fallback: string) =>
-    config.reflectionStickerLabels?.[choice] ?? fallback;
+  const usedNovaHelp = session.l1Count + session.l2Count + session.l3Count > 0;
+  const rewardBadgeTitle = session.truthDetectorSuccess
+    ? "真相探测员"
+    : usedNovaHelp
+      ? "小小提问家"
+      : isMakeTen
+        ? "凑成10星章"
+        : "找规律星章";
   // Nova 求助 L1：make-ten 关卡提供 l1 文案时改为“引导卡”，否则走默认的 +step 规律选择器。
   const helpL1AsGuidance = Boolean(session.currentQuestion === "stone" ? config.help?.l1Stone : config.help?.l1Tower);
   const helpL1Title = session.currentQuestion === "stone" ? config.help?.l1TitleStone : config.help?.l1TitleTower;
@@ -723,39 +687,22 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
             <div className="relative h-[250px] w-full shrink-0 overflow-hidden bg-cover bg-center sm:h-[280px] lg:absolute lg:inset-0 lg:aspect-auto lg:h-full" style={sceneStyle(config.assets.notebook)}>
               <div className="absolute left-4 top-4 z-20 rounded-[22px] border border-cyan-200/25 bg-blue-950/58 px-4 py-3 shadow-[0_0_24px_rgba(34,211,238,0.16)] backdrop-blur-md sm:left-6 sm:top-6">
                 <p className="text-xs font-black tracking-[0.2em] text-cyan-200">{config.copy.reflectionEyebrow}</p>
-                <h2 className="mt-1 max-w-[280px] text-xl font-black leading-7 text-white drop-shadow-[0_0_18px_rgba(103,232,249,0.38)] lg:max-w-none lg:text-2xl">选一张贴纸，完成今天的探险</h2>
+                <h2 className="mt-1 max-w-[280px] text-xl font-black leading-7 text-white drop-shadow-[0_0_18px_rgba(103,232,249,0.38)] lg:max-w-none lg:text-2xl">今日星章到账！</h2>
               </div>
             </div>
-            <div className="relative z-20 mx-auto -mt-8 w-full max-w-5xl p-3 pt-0 sm:-mt-10 sm:p-4 sm:pt-0 lg:absolute lg:inset-x-[4%] lg:top-[17%] lg:bottom-[4%] lg:mt-0 lg:p-0">
-              <div className="grid gap-5 lg:grid-cols-[260px_1fr]">
-                <div className="mx-auto grid w-full max-w-[320px] self-start rounded-[24px] border border-amber-200/25 bg-blue-950/68 p-3 shadow-[0_0_24px_rgba(252,211,77,0.12)] backdrop-blur-sm lg:mx-0 lg:max-w-none lg:gap-3 lg:rounded-[28px] lg:bg-blue-950/45">
-                  <p className="mb-2 px-1 text-center text-sm font-black text-amber-100 lg:mb-0 lg:text-left">点一张你最喜欢的贴纸</p>
-                  <StickerButton dataTestId="reflection-pattern" isSelected={selectedReflection === "pattern"} onClick={() => chooseReflection("pattern")}>{stickerLabel("pattern", "🔢 找规律")}</StickerButton>
-                  <StickerButton isSelected={selectedReflection === "ask_nova"} onClick={() => chooseReflection("ask_nova")}>{stickerLabel("ask_nova", "🤔 问 Nova")}</StickerButton>
-                  <StickerButton isSelected={selectedReflection === "island_light"} onClick={() => chooseReflection("island_light")}>{stickerLabel("island_light", "✨ 点亮新岛")}</StickerButton>
-                  {session.truthDetectorSuccess && <StickerButton isSelected={selectedReflection === "not_blind_trust"} onClick={() => chooseReflection("not_blind_trust")}>{stickerLabel("not_blind_trust", "🔍 不全信 Nova")}</StickerButton>}
+            <div className="relative z-20 mx-auto -mt-10 w-full max-w-5xl p-3 pt-0 sm:-mt-12 sm:p-4 sm:pt-0 lg:absolute lg:inset-x-[4%] lg:top-[17%] lg:bottom-[4%] lg:mt-0 lg:p-0">
+              <div className="flex h-full flex-col items-center justify-start gap-4 lg:justify-center">
+                <div className="relative w-full max-w-[340px] overflow-hidden rounded-[32px] border border-amber-100/45 bg-[radial-gradient(circle_at_50%_22%,rgba(254,243,199,0.42),rgba(251,191,36,0.18)_34%,rgba(30,41,124,0.72)_74%)] px-5 py-6 text-center shadow-[0_0_46px_rgba(252,211,77,0.32)] backdrop-blur-md lg:max-w-[460px] lg:px-8 lg:py-8">
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.3),transparent_28%)]" />
+                  <div className="relative mx-auto flex h-36 w-36 items-center justify-center rounded-full border border-amber-100/70 bg-gradient-to-br from-amber-200 via-yellow-300 to-amber-500 text-7xl text-amber-950 shadow-[0_0_34px_rgba(252,211,77,0.72),inset_0_0_22px_rgba(255,255,255,0.48)] lg:h-44 lg:w-44 lg:text-8xl">
+                    <span aria-hidden>⭐</span>
+                  </div>
+                  <p className="relative mt-5 text-xs font-black tracking-[0.22em] text-amber-100">今日星章</p>
+                  <p className="relative mt-2 text-3xl font-black leading-10 text-white drop-shadow-[0_0_18px_rgba(252,211,77,0.56)] lg:text-4xl">{rewardBadgeTitle}</p>
+                  <p className="relative mx-auto mt-3 max-w-[250px] text-sm font-black leading-6 text-amber-100/90 lg:max-w-sm lg:text-base">今天的探险发现已经收进笔记本。</p>
                 </div>
-                <div className="mx-auto min-h-28 w-full max-w-[340px] rounded-[28px] border border-amber-200/30 bg-[linear-gradient(135deg,rgba(255,245,210,0.14),rgba(30,41,124,0.34))] p-4 shadow-[0_0_40px_rgba(252,211,77,0.14)] backdrop-blur-[2px] lg:mx-0 lg:min-h-0 lg:max-w-none lg:rounded-[34px] lg:p-6">
-                  {selectedReflection ? (
-                    <div className="flex h-full flex-col items-center justify-center text-center">
-                      <div className="hidden rotate-[-6deg] rounded-[30px] border border-amber-200/45 bg-amber-100/18 px-8 py-5 text-7xl shadow-[0_0_32px_rgba(252,211,77,0.24)] sm:block">⭐</div>
-                      <p className="max-w-xl rounded-[24px] border border-amber-100/25 bg-blue-950/45 p-3 text-base font-black leading-7 text-amber-100 sm:mt-5 sm:p-4 sm:text-lg sm:leading-8" data-testid="reflection-text">
-                        {reflectionLoading || !reflectionText ? (
-                          <span className="inline-flex items-center gap-2 text-amber-100/80">
-                            <span className="nova-think-dot" aria-hidden />
-                            Nova 正在把今天的发现写进笔记…
-                          </span>
-                        ) : (
-                          reflectionText
-                        )}
-                      </p>
-                      <div className="mt-4 w-full max-w-[260px]">
-                        <GameButton dataTestId="complete-button" onClick={completeAdventure}>完成今天的探险</GameButton>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-center text-base font-black leading-7 text-cyan-100 sm:text-xl">先点一张贴纸，黄色完成按钮就会出现。</div>
-                  )}
+                <div className="w-full max-w-[260px]">
+                  <GameButton dataTestId="complete-button" onClick={completeAdventure}>收下今日星章</GameButton>
                 </div>
               </div>
             </div>
@@ -840,14 +787,6 @@ function GameButton({ children, dataTestId, onClick }: { children: ReactNode; da
 function SoftButton({ children, dataTestId, onClick }: { children: ReactNode; dataTestId?: string; onClick: () => void }) {
   return (
     <button className="rounded-[24px] border border-cyan-300/25 bg-blue-950/64 px-5 py-4 text-base font-black text-cyan-50 shadow-md transition hover:bg-cyan-300/12 focus:outline-none focus:ring-4 focus:ring-amber-200/40 active:scale-95" data-testid={dataTestId} onClick={onClick} type="button">
-      {children}
-    </button>
-  );
-}
-
-function StickerButton({ children, dataTestId, isSelected, onClick }: { children: ReactNode; dataTestId?: string; isSelected?: boolean; onClick: () => void }) {
-  return (
-    <button aria-pressed={isSelected} className={`mx-auto mb-2 min-h-14 w-full max-w-[260px] rotate-[-2deg] rounded-[24px] border px-4 py-3 text-center text-base font-black shadow-[0_0_18px_rgba(252,211,77,0.12)] transition hover:-translate-y-0.5 hover:shadow-[0_0_28px_rgba(252,211,77,0.24)] focus:outline-none focus:ring-4 focus:ring-amber-200/40 active:scale-95 even:rotate-[2deg] last:mb-0 lg:mx-0 lg:mb-0 lg:min-h-0 lg:max-w-none lg:rotate-[-1deg] lg:rounded-[20px] lg:px-4 lg:py-3 lg:text-left lg:text-sm lg:even:rotate-[1deg] ${isSelected ? "border-amber-100 bg-gradient-to-br from-amber-200/46 to-yellow-500/34 text-white ring-4 ring-amber-200/35" : "border-amber-200/40 bg-gradient-to-br from-amber-100/22 to-violet-700/42 text-amber-50"}`} data-testid={dataTestId} onClick={onClick} type="button">
       {children}
     </button>
   );
