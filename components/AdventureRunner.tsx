@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { type CSSProperties, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import {
   type AdventureConfig,
+  type AnswerOption,
   type AdventureSession,
   type AdventureStage,
   type ReflectionChoice,
@@ -140,45 +141,44 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
     logEvent("truth_detector_not_ready");
   };
 
-  const answerStone = (answer: number) => {
-    if (answer === config.stone.answer) {
-      setAnswerFeedback(`哇！你看出来了！这条数字路每次加${config.stone.step}。`);
+  const answerStone = (answer: number | string) => {
+    if (String(answer) === String(config.stone.answer)) {
+      setAnswerFeedback(config.feedback?.stoneCorrect ?? `哇！你看出来了！这条数字路每次加${config.stone.step}。`);
       logEvent("stone_correct");
       return;
     }
     if (session.wrongAttemptsStone === 0) {
       const seq = config.stone.sequence;
       updateSession("stone_try_again", (prev) => ({ ...prev, wrongAttemptsStone: prev.wrongAttemptsStone + 1 }));
-      setAnswerFeedback(`差一点！再看看 ${seq[0]} 到 ${seq[1]}、${seq[1]} 到 ${seq[2]}，中间都隔了几？`);
+      setAnswerFeedback(config.feedback?.stoneWrongFirst ?? `差一点！再看看 ${seq[0]} 到 ${seq[1]}、${seq[1]} 到 ${seq[2]}，中间都隔了几？`);
       return;
     }
-    setAnswerFeedback("我们一起想一想？");
+    setAnswerFeedback(config.feedback?.stoneSecondWrong ?? "我们一起想一想？");
     updateSession("stone_second_try_help", (prev) => ({ ...prev, wrongAttemptsStone: prev.wrongAttemptsStone + 1, currentQuestion: "stone", stage: "help_menu" }));
   };
 
-  const answerTower = (answer: number) => {
+  const answerTower = (answer: number | string) => {
     const step = config.towerSteps[session.towerStep];
-    if (answer === step.answer) {
+    if (String(answer) === String(step.answer)) {
       const isLast = session.towerStep >= config.towerSteps.length - 1;
       if (isLast) {
-        setAnswerFeedback(`塔亮起来了！${config.towerSteps.length}段数字路都点亮，每一段都是加${config.towerStep}。`);
+        setAnswerFeedback(config.feedback?.towerCorrectAll ?? `塔亮起来了！${config.towerSteps.length}段数字路都点亮，每一段都是加${config.towerStep}。`);
         logEvent("tower_correct_all");
       } else {
-        setAnswerFeedback(`第${session.towerStep + 1}段亮起来了！再看看上面那一段。`);
+        setAnswerFeedback(config.feedback?.towerCorrectStep ?? `第${session.towerStep + 1}段亮起来了！再看看上面那一段。`);
         logEvent(`tower_correct_step_${session.towerStep}`);
       }
       return;
     }
     if (session.wrongAttemptsTower === 0) {
       updateSession("tower_try_again", (prev) => ({ ...prev, wrongAttemptsTower: prev.wrongAttemptsTower + 1 }));
-      setAnswerFeedback(`再看看 ${step.sequence.join("、")}，每次多了几个？`);
+      setAnswerFeedback(config.feedback?.towerWrongFirst ?? `再看看 ${step.sequence.join("、")}，每次多了几个？`);
       return;
     }
-    setAnswerFeedback("我们可以请 Nova 一起想。");
+    setAnswerFeedback(config.feedback?.towerSecondWrong ?? "我们可以请 Nova 一起想。");
     updateSession("tower_second_try_help", (prev) => ({ ...prev, wrongAttemptsTower: prev.wrongAttemptsTower + 1, currentQuestion: "tower", stage: "help_menu" }));
   };
 
-  // 答对中间段：清空反馈、推进到下一段并重置该段错误计数；答对最后一段才进入 Beat 6。
   const advanceTower = () => {
     if (session.towerStep >= config.towerSteps.length - 1) {
       goStage("truth_moment", "tower_to_truth_moment");
@@ -215,6 +215,13 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
   };
 
   const startL2 = () => {
+    const feedbackOverride = session.currentQuestion === "stone" ? config.feedback?.helpL2Stone : config.feedback?.helpL2Tower;
+    if (feedbackOverride) {
+      setHelpStep("l2");
+      setHelpFeedback(feedbackOverride);
+      updateSession("help_l2", (prev) => ({ ...prev, l2Count: prev.l2Count + 1 }));
+      return;
+    }
     const { seq, step } = currentSeqAndStep();
     const parts = seq.slice(0, -1).map((n, i) => `${n} 到 ${seq[i + 1]} 是 +${step}`);
     const last = seq[seq.length - 1];
@@ -225,6 +232,13 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
 
   const confirmL3 = () => {
     if (session.inspirationStars === 0) {
+      const noStarOverride = session.currentQuestion === "stone" ? config.feedback?.helpL3NoStarStone : config.feedback?.helpL3NoStarTower;
+      if (noStarOverride) {
+        setHelpStep("l2");
+        setHelpFeedback(noStarOverride);
+        updateSession("help_l3_no_star", (prev) => ({ ...prev, l2Count: prev.l2Count + 1 }));
+        return;
+      }
       const { step } = currentSeqAndStep();
       setHelpStep("l2");
       setHelpFeedback(`今天的灵感星用完啦，但我还能陪你想：这条路每次多${step}。`);
@@ -238,6 +252,13 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
 
   const useInspirationStar = () => {
     const isStone = session.currentQuestion === "stone";
+    const answerOverride = isStone ? config.feedback?.helpL3AnswerStone : config.feedback?.helpL3AnswerTower;
+    if (answerOverride) {
+      setHelpStep("l3_answer");
+      setHelpFeedback(answerOverride);
+      updateSession("help_l3_used", (prev) => ({ ...prev, inspirationStars: Math.max(0, prev.inspirationStars - 1), l3Count: prev.l3Count + 1 }));
+      return;
+    }
     const answer = isStone ? config.stone.answer : config.towerSteps[session.towerStep].answer;
     const step = isStone ? config.stone.step : config.towerStep;
     setHelpStep("l3_answer");
@@ -247,12 +268,12 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
 
   const chooseTruth = (choice: "a" | "b" | "c") => {
     if (choice === "c") {
-      setNotice("再看一看刚才的两条数字路。");
+      setNotice(config.feedback?.truthThinkAgain ?? "再看一看刚才的两条数字路。");
       logEvent("truth_think_again");
       return;
     }
     updateSession(choice === "a" ? "truth_success" : "truth_tried", (prev) => ({ ...prev, truthDetectorOpened: true, truthDetectorSuccess: choice === "a", stage: "reflection" }));
-    setNotice(choice === "a" ? `哇，你抓到我啦！可能是+${config.stone.step}，也可能是+${config.towerStep}。` : "那我们继续看看今天学到了什么吧。");
+    setNotice(choice === "a" ? (config.feedback?.truthSuccess ?? `哇，你抓到我啦！可能是+${config.stone.step}，也可能是+${config.towerStep}。`) : "那我们继续看看今天学到了什么吧。");
   };
 
   const chooseReflection = (choice: ReflectionChoice) => {
@@ -471,7 +492,7 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
                 {answerFeedback}
               </p>
             )}
-            {answerFeedback.startsWith("哇") && (
+            {(answerFeedback === config.feedback?.stoneCorrect || answerFeedback.startsWith("哇")) && (
               <div className="flex justify-center p-4 lg:absolute lg:bottom-[8%] lg:left-1/2 lg:p-0 lg:-translate-x-1/2">
                 <GameButton onClick={() => goStage("island_jump", "stone_to_island_jump")}>继续</GameButton>
               </div>
@@ -549,7 +570,11 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
 
       case "tower_question": {
         const towerStep = config.towerSteps[session.towerStep];
-        const towerCorrect = answerFeedback.startsWith("塔亮") || answerFeedback.startsWith("第");
+        const towerCorrect =
+          answerFeedback === config.feedback?.towerCorrectAll ||
+          answerFeedback === config.feedback?.towerCorrectStep ||
+          answerFeedback.startsWith("塔亮") ||
+          answerFeedback.startsWith("第");
         const litSegments = session.towerStep + (towerCorrect ? 1 : 0);
         return (
           <QuestionStage asset={config.assets.tower} title={`${config.copy.towerTitlePrefix}（第${session.towerStep + 1}段 / 共${config.towerSteps.length}段）`} feedback={answerFeedback} showContinue={towerCorrect} onContinue={advanceTower}>
@@ -595,7 +620,7 @@ export default function AdventureRunner({ config }: { config: AdventureConfig })
           <StageFrame asset={config.assets.truth} title="真相探测器启动！" eyebrow="你觉得 Nova 哪里说得不对？">
             <div className="mx-auto mt-16 grid max-w-3xl gap-4 rounded-[34px] border border-cyan-300/25 bg-blue-950/70 p-6 shadow-[0_0_44px_rgba(103,232,249,0.18)] backdrop-blur-md">
               <div className="mx-auto flex h-28 w-28 animate-pulse items-center justify-center rounded-full bg-amber-300 text-6xl text-slate-950 shadow-[0_0_42px_rgba(252,211,77,0.65)]">🔍</div>
-              <SoftButton dataTestId="truth-answer-a" onClick={() => chooseTruth("a")}>A 数字路不一定每次加{config.stone.step}</SoftButton>
+              <SoftButton dataTestId="truth-answer-a" onClick={() => chooseTruth("a")}>{config.feedback?.truthOptionA ?? <>A 数字路不一定每次加{config.stone.step}</>}</SoftButton>
               <SoftButton onClick={() => chooseTruth("b")}>B 我相信 Nova</SoftButton>
               <SoftButton onClick={() => chooseTruth("c")}>C 让我再想想</SoftButton>
             </div>
@@ -752,7 +777,7 @@ function NumberRoad({ numbers }: { numbers: string[] }) {
   );
 }
 
-function OptionGrid({ onChoose, options, testPrefix, small }: { onChoose: (option: number) => void; options: readonly number[]; testPrefix: string; small?: boolean }) {
+function OptionGrid({ onChoose, options, testPrefix, small }: { onChoose: (option: AnswerOption) => void; options: readonly AnswerOption[]; testPrefix: string; small?: boolean }) {
   return (
     <>
       {options.map((option) => (
@@ -761,8 +786,8 @@ function OptionGrid({ onChoose, options, testPrefix, small }: { onChoose: (optio
             ? "h-12 min-w-20 rounded-[20px] bg-gradient-to-br from-violet-700 via-blue-700 to-cyan-500 px-5 text-xl font-black text-white shadow-[0_0_16px_rgba(34,211,238,0.28)] ring-2 ring-cyan-200/20 transition hover:scale-105 hover:shadow-[0_0_24px_rgba(34,211,238,0.45)] focus:outline-none focus:ring-4 focus:ring-amber-200/55 active:scale-95"
             : "h-20 min-w-32 rounded-[32px] bg-gradient-to-br from-violet-700 via-blue-700 to-cyan-500 px-8 text-3xl font-black text-white shadow-[0_0_24px_rgba(34,211,238,0.28)] ring-4 ring-cyan-200/20 transition hover:scale-105 hover:shadow-[0_0_34px_rgba(34,211,238,0.45)] focus:outline-none focus:ring-4 focus:ring-amber-200/55 active:scale-95"
           }
-          data-testid={`${testPrefix}-${option}`}
-          key={option}
+          data-testid={`${testPrefix}-${String(option).replace(/\s+/g, "-")}`}
+          key={String(option)}
           onClick={() => onChoose(option)}
           type="button"
         >
@@ -821,3 +846,4 @@ function ResultLine({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+

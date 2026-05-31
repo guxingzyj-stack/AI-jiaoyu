@@ -1,4 +1,4 @@
-import { multiplesSeaAssets } from "./multiplesSeaAssets";
+﻿import { multiplesSeaAssets } from "./multiplesSeaAssets";
 import { forestIslandAssets } from "./forestIslandAssets";
 
 // 7-Beat 探险母模板：把一关“探险”拆成固定的 10 个阶段，所有变化（数学规律、文案、
@@ -51,10 +51,12 @@ export const initialAdventureSession: AdventureSession = {
 };
 
 // 一段连续数字路的题：展示的数列 + 正确答案 + 三个选项。
+export type AnswerOption = number | string;
+
 export type SequenceQuestion = {
   sequence: string[];
-  answer: number;
-  options: number[];
+  answer: AnswerOption;
+  options: AnswerOption[];
 };
 
 export type AdventureConfig = {
@@ -88,6 +90,24 @@ export type AdventureConfig = {
   truthStatement: string; // Beat 6：Nova 故意说错（把 stone.step 概括到所有数字路）
 
   reflectionStickers: Record<ReflectionChoice, string>;
+  feedback?: {
+    stoneCorrect?: string;
+    stoneWrongFirst?: string;
+    stoneSecondWrong?: string;
+    towerCorrectAll?: string;
+    towerCorrectStep?: string;
+    towerWrongFirst?: string;
+    towerSecondWrong?: string;
+    helpL2Stone?: string;
+    helpL2Tower?: string;
+    helpL3NoStarStone?: string;
+    helpL3NoStarTower?: string;
+    helpL3AnswerStone?: string;
+    helpL3AnswerTower?: string;
+    truthOptionA?: string;
+    truthThinkAgain?: string;
+    truthSuccess?: string;
+  };
   stageTitles: Record<AdventureStage, string>;
   novaLines: Record<AdventureStage, string> & { helpStone: string; helpTower: string };
   goals: Record<AdventureStage, string>;
@@ -214,47 +234,57 @@ export const multiplesSeaConfig: AdventureConfig = {
   }
 };
 
-// 第 2 关：森林岛跳数探险。复用同一套 7-Beat 引擎，暂为 asset-light（无专属美术，
-// 退回渐变背景 + emoji），Nova 立绘沿用同一角色。教学对照：脚印每次 +5，大树每次 +4，
-// Nova 在 Beat 6 故意把“+5”概括到所有数字路，引导孩子用真相探测器识破。
+// 第 2 关：拆分森林。复用同一套 7-Beat 引擎，但题型改为凑成10和数字组合，
+// 用来和倍数海的数字路形成差异。Nova 在 Beat 6 故意说错，引导孩子用真相探测器检查。
 export const forestIslandConfig: AdventureConfig = {
   islandId: "forest",
-  levelId: "forest_island_skip_count",
+  levelId: "forest_island_make_ten",
   reward: { exp: 40, coins: 15 },
 
-  // 森林主题渐变：无专属背景时和倍数海的蓝色星空区分开（森林绿 + 暖光顶）。
   fallbackScene:
     "radial-gradient(circle at 50% 14%, rgba(190,242,100,0.22), rgba(34,120,67,0.7) 42%, rgba(6,28,16,0.98))",
 
-  // 森林岛专属美术已到位（见 public/assets/forest-island/）：整关用真图。
-  // fallbackScene 保留作兜底——某张图加载失败时仍退回森林绿渐变。
   assets: {
     ...forestIslandAssets
   },
 
-  stone: { sequence: ["5", "10", "15", "20"], answer: 25, options: [24, 25, 30], step: 5 },
-  towerSteps: [
-    { sequence: ["4", "8", "12", "16"], answer: 20, options: [18, 20, 24] },
-    { sequence: ["8", "12", "16", "20"], answer: 24, options: [22, 24, 28] },
-    { sequence: ["12", "16", "20", "24"], answer: 28, options: [26, 28, 32] }
-  ],
-  towerStep: 4,
-  truthStatement: "今天你学会了数字路！所有这样的数字路都是每次加5。",
+  stone: { sequence: ["7", "8", "9", "10"], answer: 3, options: [2, 3, 4], step: 1 },
+  towerSteps: [{ sequence: ["6", "4", "10"], answer: "6 和 4", options: ["6 和 4", "7 和 2", "8 和 3"] }],
+  towerStep: 10,
+  truthStatement: "我明白了！凑成10的时候，大数字一定要配大数字。",
+
+  feedback: {
+    stoneCorrect: "对啦！7 再加 3，就能凑成 10。",
+    stoneWrongFirst: "差一点！从 7 往后数：8、9、10，还差几步？",
+    stoneSecondWrong: "我们一起数一数：8、9、10，还差 3 颗。",
+    towerCorrectAll: "你找到了！6 和 4 正好凑成 10。",
+    towerWrongFirst: "再看看这两个数加起来是不是 10。",
+    towerSecondWrong: "可以问问 Nova，看看哪一对果子合起来是 10。",
+    helpL2Stone: "看，7 后面是 8、9、10。数一数还差几步？",
+    helpL2Tower: "看三对果子：6 和 4 合起来是 10，7 和 2 是 9，8 和 3 是 11。",
+    helpL3NoStarStone: "灵感星用完啦，但我还能陪你数：8、9、10，还差 3 颗。",
+    helpL3NoStarTower: "灵感星用完啦，但我还能陪你看：哪一对合起来正好是 10？",
+    helpL3AnswerStone: "答案是 3。7 再加 3，就能凑成 10。",
+    helpL3AnswerTower: "答案是 6 和 4。6 加 4 正好是 10。",
+    truthOptionA: "A 凑成10只看合起来是不是10",
+    truthThinkAgain: "再看看刚才的能量果：6 和 4 合起来是 10。",
+    truthSuccess: "你抓到我啦！凑成 10 只要合起来是 10，不管数字大还是小。"
+  },
 
   reflectionStickers: {
-    pattern: "你今天找到了数字路的秘密：每次增加一样多，就能知道下一个数字。",
-    ask_nova: "你今天学会了向 Nova 求助。先说自己看到什么，再一步一步问。",
-    island_light: "你今天点亮了森林岛！下一次还有新的地方等你发现。",
+    pattern: "你今天发现了凑成10的小秘密：先看已经有几颗，再想还差几颗。",
+    ask_nova: "你今天学会了问 Nova。卡住时，可以说出自己已经看到了什么。",
+    island_light: "你今天点亮了森林树屋！能量果把森林小路照亮了。",
     not_blind_trust: "你今天打开了真相探测器！Nova 说错时，你能自己检查。"
   },
 
   stageTitles: {
     map_intro: "星球地图",
-    beach_observe: "森林入口",
-    stone_question: "脚印数字路",
+    beach_observe: "拆分森林",
+    stone_question: "能量果问题",
     help_menu: "问问 Nova",
     island_jump: "点亮森林",
-    tower_question: "大树数字",
+    tower_question: "森林树屋",
     truth_moment: "Nova 的一句话",
     truth_question: "真相探测器",
     reflection: "探险笔记",
@@ -262,27 +292,27 @@ export const forestIslandConfig: AdventureConfig = {
   },
 
   novaLines: {
-    map_intro: "森林岛深处好像有发光的脚印……",
-    beach_observe: "看！数出第5个脚印，小径就会亮起来！",
-    stone_question: "先看脚印路，每次多了几个？",
+    map_intro: "森林里的能量树醒啦！",
+    beach_observe: "树上已经有 7 颗能量果。",
+    stone_question: "还差几颗，就能凑成 10？",
     help_menu: "",
-    island_jump: "我们成功啦！",
-    tower_question: "大树上也有一条数字路！",
-    truth_moment: "我们爬到树顶啦！我把今天的发现记下来。",
+    island_jump: "能量树亮起来了！",
+    tower_question: "找一对果子，帮树屋凑满 10。",
+    truth_moment: "我好像发现了一个规律。",
     truth_question: "",
     reflection: "选一张今天最喜欢的贴纸。",
-    complete: "这次探险很漂亮。",
-    helpStone: "我们看看脚印数字路。",
-    helpTower: "我们看看大树上的数字路。"
+    complete: "森林岛被你点亮啦！",
+    helpStone: "我们一起数能量果。",
+    helpTower: "我们一起找一对果子。"
   },
 
   goals: {
-    map_intro: "走进发光的森林岛",
-    beach_observe: "点击问号脚印",
-    stone_question: "数出第5个脚印",
+    map_intro: "去能量树看看",
+    beach_observe: "看看树上有几颗能量果",
+    stone_question: "算出还差几颗",
     help_menu: "选择一种问法",
-    island_jump: "点亮森林小径",
-    tower_question: "点亮大树数字",
+    island_jump: "继续探索森林",
+    tower_question: "找一对能凑成10的果子",
     truth_moment: "听听 Nova 的话",
     truth_question: "打开真相探测器",
     reflection: "贴上探险贴纸",
@@ -290,29 +320,29 @@ export const forestIslandConfig: AdventureConfig = {
   },
 
   copy: {
-    routeTitle: "森林岛跳数探险",
+    routeTitle: "拆分森林探险",
     mapEyebrow: "数学星球地图",
-    mapTitle: "发现森林岛",
-    mapButton: "走进森林岛",
-    observeEyebrow: "森林入口",
-    observeTitle: "林间发光的脚印",
-    stoneEyebrow: "脚印数字路",
-    stoneTitle: "第5个脚印应该是多少？",
-    jumpEyebrow: "点亮森林",
-    jumpTitle: "森林小径点亮！",
-    towerTitlePrefix: "大树上的下一个数字是多少？",
-    truthEyebrow: "树顶平台",
+    mapTitle: "发现拆分森林",
+    mapButton: "去能量树看看",
+    observeEyebrow: "拆分森林",
+    observeTitle: "树上已有 7 颗能量果",
+    stoneEyebrow: "凑成10",
+    stoneTitle: "还差几颗能量果？",
+    jumpEyebrow: "森林小路",
+    jumpTitle: "能量树亮起来了！",
+    towerTitlePrefix: "哪一对能量果能凑成10？",
+    truthEyebrow: "森林树屋",
     truthTitle: "Nova 的一句话",
     reflectionEyebrow: "探险笔记本",
     reflectionTitle: "今天最酷的发现是什么？",
     completeEyebrow: "森林岛纪念卡",
     completeTitle: "今日探险完成",
-    firstChallengeLabel: "脚印规律",
-    secondChallengeLabel: "大树数字"
+    firstChallengeLabel: "能量果",
+    secondChallengeLabel: "森林树屋"
   }
 };
-
 export const adventureConfigs: Record<string, AdventureConfig> = {
   [multiplesSeaConfig.islandId]: multiplesSeaConfig,
   [forestIslandConfig.islandId]: forestIslandConfig
 };
+
