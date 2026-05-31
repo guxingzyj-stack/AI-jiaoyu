@@ -12,6 +12,14 @@ import {
 import { markIslandCompleted, readAdventureProgress } from "../lib/adventureProgress";
 import { resolveIslandConfig } from "../lib/adventureQuestionPools";
 import { readProgress, readStudent, saveStudentAndProgress } from "../lib/learningProgress";
+import {
+  playClickSound,
+  playCompleteSound,
+  playCorrectSound,
+  playNovaSound,
+  playRewardSound,
+  playWrongSound
+} from "../lib/soundEffects";
 import { trackEvent } from "../lib/telemetry";
 
 // 无美术资源时退回的渐变背景（asset-light 关卡用）。各关可用 config.fallbackScene
@@ -123,6 +131,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
   };
 
   const askNova = () => {
+    playNovaSound();
     if (session.stage === "stone_question") {
       updateSession("open_nova_help_stone", (prev) => ({ ...prev, currentQuestion: "stone", stage: "help_menu" }));
       return;
@@ -136,6 +145,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
   };
 
   const openTruthDetector = () => {
+    playClickSound();
     if (session.stage === "truth_moment") {
       updateSession("truth_detector_opened", (prev) => ({ ...prev, truthDetectorOpened: true, stage: "truth_question" }));
       return;
@@ -146,10 +156,12 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
 
   const answerStone = (answer: number | string) => {
     if (String(answer) === String(config.stone.answer)) {
+      playCorrectSound();
       setAnswerFeedback(config.feedback?.stoneCorrect ?? `哇！你看出来了！这条数字路每次加${config.stone.step}。`);
       logEvent("stone_correct");
       return;
     }
+    playWrongSound();
     if (session.wrongAttemptsStone === 0) {
       const seq = config.stone.sequence;
       updateSession("stone_try_again", (prev) => ({ ...prev, wrongAttemptsStone: prev.wrongAttemptsStone + 1 }));
@@ -163,6 +175,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
   const answerTower = (answer: number | string) => {
     const step = config.towerSteps[session.towerStep];
     if (String(answer) === String(step.answer)) {
+      playCorrectSound();
       const isLast = session.towerStep >= config.towerSteps.length - 1;
       if (isLast) {
         setAnswerFeedback(config.feedback?.towerCorrectAll ?? `塔亮起来了！${config.towerSteps.length}段数字路都点亮，每一段都是加${config.towerStep}。`);
@@ -173,6 +186,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
       }
       return;
     }
+    playWrongSound();
     if (session.wrongAttemptsTower === 0) {
       updateSession("tower_try_again", (prev) => ({ ...prev, wrongAttemptsTower: prev.wrongAttemptsTower + 1 }));
       setAnswerFeedback(config.feedback?.towerWrongFirst ?? `再看看 ${step.sequence.join("、")}，每次多了几个？`);
@@ -184,9 +198,11 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
 
   const advanceTower = () => {
     if (session.towerStep >= config.towerSteps.length - 1) {
+      playRewardSound();
       goStage("truth_moment", "tower_to_truth_moment");
       return;
     }
+    playRewardSound();
     setAnswerFeedback("");
     updateSession("tower_next_step", (prev) => ({ ...prev, towerStep: prev.towerStep + 1, wrongAttemptsTower: 0 }));
   };
@@ -282,6 +298,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
   };
 
   const completeAdventure = () => {
+    playCompleteSound();
     // 首次完成本岛探险才并入主进度（默默加经验/金币），重玩不再重复发放。
     const alreadyCompleted = readAdventureProgress().completedIslands.includes(config.islandId);
     markIslandCompleted(config.islandId);
@@ -424,7 +441,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
               <button
                 aria-label="去看看新岛"
                 className="absolute right-[6%] top-[16%] h-20 w-24 rounded-full border border-amber-200/45 bg-amber-300/10 shadow-[0_0_46px_rgba(252,211,77,0.48)] ring-4 ring-amber-200/15 transition hover:scale-105 hover:bg-amber-300/18 focus:outline-none focus:ring-4 focus:ring-amber-200/60 active:scale-95 lg:right-[10%] lg:top-[12%] lg:h-36 lg:w-44"
-                onClick={() => goStage("beach_observe", "go_new_island")}
+                onClick={() => { playClickSound(); goStage("beach_observe", "go_new_island"); }}
                 type="button"
               />
             </div>
@@ -460,7 +477,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
                     aria-label="还差几颗，进入题目"
                     className="ml-1 flex h-12 w-12 items-center justify-center rounded-full border border-amber-100/45 bg-amber-300/20 text-2xl font-black text-white shadow-[0_0_24px_rgba(252,211,77,0.5)] ring-4 ring-amber-200/30 backdrop-blur-[1px] transition hover:scale-105 active:scale-95 lg:h-14 lg:w-14"
                     data-testid="stone-mystery"
-                    onClick={() => goStage("stone_question", "open_stone_question")}
+                    onClick={() => { playClickSound(); goStage("stone_question", "open_stone_question"); }}
                     type="button"
                   >
                     ?
@@ -474,7 +491,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
                 {config.stone.sequence.map((num) => (
                   <StoneButton key={num} onClick={() => setNotice("它轻轻亮了一下。")}>{num}</StoneButton>
                 ))}
-                <button className="relative flex h-16 w-20 items-center justify-center rounded-full border border-amber-100/35 bg-amber-300/18 text-3xl font-black text-white shadow-[0_0_30px_rgba(252,211,77,0.5)] ring-4 ring-amber-200/35 backdrop-blur-[1px] transition hover:scale-105 active:scale-95" data-testid="stone-mystery" onClick={() => goStage("stone_question", "open_stone_question")} type="button">
+                <button className="relative flex h-16 w-20 items-center justify-center rounded-full border border-amber-100/35 bg-amber-300/18 text-3xl font-black text-white shadow-[0_0_30px_rgba(252,211,77,0.5)] ring-4 ring-amber-200/35 backdrop-blur-[1px] transition hover:scale-105 active:scale-95" data-testid="stone-mystery" onClick={() => { playClickSound(); goStage("stone_question", "open_stone_question"); }} type="button">
                   ?
                 </button>
               </div>
@@ -516,7 +533,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
             )}
             {stoneCorrect && (
               <div className="flex justify-center p-4 lg:absolute lg:bottom-[8%] lg:left-1/2 lg:p-0 lg:-translate-x-1/2">
-                <GameButton onClick={() => goStage("island_jump", "stone_to_island_jump")}>继续</GameButton>
+                <GameButton onClick={() => goStage("island_jump", "stone_to_island_jump")} sound="reward">继续</GameButton>
               </div>
             )}
           </div>
@@ -603,7 +620,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
               </div>
             )}
             <div className="flex justify-center pb-4 lg:absolute lg:bottom-7 lg:left-1/2 lg:pb-0 lg:-translate-x-1/2">
-              <GameButton dataTestId="island-enter" onClick={() => updateSession("enter_island", (prev) => ({ ...prev, stage: "tower_question", currentQuestion: "tower" }))}>{config.copy.jumpButton ?? "登上新岛"}</GameButton>
+              <GameButton dataTestId="island-enter" onClick={() => updateSession("enter_island", (prev) => ({ ...prev, stage: "tower_question", currentQuestion: "tower" }))} sound="reward">{config.copy.jumpButton ?? "登上新岛"}</GameButton>
             </div>
           </div>
         );
@@ -708,7 +725,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
                   <p className="relative mx-auto mt-3 max-w-[250px] text-sm font-black leading-6 text-amber-100/90 lg:max-w-sm lg:text-base">今天的探险发现已经收进笔记本。</p>
                 </div>
                 <div className="w-full max-w-[260px]">
-                  <GameButton dataTestId="complete-button" onClick={completeAdventure}>收下今日星章</GameButton>
+                  <GameButton dataTestId="complete-button" onClick={completeAdventure} sound="none">收下今日星章</GameButton>
                 </div>
               </div>
             </div>
@@ -777,14 +794,22 @@ function QuestionStage({ asset, children, continueLabel, eyebrow = "数字路机
     <StageFrame asset={asset} eyebrow={eyebrow} title={title}>
       {children}
       {feedback && <div className="pointer-events-none absolute bottom-[25%] left-1/2 w-[min(760px,82%)] -translate-x-1/2 rounded-[26px] border border-amber-200/35 bg-blue-950/78 p-4 text-center text-base font-black leading-7 text-amber-100 shadow-[0_0_24px_rgba(252,211,77,0.16)] backdrop-blur-md lg:bottom-[22%]">{feedback}</div>}
-      {showContinue && <div className="absolute bottom-[8%] left-1/2 flex -translate-x-1/2 justify-center"><GameButton onClick={onContinue}>{continueLabel ?? "继续"}</GameButton></div>}
+      {showContinue && <div className="absolute bottom-[8%] left-1/2 flex -translate-x-1/2 justify-center"><GameButton onClick={onContinue} sound="none">{continueLabel ?? "继续"}</GameButton></div>}
     </StageFrame>
   );
 }
 
-function GameButton({ children, dataTestId, onClick }: { children: ReactNode; dataTestId?: string; onClick: () => void }) {
+type ButtonSound = "click" | "complete" | "none" | "reward";
+
+function playButtonSound(sound: ButtonSound) {
+  if (sound === "click") playClickSound();
+  if (sound === "reward") playRewardSound();
+  if (sound === "complete") playCompleteSound();
+}
+
+function GameButton({ children, dataTestId, onClick, sound = "click" }: { children: ReactNode; dataTestId?: string; onClick: () => void; sound?: ButtonSound }) {
   return (
-    <button className="inline-flex min-h-12 min-w-56 items-center justify-center rounded-[24px] bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 px-6 text-base font-black text-slate-950 shadow-[0_0_26px_rgba(252,211,77,0.4)] transition hover:shadow-[0_0_34px_rgba(252,211,77,0.62)] focus:outline-none focus:ring-4 focus:ring-amber-200/50 active:scale-95" data-testid={dataTestId} onClick={onClick} type="button">
+    <button className="inline-flex min-h-12 min-w-56 items-center justify-center rounded-[24px] bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 px-6 text-base font-black text-slate-950 shadow-[0_0_26px_rgba(252,211,77,0.4)] transition hover:shadow-[0_0_34px_rgba(252,211,77,0.62)] focus:outline-none focus:ring-4 focus:ring-amber-200/50 active:scale-95" data-testid={dataTestId} onClick={() => { playButtonSound(sound); onClick(); }} type="button">
       {children}
     </button>
   );
@@ -792,7 +817,7 @@ function GameButton({ children, dataTestId, onClick }: { children: ReactNode; da
 
 function SoftButton({ children, dataTestId, onClick }: { children: ReactNode; dataTestId?: string; onClick: () => void }) {
   return (
-    <button className="rounded-[24px] border border-cyan-300/25 bg-blue-950/64 px-5 py-4 text-base font-black text-cyan-50 shadow-md transition hover:bg-cyan-300/12 focus:outline-none focus:ring-4 focus:ring-amber-200/40 active:scale-95" data-testid={dataTestId} onClick={onClick} type="button">
+    <button className="rounded-[24px] border border-cyan-300/25 bg-blue-950/64 px-5 py-4 text-base font-black text-cyan-50 shadow-md transition hover:bg-cyan-300/12 focus:outline-none focus:ring-4 focus:ring-amber-200/40 active:scale-95" data-testid={dataTestId} onClick={() => { playClickSound(); onClick(); }} type="button">
       {children}
     </button>
   );
@@ -870,7 +895,7 @@ function OptionGrid({ onChoose, options, testPrefix, small }: { onChoose: (optio
 
 function StoneButton({ children, onClick }: { children: ReactNode; onClick: () => void }) {
   return (
-    <button className="flex h-16 w-20 items-center justify-center rounded-full border border-cyan-100/25 bg-cyan-300/12 text-3xl font-black text-white shadow-[0_0_24px_rgba(34,211,238,0.34)] ring-4 ring-cyan-200/18 backdrop-blur-[1px] transition hover:scale-105 hover:bg-cyan-300/20 hover:shadow-[0_0_34px_rgba(34,211,238,0.52)] focus:outline-none focus:ring-4 focus:ring-amber-200/55 active:scale-95" onClick={onClick} type="button">
+    <button className="flex h-16 w-20 items-center justify-center rounded-full border border-cyan-100/25 bg-cyan-300/12 text-3xl font-black text-white shadow-[0_0_24px_rgba(34,211,238,0.34)] ring-4 ring-cyan-200/18 backdrop-blur-[1px] transition hover:scale-105 hover:bg-cyan-300/20 hover:shadow-[0_0_34px_rgba(34,211,238,0.52)] focus:outline-none focus:ring-4 focus:ring-amber-200/55 active:scale-95" onClick={() => { playClickSound(); onClick(); }} type="button">
       {children}
     </button>
   );
