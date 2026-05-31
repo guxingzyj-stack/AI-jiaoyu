@@ -7,6 +7,7 @@ import {
   type AnswerOption,
   type AdventureSession,
   type AdventureStage,
+  type ReflectionChoice,
   initialAdventureSession
 } from "../lib/adventures";
 import { markIslandCompleted, readAdventureProgress } from "../lib/adventureProgress";
@@ -44,6 +45,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
   const [answerFeedback, setAnswerFeedback] = useState("");
   const [helpStep, setHelpStep] = useState<"menu" | "l1" | "l2" | "l3_confirm" | "l3_answer">("menu");
   const [helpFeedback, setHelpFeedback] = useState("");
+  const rescue = config.forestRescue;
 
   const preloadAssets = useMemo(
     () => Array.from(new Set(Object.values(config.assets).filter(Boolean) as string[])),
@@ -91,14 +93,15 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
         : config.assets.novaGuide;
 
   const novaLine = useMemo(() => {
+    if (session.stage === "map_intro" && rescue) return rescue.entry.novaLine;
     if (session.stage === "help_menu") {
       return session.currentQuestion === "stone" ? config.novaLines.helpStone : config.novaLines.helpTower;
     }
     if (session.stage === "truth_question") return notice;
     return config.novaLines[session.stage];
-  }, [config, notice, session.currentQuestion, session.stage]);
+  }, [config, notice, rescue, session.currentQuestion, session.stage]);
 
-  const currentGoal = config.goals[session.stage];
+  const currentGoal = session.stage === "beach_observe" && rescue ? rescue.observe.goal : config.goals[session.stage];
 
   const logEvent = (event: string, nextSession: AdventureSession = session) => {
     // 真埋点：写入本地事件日志（lib/telemetry），附带本关 id 与一份精简的会话快照。
@@ -157,7 +160,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
   const answerStone = (answer: number | string) => {
     if (String(answer) === String(config.stone.answer)) {
       playCorrectSound();
-      setAnswerFeedback(config.feedback?.stoneCorrect ?? `哇！你看出来了！这条数字路每次加${config.stone.step}。`);
+      setAnswerFeedback(rescue?.firstQuestion.correct ?? config.feedback?.stoneCorrect ?? `哇！你看出来了！这条数字路每次加${config.stone.step}。`);
       logEvent("stone_correct");
       return;
     }
@@ -165,11 +168,11 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
     if (session.wrongAttemptsStone === 0) {
       const seq = config.stone.sequence;
       updateSession("stone_try_again", (prev) => ({ ...prev, wrongAttemptsStone: prev.wrongAttemptsStone + 1 }));
-      setAnswerFeedback(config.feedback?.stoneWrongFirst ?? `差一点！再看看 ${seq[0]} 到 ${seq[1]}、${seq[1]} 到 ${seq[2]}，中间都隔了几？`);
+      setAnswerFeedback(rescue?.firstQuestion.wrongFirst ?? config.feedback?.stoneWrongFirst ?? `差一点！再看看 ${seq[0]} 到 ${seq[1]}、${seq[1]} 到 ${seq[2]}，中间都隔了几？`);
       return;
     }
     updateSession("stone_second_try", (prev) => ({ ...prev, wrongAttemptsStone: prev.wrongAttemptsStone + 1 }));
-    setAnswerFeedback(config.feedback?.stoneSecondWrong ?? "我们一起想一想？");
+    setAnswerFeedback(rescue?.firstQuestion.wrongSecond ?? config.feedback?.stoneSecondWrong ?? "我们一起想一想？");
   };
 
   const answerTower = (answer: number | string) => {
@@ -178,7 +181,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
       playCorrectSound();
       const isLast = session.towerStep >= config.towerSteps.length - 1;
       if (isLast) {
-        setAnswerFeedback(config.feedback?.towerCorrectAll ?? `塔亮起来了！${config.towerSteps.length}段数字路都点亮，每一段都是加${config.towerStep}。`);
+        setAnswerFeedback(rescue?.secondQuestion.correct ?? config.feedback?.towerCorrectAll ?? `塔亮起来了！${config.towerSteps.length}段数字路都点亮，每一段都是加${config.towerStep}。`);
         logEvent("tower_correct_all");
       } else {
         setAnswerFeedback(config.feedback?.towerCorrectStep ?? `第${session.towerStep + 1}段亮起来了！再看看上面那一段。`);
@@ -189,11 +192,11 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
     playWrongSound();
     if (session.wrongAttemptsTower === 0) {
       updateSession("tower_try_again", (prev) => ({ ...prev, wrongAttemptsTower: prev.wrongAttemptsTower + 1 }));
-      setAnswerFeedback(config.feedback?.towerWrongFirst ?? `再看看 ${step.sequence.join("、")}，每次多了几个？`);
+      setAnswerFeedback(rescue?.secondQuestion.wrongFirst ?? config.feedback?.towerWrongFirst ?? `再看看 ${step.sequence.join("、")}，每次多了几个？`);
       return;
     }
     updateSession("tower_second_try", (prev) => ({ ...prev, wrongAttemptsTower: prev.wrongAttemptsTower + 1 }));
-    setAnswerFeedback(config.feedback?.towerSecondWrong ?? "我们可以请 Nova 一起想。");
+    setAnswerFeedback(rescue?.secondQuestion.wrongSecond ?? config.feedback?.towerSecondWrong ?? "我们可以请 Nova 一起想。");
   };
 
   const advanceTower = () => {
@@ -315,6 +318,11 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
     updateSession("complete_adventure", (prev) => ({ ...prev, completed: true, stage: "complete" }));
   };
 
+  const chooseReflection = (choice: ReflectionChoice) => {
+    playRewardSound();
+    updateSession(`reflection_${choice}`, (prev) => ({ ...prev, reflectionChoice: choice }));
+  };
+
   const resetAdventure = () => {
     setConfig(resolveIslandConfig(baseConfig)); // 再玩一次重新抽题，优先避开上一轮
     setSession(initialAdventureSession);
@@ -327,15 +335,17 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
 
   const jumpNumbers = [...config.stone.sequence, String(config.stone.answer)];
   const jumpHighlight = String(config.stone.answer);
-  const isMakeTen = config.kind === "make-ten";
   const usedNovaHelp = session.l1Count + session.l2Count + session.l3Count > 0;
-  const rewardBadgeTitle = session.truthDetectorSuccess
-    ? "真相探测员"
-    : usedNovaHelp
-      ? "小小提问家"
-      : isMakeTen
-        ? "凑成10星章"
-        : "找规律星章";
+  const isMakeTen = config.kind === "make-ten";
+  const defaultReflectionChoice: ReflectionChoice = session.truthDetectorSuccess ? "not_blind_trust" : usedNovaHelp ? "ask_nova" : "pattern";
+  const selectedReflectionChoice = session.reflectionChoice ?? defaultReflectionChoice;
+  const rewardBadgeTitle =
+    rescue?.reflectionBadges[selectedReflectionChoice] ??
+    config.reflectionStickerLabels?.[selectedReflectionChoice] ??
+    (session.truthDetectorSuccess ? "真相探测员" : usedNovaHelp ? "小小提问家" : "找规律星章");
+  const visibleReflectionChoices = (Object.keys(config.reflectionStickers) as ReflectionChoice[]).filter(
+    (choice) => choice !== "not_blind_trust" || session.truthDetectorSuccess
+  );
   // Nova 求助 L1：make-ten 关卡提供 l1 文案时改为“引导卡”，否则走默认的 +step 规律选择器。
   const helpL1AsGuidance = Boolean(session.currentQuestion === "stone" ? config.help?.l1Stone : config.help?.l1Tower);
   const helpL1Title = session.currentQuestion === "stone" ? config.help?.l1TitleStone : config.help?.l1TitleTower;
@@ -435,7 +445,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
             <div className="relative aspect-[16/9] w-full bg-cover bg-center lg:absolute lg:inset-0 lg:aspect-auto lg:h-full" style={sceneStyle(config.assets.map)}>
               <div className="absolute -bottom-4 right-3 z-20 rounded-[18px] border border-cyan-200/25 bg-blue-950/58 px-3 py-2 shadow-[0_0_24px_rgba(34,211,238,0.16)] backdrop-blur-md">
                 <p className="text-[10px] font-black tracking-[0.18em] text-cyan-200">{config.copy.mapEyebrow}</p>
-                <h2 className="mt-0.5 text-base font-black text-white drop-shadow-[0_0_18px_rgba(103,232,249,0.38)]">{config.copy.mapTitle}</h2>
+                <h2 className="mt-0.5 text-base font-black text-white drop-shadow-[0_0_18px_rgba(103,232,249,0.38)]">{rescue?.entry.title ?? config.copy.mapTitle}</h2>
               </div>
               <span className="absolute right-[8%] top-[9%] z-20 rounded-full border border-amber-200/40 bg-blue-950/60 px-3 py-1 text-xs font-black text-amber-100 shadow-[0_0_22px_rgba(252,211,77,0.24)] sm:px-4 sm:py-2 sm:text-sm lg:right-[13%] lg:top-[8%]">NEW</span>
               <button
@@ -446,7 +456,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
               />
             </div>
             <div className="flex flex-1 flex-col items-center justify-center gap-3 p-4 text-center lg:absolute lg:inset-x-0 lg:bottom-8 lg:flex-row lg:items-center lg:justify-center lg:gap-3 lg:px-8 lg:p-0">
-              <GameButton dataTestId="multiples-start" onClick={() => goStage("beach_observe", "go_new_island")}>{config.copy.mapButton}</GameButton>
+              <GameButton dataTestId="multiples-start" onClick={() => goStage("beach_observe", "go_new_island")}>{rescue?.entry.primaryButton ?? config.copy.mapButton}</GameButton>
             </div>
           </div>
         );
@@ -464,7 +474,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
             {isMakeTen && config.makeTen ? (
               <div className="flex w-full flex-col items-center gap-3 p-4 text-center lg:absolute lg:inset-x-[6%] lg:bottom-[8%] lg:gap-3 lg:p-0">
                 <div className="rounded-full border border-emerald-200/45 bg-blue-950/72 px-5 py-2 text-base font-black text-emerald-100 shadow-[0_0_20px_rgba(110,231,183,0.22)] backdrop-blur-sm lg:text-lg">
-                  目标：凑满 {config.makeTen.target} 颗能量果
+                  {rescue?.observe.goal ?? `目标：凑满 ${config.makeTen.target}`}
                 </div>
                 <div className="flex max-w-[360px] flex-wrap items-center justify-center gap-2 sm:max-w-none">
                   {Array.from({ length: config.makeTen.have }).map((_, i) => (
@@ -483,8 +493,8 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
                     ?
                   </button>
                 </div>
-                <p className="text-sm font-black text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.7)] lg:text-base">数一数，还差几颗能量果？</p>
-                <GameButton dataTestId="forest-observe-start" onClick={() => goStage("stone_question", "open_stone_question")}>帮能量树补果子</GameButton>
+                <p className="text-sm font-black text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.7)] lg:text-base">{rescue?.observe.hint ?? config.copy.stoneTitle}</p>
+                <GameButton dataTestId="forest-observe-start" onClick={() => goStage("stone_question", "open_stone_question")}>{rescue?.observe.button ?? config.copy.mapButton}</GameButton>
               </div>
             ) : (
               <div className="flex flex-1 items-center justify-center gap-3 p-4 lg:absolute lg:inset-x-[7%] lg:bottom-[17%] lg:flex-none lg:items-end lg:justify-center lg:gap-4 lg:p-0 xl:gap-5">
@@ -502,6 +512,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
       case "stone_question":
         {
           const stoneCorrect =
+            answerFeedback === rescue?.firstQuestion.correct ||
             answerFeedback === config.feedback?.stoneCorrect ||
             answerFeedback.startsWith("哇") ||
             answerFeedback.startsWith("对啦");
@@ -516,7 +527,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
             </div>
             <div className="mx-4 mt-4 max-w-3xl rounded-[30px] border border-cyan-300/25 bg-blue-950/56 p-4 shadow-[0_0_26px_rgba(34,211,238,0.14)] backdrop-blur-sm lg:absolute lg:left-1/2 lg:top-[28%] lg:mx-0 lg:mt-0 lg:w-[min(680px,82%)] lg:-translate-x-1/2">
               {isMakeTen && config.makeTen ? (
-                <MakeTenView have={config.makeTen.have} need={Number(config.stone.answer)} target={config.makeTen.target} />
+                <MakeTenView have={config.makeTen.have} need={Number(config.stone.answer)} target={config.makeTen.target} solved={stoneCorrect} />
               ) : (
                 <NumberRoad numbers={[...config.stone.sequence, "?"]} />
               )}
@@ -628,6 +639,7 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
       case "tower_question": {
         const towerStep = config.towerSteps[session.towerStep];
         const towerCorrect =
+          answerFeedback === rescue?.secondQuestion.correct ||
           answerFeedback === config.feedback?.towerCorrectAll ||
           answerFeedback === config.feedback?.towerCorrectStep ||
           answerFeedback.startsWith("塔亮") ||
@@ -635,15 +647,15 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
         const litSegments = session.towerStep + (towerCorrect ? 1 : 0);
         // make-ten 不分段，去掉“第X段/共Y段”后缀，避免数字路语义混进森林岛。
         const towerTitle = isMakeTen
-          ? config.copy.towerTitlePrefix
+          ? rescue?.secondQuestion.treasureTitle ?? config.copy.towerTitlePrefix
           : `${config.copy.towerTitlePrefix}（第${session.towerStep + 1}段 / 共${config.towerSteps.length}段）`;
         return (
-          <QuestionStage asset={config.assets.tower} continueLabel={config.copy.towerContinue} eyebrow={config.copy.towerEyebrow ?? "数字路机关"} title={towerTitle} feedback={answerFeedback} showContinue={towerCorrect} onContinue={advanceTower}>
+          <QuestionStage asset={config.assets.tower} continueLabel={rescue?.secondQuestion.button ?? config.copy.towerContinue} eyebrow={config.copy.towerEyebrow ?? "数字路机关"} title={towerTitle} feedback={answerFeedback} showContinue={towerCorrect} onContinue={advanceTower}>
             {isMakeTen ? (
               <>
-                <div className="absolute left-1/2 top-[33%] z-20 -translate-x-1/2 -translate-y-1/2 rounded-[22px] border border-emerald-200/45 bg-blue-950/70 px-5 py-3 text-center shadow-[0_0_24px_rgba(110,231,183,0.26)] backdrop-blur-sm lg:top-[44%] lg:rounded-[30px] lg:px-9 lg:py-6">
-                  <p className="text-xs font-black tracking-[0.2em] text-emerald-200 lg:text-base">目标</p>
-                  <p className="mt-1 whitespace-nowrap text-xl font-black text-white lg:mt-2 lg:text-[2.6rem] lg:leading-tight">凑成 {config.pairTarget ?? config.towerStep} 颗能量果</p>
+                <div className="absolute left-1/2 top-[30%] z-20 w-[min(340px,88%)] -translate-x-1/2 -translate-y-1/2 rounded-[22px] border border-emerald-200/45 bg-blue-950/70 px-5 py-3 text-center shadow-[0_0_24px_rgba(110,231,183,0.26)] backdrop-blur-sm lg:top-[41%] lg:w-[min(620px,84%)] lg:rounded-[30px] lg:px-9 lg:py-6">
+                  <p className="text-xs font-black tracking-[0.2em] text-emerald-200 lg:text-base">{config.copy.towerTitlePrefix}</p>
+                  <p className="mt-2 text-sm font-black leading-6 text-white lg:text-2xl lg:leading-9">{rescue?.secondQuestion.description ?? `${config.pairTarget ?? config.towerStep}`}</p>
                 </div>
                 {!towerCorrect && (
                   <div className="absolute bottom-[11%] left-1/2 flex w-[min(720px,92%)] -translate-x-1/2 flex-wrap justify-center gap-3 lg:gap-4">
@@ -710,24 +722,36 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
             <div className="relative h-[250px] w-full shrink-0 overflow-hidden bg-cover bg-center sm:h-[280px] lg:absolute lg:inset-0 lg:aspect-auto lg:h-full" style={sceneStyle(config.assets.notebook)}>
               <div className="absolute left-4 top-4 z-20 rounded-[22px] border border-cyan-200/25 bg-blue-950/58 px-4 py-3 shadow-[0_0_24px_rgba(34,211,238,0.16)] backdrop-blur-md sm:left-6 sm:top-6">
                 <p className="text-xs font-black tracking-[0.2em] text-cyan-200">{config.copy.reflectionEyebrow}</p>
-                <h2 className="mt-1 max-w-[280px] text-xl font-black leading-7 text-white drop-shadow-[0_0_18px_rgba(103,232,249,0.38)] lg:max-w-none lg:text-2xl">今日星章到账！</h2>
+                <h2 className="mt-1 max-w-[280px] text-xl font-black leading-7 text-white drop-shadow-[0_0_18px_rgba(103,232,249,0.38)] lg:max-w-none lg:text-2xl">{rescue?.reflection.prompt ?? config.copy.reflectionTitle}</h2>
               </div>
             </div>
             <div className="relative z-20 mx-auto -mt-10 w-full max-w-5xl p-3 pt-0 sm:-mt-12 sm:p-4 sm:pt-0 lg:absolute lg:inset-x-[4%] lg:top-[17%] lg:bottom-[4%] lg:mt-0 lg:p-0">
-              <div className="flex h-full flex-col items-center justify-start gap-4 lg:justify-center">
-                <div className="relative w-full max-w-[340px] overflow-hidden rounded-[32px] border border-amber-100/45 bg-[radial-gradient(circle_at_50%_22%,rgba(254,243,199,0.42),rgba(251,191,36,0.18)_34%,rgba(30,41,124,0.72)_74%)] px-5 py-6 text-center shadow-[0_0_46px_rgba(252,211,77,0.32)] backdrop-blur-md lg:max-w-[460px] lg:px-8 lg:py-8">
-                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.3),transparent_28%)]" />
-                  <div className="relative mx-auto flex h-36 w-36 items-center justify-center rounded-full border border-amber-100/70 bg-gradient-to-br from-amber-200 via-yellow-300 to-amber-500 text-7xl text-amber-950 shadow-[0_0_34px_rgba(252,211,77,0.72),inset_0_0_22px_rgba(255,255,255,0.48)] lg:h-44 lg:w-44 lg:text-8xl">
-                    <span aria-hidden>⭐</span>
+              {rescue ? (
+                <div className="flex h-full flex-col items-center justify-start gap-3 lg:justify-center lg:gap-4">
+                  <div className="grid w-full max-w-[680px] grid-cols-1 gap-2 sm:grid-cols-2">
+                    {visibleReflectionChoices.map((choice) => (
+                      <SoftButton dataTestId={`reflection-${choice}`} key={choice} onClick={() => chooseReflection(choice)}>
+                        {rescue.reflectionBadges[choice] ?? config.reflectionStickerLabels?.[choice] ?? choice}
+                      </SoftButton>
+                    ))}
                   </div>
-                  <p className="relative mt-5 text-xs font-black tracking-[0.22em] text-amber-100">今日星章</p>
-                  <p className="relative mt-2 text-3xl font-black leading-10 text-white drop-shadow-[0_0_18px_rgba(252,211,77,0.56)] lg:text-4xl">{rewardBadgeTitle}</p>
-                  <p className="relative mx-auto mt-3 max-w-[250px] text-sm font-black leading-6 text-amber-100/90 lg:max-w-sm lg:text-base">今天的探险发现已经收进笔记本。</p>
+                  {session.reflectionChoice && (
+                    <>
+                      <BadgeCard eyebrow={rescue.reflection.badgeEyebrow} summary={rescue.reflection.summary} title={rewardBadgeTitle} />
+                      <div className="w-full max-w-[260px]">
+                        <GameButton dataTestId="complete-button" onClick={completeAdventure} sound="none">{rescue.reflection.collectButton}</GameButton>
+                      </div>
+                    </>
+                  )}
                 </div>
-                <div className="w-full max-w-[260px]">
-                  <GameButton dataTestId="complete-button" onClick={completeAdventure} sound="none">收下今日星章</GameButton>
+              ) : (
+                <div className="flex h-full flex-col items-center justify-start gap-4 lg:justify-center">
+                  <BadgeCard eyebrow="探险徽章" summary={config.reflectionStickers[selectedReflectionChoice]} title={rewardBadgeTitle} />
+                  <div className="w-full max-w-[260px]">
+                    <GameButton dataTestId="complete-button" onClick={completeAdventure} sound="none">收下徽章</GameButton>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         );
@@ -751,16 +775,17 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
                 </div>
                 <div className="rounded-[34px] border border-cyan-300/25 bg-blue-950/62 p-4 shadow-[0_0_30px_rgba(34,211,238,0.12)] backdrop-blur-md">
                   <div className="grid gap-2">
-                    <ResultLine label={config.copy.islandResultLabel ?? "新岛屿"} value="已点亮" />
-                    <ResultLine label={config.copy.firstChallengeLabel} value={config.copy.firstChallengeValue ?? "已发现"} />
-                    <ResultLine label={config.copy.secondChallengeLabel} value={config.copy.secondChallengeValue ?? "已点亮"} />
-                    <ResultLine label="真相探测器" value={session.truthDetectorSuccess ? "已识破" : session.truthDetectorOpened ? "已尝试" : "下次再试"} />
+                    <ResultLine label={config.copy.islandResultLabel ?? "新岛屿"} value={rescue?.completeResults.island ?? "已点亮"} />
+                    <ResultLine label={config.copy.firstChallengeLabel} value={rescue?.completeResults.firstChallenge ?? config.copy.firstChallengeValue ?? "已发现"} />
+                    <ResultLine label={config.copy.secondChallengeLabel} value={rescue?.completeResults.secondChallenge ?? config.copy.secondChallengeValue ?? "已点亮"} />
+                    <ResultLine label="真相探测器" value={rescue?.completeResults.truthDetector ?? (session.truthDetectorSuccess ? "已识破" : session.truthDetectorOpened ? "已尝试" : "下次再试")} />
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <Link className="inline-flex h-9 items-center justify-center rounded-[16px] border border-cyan-200/35 bg-cyan-300/20 px-2 text-xs font-black text-cyan-50 transition active:scale-95 lg:h-10 lg:rounded-[18px] lg:px-4 lg:text-sm" href="/adventure">回到地图</Link>
-                    <button className="inline-flex h-9 items-center justify-center rounded-[16px] bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 px-2 text-xs font-black text-slate-950 shadow-[0_0_20px_rgba(252,211,77,0.4)] transition active:scale-95 lg:h-10 lg:rounded-[18px] lg:px-4 lg:text-sm" data-testid="reset-multiples" onClick={resetAdventure} type="button">再玩一次</button>
+                    <button className="inline-flex h-9 items-center justify-center rounded-[16px] bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 px-2 text-xs font-black text-slate-950 shadow-[0_0_20px_rgba(252,211,77,0.4)] transition active:scale-95 lg:h-10 lg:rounded-[18px] lg:px-4 lg:text-sm" data-testid="reset-multiples" onClick={resetAdventure} type="button">{rescue?.retryButton ?? "再玩一次"}</button>
                     <Link className="col-span-2 inline-flex h-9 items-center justify-center rounded-[16px] border border-violet-200/35 bg-violet-400/25 px-2 text-xs font-black text-violet-50 transition active:scale-95 lg:col-span-1 lg:h-10 lg:rounded-[18px] lg:px-4 lg:text-sm" href="/report">查看星星报告</Link>
                   </div>
+                  {rescue?.nextRoundLine && <p className="mt-3 text-center text-xs font-black text-amber-100 lg:text-sm">{rescue.nextRoundLine}</p>}
                 </div>
               </div>
             </div>
@@ -768,6 +793,20 @@ export default function AdventureRunner({ config: baseConfig }: { config: Advent
         );
     }
   }
+}
+
+function BadgeCard({ eyebrow, summary, title }: { eyebrow: string; summary: string; title: string }) {
+  return (
+    <div className="relative w-full max-w-[340px] overflow-hidden rounded-[32px] border border-amber-100/45 bg-[radial-gradient(circle_at_50%_22%,rgba(254,243,199,0.42),rgba(251,191,36,0.18)_34%,rgba(30,41,124,0.72)_74%)] px-5 py-6 text-center shadow-[0_0_46px_rgba(252,211,77,0.32)] backdrop-blur-md lg:max-w-[460px] lg:px-8 lg:py-8">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.3),transparent_28%)]" />
+      <div className="relative mx-auto flex h-32 w-32 items-center justify-center rounded-full border border-amber-100/70 bg-gradient-to-br from-amber-200 via-yellow-300 to-amber-500 text-7xl text-amber-950 shadow-[0_0_34px_rgba(252,211,77,0.72),inset_0_0_22px_rgba(255,255,255,0.48)] lg:h-44 lg:w-44 lg:text-8xl">
+        <span aria-hidden>⭐</span>
+      </div>
+      <p className="relative mt-5 text-xs font-black tracking-[0.22em] text-amber-100">{eyebrow}</p>
+      <p className="relative mt-2 text-3xl font-black leading-10 text-white drop-shadow-[0_0_18px_rgba(252,211,77,0.56)] lg:text-4xl">{title}</p>
+      <p className="relative mx-auto mt-3 max-w-[250px] text-sm font-black leading-6 text-amber-100/90 lg:max-w-sm lg:text-base">{summary}</p>
+    </div>
+  );
 }
 
 function StageFrame({ asset, children, eyebrow, title }: { asset?: string; children: ReactNode; eyebrow: string; title: string }) {
@@ -840,20 +879,20 @@ function NumberRoad({ numbers }: { numbers: string[] }) {
   );
 }
 
-// 凑成10题的可视化：已亮的果子（have 颗）+ 空位（target-have 个），配合 have + ? = target。
-// solved=true 时空位变成发光的新果子、问号换成答案，用于 Beat 4 胜利（7 + 3 = 10）。
+// make-ten 可视化：已亮数量 + 空位，配合 have + ? = target。
+// solved=true 时空位变成新补数量、问号换成答案，用于胜利反馈。
 function MakeTenView({ have, target, need, solved }: { have: number; target: number; need: number; solved?: boolean }) {
   const gap = Math.max(0, target - have);
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="flex max-w-[420px] flex-wrap items-center justify-center gap-2">
         {Array.from({ length: have }).map((_, i) => (
-          <span className="h-7 w-7 rounded-full bg-amber-300 shadow-[0_0_12px_rgba(252,211,77,0.7)] ring-2 ring-amber-100/60 lg:h-9 lg:w-9" key={`have-${i}`} />
+          <span className={`h-7 w-7 rounded-full bg-amber-300 shadow-[0_0_12px_rgba(252,211,77,0.7)] ring-2 ring-amber-100/60 lg:h-9 lg:w-9 ${solved ? "animate-pulse" : ""}`} key={`have-${i}`} />
         ))}
         {Array.from({ length: gap }).map((_, i) => (
           <span
             className={solved
-              ? "h-7 w-7 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.75)] ring-2 ring-emerald-100/60 lg:h-9 lg:w-9"
+              ? "animate-pulse h-7 w-7 rounded-full bg-emerald-300 shadow-[0_0_22px_rgba(110,231,183,0.95)] ring-4 ring-emerald-100/70 lg:h-9 lg:w-9"
               : "h-7 w-7 rounded-full border-2 border-dashed border-cyan-100/55 bg-blue-950/40 lg:h-9 lg:w-9"}
             key={`gap-${i}`}
           />

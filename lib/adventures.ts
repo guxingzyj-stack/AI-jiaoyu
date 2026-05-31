@@ -110,6 +110,8 @@ export type AdventureConfig = {
     };
     observe: {
       goal: string;
+      hint?: string;
+      button?: string;
     };
     firstQuestion: {
       correct: string;
@@ -136,6 +138,12 @@ export type AdventureConfig = {
       default: string;
       usedHelp: string;
       detectedTruth: string;
+    };
+    reflection: {
+      prompt: string;
+      badgeEyebrow: string;
+      collectButton: string;
+      summary: string;
     };
     nextRoundLine: string;
     retryButton: string;
@@ -446,7 +454,9 @@ export const forestIslandConfig: AdventureConfig = {
       primaryButton: "去救援能量树"
     },
     observe: {
-      goal: "能量树快睡着了，帮它补满 10 颗能量果，让森林重新发光。"
+      goal: "能量树快睡着了，帮它补满 10 颗能量果，让森林重新发光。",
+      hint: "数一数，还差几颗能量果？",
+      button: "帮能量树补果子"
     },
     firstQuestion: {
       correct: "能量果补对啦！",
@@ -479,7 +489,13 @@ export const forestIslandConfig: AdventureConfig = {
       usedHelp: "你会在卡住时问清楚问题，这也是很棒的探险本领。",
       detectedTruth: "你没有全信 Nova，而是自己检查了一遍。真厉害！"
     },
-    nextRoundLine: "下一轮题目会换一组能量果，再来会遇到新组合。",
+    reflection: {
+      prompt: "今天你最厉害的一招是什么？",
+      badgeEyebrow: "今日星章",
+      collectButton: "收下今日星章",
+      summary: "今天的救援发现已经收进探险笔记。"
+    },
+    nextRoundLine: "下一轮题目会变哦。",
     retryButton: "挑战新题目"
   }
 };
