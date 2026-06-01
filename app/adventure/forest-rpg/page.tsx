@@ -43,14 +43,6 @@ export default function ForestRpgPage() {
   const showAwakeningBurst = lampState === "lit" || stage === "result" || stage === "complete";
   const playerPoint = getPoint(moving ? targetPosition : playerPosition);
 
-  const stageLabel = useMemo(() => {
-    if (stage === "intro") return content.stageLabels.intro;
-    if (stage === "result") return attemptCount === 1 ? content.stageLabels.perfect : content.stageLabels.success;
-    if (stage === "complete") return content.stageLabels.complete;
-    if (isTryingLamp) return content.stageLabels.lamp;
-    return content.stageLabels.collect;
-  }, [attemptCount, content.stageLabels, isTryingLamp, stage]);
-
   const taskPrompt = useMemo(() => {
     if (stage === "intro") return content.prompts.intro;
     if (stage === "result") return content.prompts.result;
@@ -174,26 +166,28 @@ export default function ForestRpgPage() {
     setLastTry(null);
   };
 
+  const islandName = content.name.split(" · ")[0] ?? content.name;
+
   return (
-    <main className={`min-h-screen overflow-hidden bg-[#07102f] text-white ${isAwake ? "forest-lit" : ""}`}>
+    <main className={`h-[100dvh] overflow-hidden bg-[#07102f] text-white ${isAwake ? "forest-lit" : ""}`}>
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(70,230,255,0.24),transparent_34%),radial-gradient(circle_at_82%_20%,rgba(168,85,247,0.26),transparent_34%),linear-gradient(180deg,#121d62,#07102f_58%,#05101e)]" />
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_24px_24px,rgba(255,255,255,0.13)_1px,transparent_2px)] bg-[size:34px_34px] opacity-30" />
 
-      <section className="relative mx-auto grid min-h-screen w-full max-w-6xl grid-rows-[auto_1fr] gap-3 px-3 py-3 sm:px-5 lg:py-5">
-        <header className="hud-panel flex items-center justify-between gap-2 rounded-[22px] border border-cyan-200/25 bg-blue-950/70 px-3 py-2 shadow-[0_0_30px_rgba(34,211,238,0.16)] backdrop-blur-xl">
-          <Link className="inline-flex min-h-10 shrink-0 items-center rounded-full border border-cyan-200/25 bg-cyan-200/10 px-3 text-xs font-black text-cyan-50" href="/adventure">
+      <section className="relative mx-auto grid h-[100dvh] w-full max-w-6xl grid-rows-[auto_minmax(0,1fr)] gap-2 px-2 py-2 sm:px-5 sm:py-4 lg:py-5">
+        <header className="hud-panel flex min-h-11 items-center justify-between gap-2 rounded-[18px] border border-cyan-200/22 bg-blue-950/66 px-2 py-1 shadow-[0_0_24px_rgba(34,211,238,0.14)] backdrop-blur-xl sm:min-h-14 sm:px-3 sm:py-2">
+          <Link className="inline-flex min-h-8 shrink-0 items-center rounded-full border border-cyan-200/25 bg-cyan-200/10 px-2.5 text-xs font-black text-cyan-50 sm:min-h-10 sm:px-3" href="/adventure">
             ← 入口
           </Link>
           <div className="min-w-0 text-center">
-            <h1 className="truncate text-base font-black sm:text-2xl">{content.name}</h1>
-            <p className="mt-0.5 text-[10px] font-black text-amber-200 sm:text-xs">{stageLabel}</p>
+            <h1 className="truncate text-base font-black leading-tight sm:text-2xl">{islandName}</h1>
+            <p className="hidden text-[10px] font-black text-amber-200 sm:block">{content.name.replace(`${islandName} · `, "")}</p>
           </div>
-          <div className="shrink-0 rounded-full border border-amber-200/35 bg-amber-300/10 px-3 py-2 text-xs font-black text-amber-100">
+          <div className="shrink-0 rounded-full border border-amber-200/35 bg-amber-300/10 px-2.5 py-1.5 text-[11px] font-black text-amber-100 sm:px-3 sm:py-2 sm:text-xs">
             星光碎片 x{stage === "complete" ? content.rewards.amount : 0}
           </div>
         </header>
 
-        <section className="game-stage relative min-h-[calc(100vh-92px)] overflow-hidden rounded-[30px] border border-cyan-200/25 bg-[#0d1850]/82 shadow-[0_0_42px_rgba(34,211,238,0.2)] sm:min-h-[680px] lg:min-h-[720px]">
+        <section className="game-stage relative min-h-0 overflow-hidden rounded-[24px] border border-cyan-200/25 bg-[#0d1850]/82 shadow-[0_0_36px_rgba(34,211,238,0.18)] sm:min-h-[680px] sm:rounded-[30px] lg:min-h-[720px]">
           <ForestMap
             contentFruits={content.fruits}
             hasFailedTry={hasFailedTry}
@@ -212,24 +206,23 @@ export default function ForestRpgPage() {
           />
 
           {stage !== "intro" && (
-            <div className="pointer-events-none absolute left-3 right-3 top-3 z-50 flex justify-center">
-              <div className={`max-w-[340px] rounded-full border px-4 py-2 text-center text-sm font-black shadow-[0_0_24px_rgba(34,211,238,0.18)] backdrop-blur-xl ${isBagReady ? "border-amber-200/60 bg-amber-300/95 text-slate-950" : "border-cyan-200/28 bg-blue-950/72 text-cyan-50"}`}>
+            <div className="pointer-events-none absolute left-2 right-2 top-2 z-50 flex justify-center">
+              <div className={`max-w-[330px] rounded-full border px-3 py-1.5 text-center text-xs font-black shadow-[0_0_20px_rgba(34,211,238,0.16)] backdrop-blur-xl sm:text-sm ${isBagReady ? "border-amber-200/60 bg-amber-300/95 text-slate-950" : "border-cyan-200/28 bg-blue-950/72 text-cyan-50"}`}>
                 {taskPrompt}
               </div>
             </div>
           )}
 
           {stage === "intro" && (
-            <SceneCard className="bottom-4 left-4 right-4 sm:left-6 sm:right-auto sm:w-[380px]">
-              <p className="text-xs font-black tracking-[0.22em] text-cyan-200">冷开场</p>
-              <h2 className="mt-2 text-2xl font-black leading-tight">{content.narrative.introTitle}</h2>
-              <p className="mt-2 text-sm font-bold leading-6 text-cyan-50/88">{content.narrative.introLine}</p>
+            <SceneCard className="bottom-3 left-3 right-3 p-3 sm:bottom-6 sm:left-6 sm:right-auto sm:w-[380px] sm:p-4">
+              <h2 className="text-xl font-black leading-tight sm:text-2xl">{content.narrative.introTitle}</h2>
+              <p className="mt-1.5 text-xs font-bold leading-5 text-cyan-50/88 sm:text-sm sm:leading-6">{content.narrative.introLine}</p>
               <PrimaryButton onClick={startAdventure}>{content.buttons.start}</PrimaryButton>
             </SceneCard>
           )}
 
           {(stage === "map" || stage === "collect" || stage === "lamp") && (
-            <div className="game-controls absolute bottom-3 left-3 right-3 z-50 mx-auto max-w-[520px] rounded-[28px] border border-cyan-200/24 bg-blue-950/72 p-3 shadow-[0_0_32px_rgba(34,211,238,0.18)] backdrop-blur-xl">
+            <div className="game-controls absolute bottom-2 left-2 right-2 z-50 mx-auto max-w-[500px] rounded-[22px] border border-cyan-200/24 bg-blue-950/72 p-2 shadow-[0_0_28px_rgba(34,211,238,0.16)] backdrop-blur-xl sm:bottom-3 sm:rounded-[28px] sm:p-3">
               <NovaHint line={novaLine} />
               <InventoryDock fruits={selectedFruits} hasFailedTry={hasFailedTry} onReset={resetBag} />
               {isTryingLamp && <LampMeter state={lampState} sum={bagSum} />}
@@ -243,26 +236,26 @@ export default function ForestRpgPage() {
           )}
 
           {stage === "result" && lastTry && (
-            <SceneCard className="awakening-card bottom-4 left-4 right-4 text-center sm:left-1/2 sm:w-[430px] sm:-translate-x-1/2">
-              <div className="mx-auto mb-2 flex h-20 w-20 items-center justify-center rounded-full border border-amber-100/40 bg-amber-200/18 shadow-[0_0_34px_rgba(250,204,21,0.35)]">
+            <SceneCard className="awakening-card bottom-3 left-3 right-3 p-3 text-center sm:bottom-4 sm:left-1/2 sm:w-[430px] sm:-translate-x-1/2 sm:p-4">
+              <div className="mx-auto mb-1.5 flex h-16 w-16 items-center justify-center rounded-full border border-amber-100/40 bg-amber-200/18 shadow-[0_0_30px_rgba(250,204,21,0.34)] sm:h-20 sm:w-20">
                 <AssetImage
                   alt=""
-                  className="h-16 w-16 object-contain drop-shadow-[0_0_16px_rgba(250,204,21,0.75)]"
+                  className="h-12 w-12 object-contain drop-shadow-[0_0_16px_rgba(250,204,21,0.75)] sm:h-16 sm:w-16"
                   src={forestRpgAssets.objects.starlightFragment}
                 />
               </div>
-              <p className="text-xs font-black tracking-[0.22em] text-amber-200">
+              <p className="text-[10px] font-black tracking-[0.18em] text-amber-200 sm:text-xs">
                 {attemptCount === 1 ? content.narrative.resultPerfectTitle : content.narrative.resultSuccessTitle}
               </p>
-              <h2 className="mt-2 text-3xl font-black leading-tight">星光亮起来了！</h2>
-              <p className="mt-1 text-lg font-black text-amber-100">小精灵醒来了！</p>
-              <p className="mt-2 text-sm font-bold leading-6 text-cyan-50/88">
+              <h2 className="mt-1 text-2xl font-black leading-tight sm:text-3xl">星光亮起来了！</h2>
+              <p className="text-base font-black text-amber-100 sm:mt-1 sm:text-lg">小精灵醒来了！</p>
+              <p className="mt-1.5 text-xs font-bold leading-5 text-cyan-50/88 sm:text-sm sm:leading-6">
                 {content.novaLines.successSummary(lastTry.fruits[0].value, lastTry.fruits[1].value)}
               </p>
-              <p className="mt-2 rounded-full border border-emerald-200/30 bg-emerald-300/16 px-4 py-2 text-sm font-black text-emerald-50">
+              <p className="mt-1.5 rounded-full border border-emerald-200/30 bg-emerald-300/16 px-3 py-1.5 text-xs font-black text-emerald-50 sm:text-sm">
                 {content.narrative.friendLine}
               </p>
-              <p className="mt-3 rounded-full bg-amber-300 px-4 py-2 text-sm font-black text-slate-950">
+              <p className="mt-2 rounded-full bg-amber-300 px-3 py-1.5 text-xs font-black text-slate-950 sm:text-sm">
                 获得：{content.rewards.item} +{content.rewards.amount}
               </p>
               <PrimaryButton onClick={completeAdventure}>{content.buttons.seeSpirit}</PrimaryButton>
@@ -270,24 +263,23 @@ export default function ForestRpgPage() {
           )}
 
           {stage === "complete" && (
-            <SceneCard className="reward-card bottom-4 left-4 right-4 text-center sm:left-1/2 sm:w-[460px] sm:-translate-x-1/2">
-              <p className="text-xs font-black tracking-[0.22em] text-amber-200">星光灯救援完成</p>
-              <div className="mx-auto mt-2 flex h-24 w-24 items-center justify-center rounded-full border border-amber-100/45 bg-amber-200/18 shadow-[0_0_42px_rgba(250,204,21,0.42)]">
+            <SceneCard className="reward-card bottom-3 left-3 right-3 p-3 text-center sm:bottom-4 sm:left-1/2 sm:w-[440px] sm:-translate-x-1/2 sm:p-4">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-amber-100/45 bg-amber-200/18 shadow-[0_0_38px_rgba(250,204,21,0.42)] sm:h-24 sm:w-24">
                 <AssetImage
                   alt=""
-                  className="h-20 w-20 object-contain drop-shadow-[0_0_20px_rgba(250,204,21,0.8)]"
+                  className="h-16 w-16 object-contain drop-shadow-[0_0_20px_rgba(250,204,21,0.8)] sm:h-20 sm:w-20"
                   src={forestRpgAssets.objects.starlightFragment}
                 />
               </div>
-              <h2 className="mt-2 text-3xl font-black leading-tight">{content.narrative.rewardTitle}</h2>
-              <div className="mt-4 grid gap-2 text-sm font-black text-cyan-50">
-                <p className="rounded-[18px] border border-amber-200/30 bg-amber-300/16 px-4 py-2">{content.narrative.friendLine}</p>
-                <p className="rounded-[18px] border border-emerald-200/30 bg-emerald-300/14 px-4 py-2">{content.narrative.pathProgress}</p>
+              <h2 className="mt-1.5 text-2xl font-black leading-tight sm:text-3xl">{content.narrative.rewardTitle}</h2>
+              <div className="mt-2 grid gap-1.5 text-xs font-black text-cyan-50 sm:gap-2 sm:text-sm">
+                <p className="rounded-[16px] border border-amber-200/30 bg-amber-300/16 px-3 py-1.5">{content.narrative.friendLine}</p>
+                <p className="rounded-[16px] border border-emerald-200/30 bg-emerald-300/14 px-3 py-1.5">{content.narrative.pathProgress}</p>
               </div>
-              <p className="mt-3 text-sm font-bold leading-6 text-cyan-50/88">{content.narrative.hookLine}</p>
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              <p className="mt-2 text-xs font-bold leading-5 text-cyan-50/82 sm:text-sm sm:leading-6">{content.narrative.hookLine}</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <PrimaryButton onClick={resetAdventure}>{content.buttons.replay}</PrimaryButton>
-                <Link className="inline-flex min-h-12 items-center justify-center rounded-[22px] border border-cyan-200/30 bg-cyan-200/12 px-4 text-sm font-black text-cyan-50 transition active:scale-95" href="/adventure">
+                <Link className="inline-flex min-h-11 items-center justify-center rounded-[20px] border border-cyan-200/30 bg-cyan-200/12 px-4 text-sm font-black text-cyan-50 transition active:scale-95 sm:min-h-12 sm:rounded-[22px]" href="/adventure">
                   {content.buttons.backToAdventure}
                 </Link>
               </div>
@@ -408,10 +400,10 @@ function ForestMap({
         />
       ))}
 
-      <div className="absolute left-[58%] top-[45%] z-20 -translate-x-1/2 -translate-y-1/2">
+      <div className="absolute left-[58%] top-[43%] z-20 -translate-x-1/2 -translate-y-1/2">
         <button
           aria-label="星光灯"
-          className={`relative flex h-28 w-24 items-center justify-center rounded-[34px] border border-amber-100/50 bg-[radial-gradient(circle_at_50%_35%,rgba(250,204,21,0.28),rgba(23,37,84,0.9))] shadow-[0_0_26px_rgba(250,204,21,0.18)] transition active:scale-95 sm:h-32 sm:w-28 ${isBagReady ? "lamp-ready bg-amber-300/25 ring-4 ring-amber-200/40" : ""} ${lampState === "lit" ? "lamp-lit bg-amber-300/80" : ""} ${lampPulse ? "scale-105" : ""}`}
+          className={`relative flex h-24 w-20 items-center justify-center rounded-[28px] border border-amber-100/45 bg-[radial-gradient(circle_at_50%_35%,rgba(250,204,21,0.24),rgba(23,37,84,0.86))] shadow-[0_0_24px_rgba(250,204,21,0.17)] transition active:scale-95 sm:h-32 sm:w-28 sm:rounded-[34px] ${isBagReady ? "lamp-ready bg-amber-300/25 ring-4 ring-amber-200/40" : ""} ${lampState === "lit" ? "lamp-lit bg-amber-300/80" : ""} ${lampPulse ? "scale-105" : ""}`}
           data-testid="starlight-lamp"
           onClick={onLampClick}
           type="button"
@@ -422,14 +414,13 @@ function ForestMap({
             src={lampState === "lit" ? forestRpgAssets.objects.starlightLampOn : forestRpgAssets.objects.starlightLampOff}
           />
           <div className={`absolute h-12 w-10 rounded-full ${lampState === "lit" ? "bg-amber-100/30" : lampState === "charging" ? "bg-amber-200/25" : lampState === "too-low" ? "bg-amber-200/16" : lampState === "too-high" ? "bg-violet-300/20" : "bg-cyan-200/12"} transition`} />
-          <span className="absolute -bottom-7 whitespace-nowrap rounded-full bg-blue-950/70 px-2 py-1 text-[10px] font-black text-amber-100">星光灯</span>
           {isBagReady && <span className="tap-hint absolute -top-7 rounded-full bg-amber-300 px-2 py-1 text-[10px] font-black text-slate-950">点这里</span>}
         </button>
       </div>
 
-      <div className="absolute right-[12%] top-[24%] z-20 flex flex-col items-center gap-2 sm:right-[18%]">
+      <div className="absolute right-[10%] top-[23%] z-20 flex flex-col items-center gap-2 sm:right-[18%]">
         <div
-          className={`spirit-avatar relative flex h-24 w-24 items-center justify-center rounded-[42%] border border-cyan-100/35 ${spiritAwake ? "spirit-awake bg-[radial-gradient(circle_at_50%_30%,rgba(254,243,199,0.42),rgba(134,239,172,0.2)_52%,rgba(34,197,94,0.12))] shadow-[0_0_42px_rgba(134,239,172,0.7)]" : "bg-[radial-gradient(circle_at_50%_30%,rgba(219,234,254,0.32),rgba(148,163,184,0.18)_54%,rgba(71,85,105,0.12))] shadow-[0_0_28px_rgba(148,163,184,0.48)]"} sm:h-28 sm:w-28`}
+          className={`spirit-avatar relative flex h-20 w-20 items-center justify-center rounded-[42%] border border-cyan-100/30 ${spiritAwake ? "spirit-awake bg-[radial-gradient(circle_at_50%_30%,rgba(254,243,199,0.36),rgba(134,239,172,0.18)_52%,rgba(34,197,94,0.1))] shadow-[0_0_36px_rgba(134,239,172,0.64)]" : "bg-[radial-gradient(circle_at_50%_30%,rgba(219,234,254,0.28),rgba(148,163,184,0.16)_54%,rgba(71,85,105,0.1))] shadow-[0_0_24px_rgba(148,163,184,0.42)]"} sm:h-28 sm:w-28`}
         >
           <AssetImage
             alt=""
@@ -437,7 +428,6 @@ function ForestMap({
             src={spiritAwake ? forestRpgAssets.characters.awakeSpirit : forestRpgAssets.characters.sleepingSpirit}
           />
         </div>
-        <p className="rounded-full border border-cyan-100/25 bg-blue-950/58 px-3 py-1 text-xs font-black text-cyan-50">{spiritAwake ? "醒来了" : "睡着了"}</p>
       </div>
 
       <div className="sleepy-mist absolute right-[4%] top-[12%] z-10 h-72 w-72 rounded-full bg-slate-300/22 bg-contain bg-center bg-no-repeat blur-2xl sm:right-[12%]" style={{ backgroundImage: `url(${forestRpgAssets.objects.sleepyFog}), radial-gradient(circle, rgba(203,213,225,0.24), transparent 68%)` }} />
@@ -470,7 +460,7 @@ function ForestMap({
               {fruit.label}
             </span>
             {showTapHint && <span className="tap-hint pointer-events-none absolute -top-7 rounded-full bg-amber-200 px-2 py-1 text-[10px] font-black text-slate-950">点我</span>}
-            {picked && <span className="pointer-events-none absolute -bottom-6 whitespace-nowrap rounded-full bg-blue-950/70 px-2 py-1 text-[10px] font-black text-cyan-50">已装入</span>}
+            {picked && <span className="pointer-events-none absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-100 text-[11px] font-black text-slate-950 shadow-[0_0_12px_rgba(186,230,253,0.75)]">✓</span>}
           </button>
         );
       })}
@@ -508,7 +498,7 @@ function getRecommendedFruitId(fruits: ForestFruit[], pickedFruitIds: string[], 
 
 function SceneCard({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`absolute z-50 rounded-[28px] border border-cyan-200/25 bg-blue-950/78 p-4 shadow-[0_0_36px_rgba(34,211,238,0.18)] backdrop-blur-xl ${className}`}>
+    <div className={`absolute z-50 rounded-[24px] border border-cyan-200/25 bg-blue-950/78 p-4 shadow-[0_0_32px_rgba(34,211,238,0.17)] backdrop-blur-xl sm:rounded-[28px] ${className}`}>
       {children}
     </div>
   );
@@ -516,10 +506,10 @@ function SceneCard({ children, className = "" }: { children: ReactNode; classNam
 
 function NovaHint({ line }: { line: string }) {
   return (
-    <div className="mb-2 grid grid-cols-[56px_minmax(0,1fr)] items-center gap-2">
+    <div className="mb-1.5 grid grid-cols-[44px_minmax(0,1fr)] items-center gap-2 sm:mb-2 sm:grid-cols-[56px_minmax(0,1fr)]">
       <div
         aria-label="Nova"
-        className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-[18px] border border-cyan-100/35 bg-[radial-gradient(circle_at_50%_30%,#dffbff,#38bdf8_48%,#1d4ed8)] shadow-[0_0_20px_rgba(34,211,238,0.28)]"
+        className="relative mx-auto flex h-11 w-11 items-center justify-center rounded-[14px] border border-cyan-100/35 bg-[radial-gradient(circle_at_50%_30%,#dffbff,#38bdf8_48%,#1d4ed8)] shadow-[0_0_18px_rgba(34,211,238,0.26)] sm:h-14 sm:w-14 sm:rounded-[18px]"
       >
         <AssetImage
           alt=""
@@ -527,29 +517,29 @@ function NovaHint({ line }: { line: string }) {
           src={forestRpgAssets.characters.nova}
         />
       </div>
-      <p className="rounded-[16px] border border-cyan-200/16 bg-slate-950/28 p-2 text-xs font-bold leading-5 text-cyan-50">{line}</p>
+      <p className="rounded-[14px] border border-cyan-200/16 bg-slate-950/28 px-2 py-1.5 text-[11px] font-bold leading-4 text-cyan-50 sm:rounded-[16px] sm:p-2 sm:text-xs sm:leading-5">{line}</p>
     </div>
   );
 }
 
 function InventoryDock({ fruits, hasFailedTry, onReset }: { fruits: ForestFruit[]; hasFailedTry: boolean; onReset: () => void }) {
   return (
-    <div className="rounded-[24px] border border-amber-200/30 bg-blue-950/72 p-3 shadow-[0_0_28px_rgba(34,211,238,0.16)] backdrop-blur-xl" data-testid="fruit-bag">
+    <div className="rounded-[18px] border border-amber-200/26 bg-blue-950/68 p-2 shadow-[0_0_24px_rgba(34,211,238,0.14)] backdrop-blur-xl sm:rounded-[24px] sm:p-3" data-testid="fruit-bag">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-black tracking-[0.18em] text-amber-200">背包</p>
+        <p className="text-[11px] font-black tracking-[0.14em] text-amber-200 sm:text-xs sm:tracking-[0.18em]">背包</p>
         {(fruits.length > 0 || hasFailedTry) && (
-          <button className="rounded-full border border-cyan-200/25 bg-cyan-200/10 px-3 py-1 text-xs font-black text-cyan-50 transition active:scale-95" onClick={onReset} type="button">
+          <button className="rounded-full border border-cyan-200/25 bg-cyan-200/10 px-2.5 py-0.5 text-[11px] font-black text-cyan-50 transition active:scale-95 sm:px-3 sm:py-1 sm:text-xs" onClick={onReset} type="button">
             换果子
           </button>
         )}
       </div>
-      <div className="mt-2 grid grid-cols-2 gap-2">
+      <div className="mt-1.5 grid grid-cols-2 gap-2 sm:mt-2">
         {[0, 1].map((index) => {
           const fruit = fruits[index];
           return (
-            <div className={`flex min-h-12 items-center justify-center rounded-[18px] border px-2 text-sm font-black ${fruit ? "border-amber-100/55 bg-amber-300/18 text-amber-50 shadow-[0_0_18px_rgba(250,204,21,0.2)]" : "border-cyan-100/18 bg-slate-950/22 text-cyan-50/55"}`} key={index}>
+            <div className={`flex min-h-9 items-center justify-center rounded-[14px] border px-2 text-sm font-black sm:min-h-12 sm:rounded-[18px] ${fruit ? "border-amber-100/55 bg-amber-300/18 text-amber-50 shadow-[0_0_18px_rgba(250,204,21,0.2)]" : "border-cyan-100/18 bg-slate-950/22 text-cyan-50/55"}`} key={index}>
               {fruit ? (
-                <span className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-amber-100/60 bg-[radial-gradient(circle_at_35%_28%,#fef3c7,#facc15_38%,#22c55e_76%)] text-base font-black text-slate-950">
+                <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-amber-100/60 bg-[radial-gradient(circle_at_35%_28%,#fef3c7,#facc15_38%,#22c55e_76%)] text-base font-black text-slate-950 sm:h-10 sm:w-10">
                   <AssetImage
                     alt=""
                     className="absolute inset-0 h-full w-full object-contain"
@@ -558,7 +548,7 @@ function InventoryDock({ fruits, hasFailedTry, onReset }: { fruits: ForestFruit[
                   <span className="relative z-10 rounded-full bg-slate-950/68 px-1.5 text-xs text-amber-100">{fruit.label}</span>
                 </span>
               ) : (
-                <span>空</span>
+                <span className="h-2 w-2 rounded-full bg-cyan-100/28" />
               )}
             </div>
           );
@@ -573,9 +563,9 @@ function LampMeter({ state, sum }: { state: LampState; sum: number }) {
   const color = state === "too-high" ? "from-violet-300 to-fuchsia-300" : state === "lit" ? "from-amber-200 to-yellow-300" : "from-cyan-200 to-emerald-200";
 
   return (
-    <div className="mt-2 rounded-[20px] border border-cyan-200/25 bg-slate-950/48 p-3" data-testid="lamp-meter">
-      <p className="text-xs font-black tracking-[0.18em] text-cyan-200">星光灯能量</p>
-      <div className="mt-2 h-4 overflow-hidden rounded-full bg-slate-950/70">
+    <div className="mt-1.5 rounded-[16px] border border-cyan-200/25 bg-slate-950/48 p-2 sm:mt-2 sm:rounded-[20px] sm:p-3" data-testid="lamp-meter">
+      <p className="text-[11px] font-black tracking-[0.14em] text-cyan-200 sm:text-xs sm:tracking-[0.18em]">星光灯能量</p>
+      <div className="mt-1.5 h-3 overflow-hidden rounded-full bg-slate-950/70 sm:mt-2 sm:h-4">
         <div className={`h-full rounded-full bg-gradient-to-r ${color} transition-all duration-500`} style={{ width: `${width}%` }} />
       </div>
     </div>
@@ -584,7 +574,7 @@ function LampMeter({ state, sum }: { state: LampState; sum: number }) {
 
 function PrimaryButton({ children, onClick }: { children: ReactNode; onClick: () => void }) {
   return (
-    <button className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-[22px] bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 px-5 text-base font-black text-slate-950 shadow-[0_0_28px_rgba(250,204,21,0.42)] transition active:scale-95" onClick={onClick} type="button">
+    <button className="mt-2 inline-flex min-h-11 w-full items-center justify-center rounded-[20px] bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 px-4 text-sm font-black text-slate-950 shadow-[0_0_24px_rgba(250,204,21,0.38)] transition active:scale-95 sm:mt-3 sm:min-h-12 sm:rounded-[22px] sm:px-5 sm:text-base" onClick={onClick} type="button">
       {children}
     </button>
   );
@@ -592,7 +582,7 @@ function PrimaryButton({ children, onClick }: { children: ReactNode; onClick: ()
 
 function SecondaryAction({ children, onClick }: { children: ReactNode; onClick: () => void }) {
   return (
-    <button className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-[20px] border border-cyan-200/30 bg-cyan-200/12 px-4 text-sm font-black text-cyan-50 transition active:scale-95" onClick={onClick} type="button">
+    <button className="mt-2 inline-flex min-h-10 w-full items-center justify-center rounded-[18px] border border-cyan-200/30 bg-cyan-200/12 px-4 text-sm font-black text-cyan-50 transition active:scale-95 sm:mt-3 sm:min-h-11 sm:rounded-[20px]" onClick={onClick} type="button">
       {children}
     </button>
   );

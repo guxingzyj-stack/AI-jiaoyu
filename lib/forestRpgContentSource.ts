@@ -123,8 +123,8 @@ export const forestRpgContent: ForestRpgContent = {
     resultSuccessTitle: "成功点亮！",
     completeTitle: "森林小路亮起来了一小段",
     completeLine: "你和 Nova 救醒了第一个小精灵。",
-    friendLine: "它现在是你的森林朋友了！",
-    rewardTitle: "获得：第一片星光碎片",
+    friendLine: "小精灵成为你的森林朋友",
+    rewardTitle: "星光碎片 +1",
     pathProgress: "森林小路亮起 1/3",
     hookLine: "前面好像还有一团瞌睡迷雾……也许还有小伙伴在等我们。"
   },
@@ -149,6 +149,6 @@ export const forestRpgContent: ForestRpgContent = {
     retry: "重新找果子",
     seeSpirit: "看看小精灵",
     replay: "再救醒一个小精灵",
-    backToAdventure: "回到冒险入口"
+    backToAdventure: "回到入口"
   }
 };
