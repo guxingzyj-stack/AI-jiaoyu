@@ -358,6 +358,10 @@ function ParentTestLinks() {
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         <TestLink href="/adventure/forest-map">测试：森林小地图探索版</TestLink>
         <TestLink href="/adventure/starlight-sea">开始星光海跳岛航线</TestLink>
+        <TestLink href="/adventure/geometry-mountain">测试：第三章 几何山</TestLink>
+        <TestLink href="/adventure/time-city">测试：第四章 时间城</TestLink>
+        <TestLink href="/adventure/fraction-valley">测试：第五章 分数谷</TestLink>
+        <TestLink href="/adventure/star-core">测试：终章 星光核心</TestLink>
         <TestLink href="/map">进入星球地图</TestLink>
         <TestLink href="/adventure/multiples-sea">直接进入倍数海</TestLink>
         <TestLink href="/adventure/forest-island">直接进入森林岛</TestLink>
