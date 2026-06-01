@@ -50,6 +50,7 @@ export type ForestRpgContent = {
     resultSuccessTitle: string;
     completeTitle: string;
     completeLine: string;
+    friendLine: string;
   };
   novaLines: {
     intro: string;
@@ -118,7 +119,8 @@ export const forestRpgContent: ForestRpgContent = {
     resultPerfectTitle: "完美点亮！",
     resultSuccessTitle: "成功点亮！",
     completeTitle: "森林小路亮起来了一小段",
-    completeLine: "你和 Nova 救醒了第一个小精灵。"
+    completeLine: "你和 Nova 救醒了第一个小精灵。",
+    friendLine: "它现在是你的森林朋友了！"
   },
   novaLines: {
     intro: "小精灵睡着了。我们去帮它点亮星光灯吧。",
@@ -140,7 +142,7 @@ export const forestRpgContent: ForestRpgContent = {
     clearBag: "换果子",
     retry: "重新找果子",
     seeSpirit: "看看小精灵",
-    replay: "再点亮一次",
+    replay: "再救醒一个小精灵",
     backToAdventure: "回到冒险入口"
   }
 };

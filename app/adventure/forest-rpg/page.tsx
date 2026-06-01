@@ -204,6 +204,7 @@ export default function ForestRpgPage() {
             playerPoint={playerPoint}
             selectedFruits={selectedFruits}
             showMap={stage !== "intro"}
+            targetEnergy={content.targetEnergy}
           />
 
           {stage !== "intro" && (
@@ -245,6 +246,9 @@ export default function ForestRpgPage() {
               <p className="mt-2 text-sm font-bold leading-6 text-cyan-50/88">
                 {content.novaLines.successSummary(lastTry.fruits[0].value, lastTry.fruits[1].value)}
               </p>
+              <p className="mt-2 rounded-full border border-emerald-200/30 bg-emerald-300/16 px-4 py-2 text-sm font-black text-emerald-50">
+                {content.narrative.friendLine}
+              </p>
               <p className="mt-3 rounded-full bg-amber-300 px-4 py-2 text-sm font-black text-slate-950">
                 获得：{content.rewards.item} +{content.rewards.amount}
               </p>
@@ -257,6 +261,7 @@ export default function ForestRpgPage() {
               <p className="text-xs font-black tracking-[0.22em] text-amber-200">星光灯救援完成</p>
               <h2 className="mt-2 text-3xl font-black leading-tight">{content.narrative.completeTitle}</h2>
               <p className="mt-3 text-sm font-bold leading-6 text-cyan-50/88">{content.narrative.completeLine}</p>
+              <p className="mt-2 text-sm font-black text-emerald-100">{content.narrative.friendLine}</p>
               <p className="mt-3 rounded-full bg-cyan-200/18 px-4 py-2 text-sm font-black text-cyan-50">
                 {content.rewards.item}：{content.rewards.amount}
               </p>
@@ -349,7 +354,8 @@ function ForestMap({
   pickedFruitIds,
   playerPoint,
   selectedFruits,
-  showMap
+  showMap,
+  targetEnergy
 }: {
   contentFruits: ForestFruit[];
   hasFailedTry: boolean;
@@ -363,8 +369,10 @@ function ForestMap({
   playerPoint: { x: number; y: number };
   selectedFruits: ForestFruit[];
   showMap: boolean;
+  targetEnergy: number;
 }) {
   const spiritAwake = isAwake;
+  const recommendedFruitId = getRecommendedFruitId(contentFruits, pickedFruitIds, selectedFruits, targetEnergy);
 
   return (
     <div className={`absolute inset-0 overflow-hidden ${isAwake ? "bg-emerald-500/10" : "bg-slate-950/20"}`}>
@@ -410,6 +418,7 @@ function ForestMap({
         const picked = pickedFruitIds.includes(fruit.id);
         const carried = selectedFruits.some((item) => item.id === fruit.id);
         const canPick = !picked && selectedFruits.length < 2 && !hasFailedTry;
+        const showTapHint = canPick && fruit.id === recommendedFruitId;
         return (
           <button
             className={`absolute z-30 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-amber-100/60 bg-[radial-gradient(circle_at_35%_28%,#fef3c7,#facc15_34%,#22c55e_72%,#15803d)] text-xl font-black text-slate-950 transition active:scale-95 ${canPick ? "energy-fruit hover:scale-105" : "opacity-35 grayscale"} ${carried ? "ring-4 ring-cyan-100/60" : ""}`}
@@ -421,7 +430,7 @@ function ForestMap({
             type="button"
           >
             {fruit.label}
-            {canPick && <span className="tap-hint pointer-events-none absolute -top-7 rounded-full bg-amber-200 px-2 py-1 text-[10px] font-black text-slate-950">点我</span>}
+            {showTapHint && <span className="tap-hint pointer-events-none absolute -top-7 rounded-full bg-amber-200 px-2 py-1 text-[10px] font-black text-slate-950">点我</span>}
             {picked && <span className="pointer-events-none absolute -bottom-6 whitespace-nowrap rounded-full bg-blue-950/70 px-2 py-1 text-[10px] font-black text-cyan-50">已装入</span>}
           </button>
         );
@@ -438,6 +447,20 @@ function ForestMap({
       )}
     </div>
   );
+}
+
+function getRecommendedFruitId(fruits: ForestFruit[], pickedFruitIds: string[], selectedFruits: ForestFruit[], targetEnergy: number) {
+  const available = fruits.filter((fruit) => !pickedFruitIds.includes(fruit.id));
+  if (selectedFruits.length === 0) {
+    return available.find((fruit) => fruit.value === 6)?.id ?? available[0]?.id ?? null;
+  }
+
+  if (selectedFruits.length === 1) {
+    const neededValue = targetEnergy - selectedFruits[0].value;
+    return available.find((fruit) => fruit.value === neededValue)?.id ?? available.sort((left, right) => left.value - right.value)[0]?.id ?? null;
+  }
+
+  return null;
 }
 
 function SceneCard({ children, className = "" }: { children: ReactNode; className?: string }) {
