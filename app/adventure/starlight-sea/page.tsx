@@ -245,7 +245,7 @@ export default function StarlightSeaPage() {
                 onClick={() => goTo(loc.id)}
                 type="button"
               >
-                <span className={`h-9 w-9 bg-contain bg-center bg-no-repeat ${st === "locked" ? "opacity-50 grayscale" : ""}`} style={{ backgroundImage: `url(${nodeImage(loc.id)})` }} />
+                <span className={`h-8 w-8 bg-contain bg-center bg-no-repeat ${st === "locked" ? "opacity-50 grayscale" : ""}`} style={{ backgroundImage: `url(${nodeImage(loc.id)})` }} />
                 {st === "locked" && <span className="absolute -right-1 -top-1 text-xs">🔒</span>}
                 {done && <span className="absolute -right-1 -top-1 text-xs">✅</span>}
                 <span className="pointer-events-none absolute -bottom-4 whitespace-nowrap rounded-full bg-[#06122c]/85 px-1.5 text-[9px] font-black text-cyan-50">{loc.short}</span>
@@ -298,7 +298,9 @@ export default function StarlightSeaPage() {
           <div className="relative my-auto w-full max-w-sm overflow-hidden rounded-[28px] border border-amber-200/40 bg-[#0d1f47]/95 p-5 text-center shadow-[0_0_40px_rgba(252,211,77,0.35)]">
             <div className="absolute inset-0" style={{ backgroundImage: seaGlow, opacity: 0.5 }} />
             <div className="relative">
-              <div className="mx-auto h-20 w-20 bg-contain bg-center bg-no-repeat drop-shadow-[0_0_24px_rgba(252,211,77,0.5)]" style={{ backgroundImage: `url(${starlightSeaAssets.lighthouseCoreNode})` }} aria-label="海星灯塔核心" />
+              <div className="mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-amber-300/70 bg-[radial-gradient(circle_at_50%_36%,#1a4684,#0a1c40)] shadow-[0_0_26px_rgba(252,211,77,0.55)]">
+                <span className="h-14 w-14 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${starlightSeaAssets.lighthouseNode})` }} aria-label="海星灯塔" />
+              </div>
               <h2 className="mt-3 text-xl font-black text-amber-100">第二章完成！</h2>
               <p className="mt-2 text-sm font-bold leading-6 text-cyan-50">{SEA_COPY.coreComplete}</p>
               <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] font-black text-cyan-100">
