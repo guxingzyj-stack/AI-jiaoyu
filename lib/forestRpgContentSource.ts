@@ -81,7 +81,6 @@ export type ForestRpgContent = {
     retry: string;
     continueForward: string;
     seeSpirit: string;
-    mistGate: string;
     replay: string;
     backToAdventure: string;
   };
@@ -162,7 +161,7 @@ export const forestRpgContent: ForestRpgContent = {
     finalFriends: "你救醒了 2 个森林朋友",
     finalProgress: "森林小路亮起 2/3",
     finalFragments: "星光碎片 x2",
-    mistGateTitle: "远处的迷雾门露出来了",
+    mistGateTitle: "下一集：迷雾门即将开启",
     mistGateLine: "门后面，好像还有更大的秘密。"
   },
   novaLines: {
@@ -181,8 +180,7 @@ export const forestRpgContent: ForestRpgContent = {
     retry: "重新找果子",
     continueForward: "继续往前走",
     seeSpirit: "继续往前走",
-    mistGate: "继续探索迷雾门",
-    replay: "再玩一次",
+    replay: "再救醒一次",
     backToAdventure: "回到入口"
   }
 };

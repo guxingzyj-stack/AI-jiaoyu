@@ -325,12 +325,10 @@ export default function ForestRpgPage() {
                 <p className="rounded-[16px] border border-emerald-200/30 bg-emerald-300/14 px-3 py-1.5">{content.narrative.finalProgress}</p>
                 <p className="rounded-[16px] border border-cyan-200/30 bg-cyan-300/12 px-3 py-1.5">{content.narrative.finalFragments}</p>
               </div>
-              <p className="mt-2 text-xs font-bold leading-5 text-cyan-50/82 sm:text-sm sm:leading-6">
-                {content.narrative.mistGateTitle}。{content.narrative.mistGateLine}
-              </p>
-              <button className="mt-3 inline-flex min-h-10 w-full cursor-not-allowed items-center justify-center rounded-[18px] border border-slate-300/20 bg-slate-200/10 px-4 text-sm font-black text-cyan-50/55" disabled type="button">
-                {content.buttons.mistGate} · 下一集开启
-              </button>
+              <div className="mt-3 rounded-[18px] border border-cyan-200/28 bg-cyan-200/12 px-3 py-2 text-left shadow-[0_0_18px_rgba(34,211,238,0.12)]">
+                <p className="text-xs font-black text-amber-100 sm:text-sm">{content.narrative.mistGateTitle}</p>
+                <p className="mt-1 text-xs font-bold leading-5 text-cyan-50/82">{content.narrative.mistGateLine}</p>
+              </div>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <PrimaryButton onClick={resetAdventure}>{content.buttons.replay}</PrimaryButton>
                 <Link className="inline-flex min-h-11 items-center justify-center rounded-[20px] border border-cyan-200/30 bg-cyan-200/12 px-4 text-sm font-black text-cyan-50 transition active:scale-95 sm:min-h-12 sm:rounded-[22px]" href="/adventure">
