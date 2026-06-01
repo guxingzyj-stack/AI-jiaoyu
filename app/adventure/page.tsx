@@ -117,6 +117,14 @@ export default function AdventurePage() {
                   开始今天的冒险
                   <ChevronRight size={22} />
                 </Link>
+                <Link
+                  className="mt-3 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[26px] bg-gradient-to-r from-lime-300 via-amber-300 to-amber-400 px-5 text-lg font-black text-slate-950 shadow-glow"
+                  data-testid="start-forest-map"
+                  href="/adventure/forest-map"
+                >
+                  开始森林小地图探索
+                  <ChevronRight size={22} />
+                </Link>
                 <ParentTestLinks />
               </div>
             </div>
@@ -327,6 +335,14 @@ export default function AdventurePage() {
           {heroButtonLabel}
           <ChevronRight size={24} />
         </Link>
+        <Link
+          className="mb-4 flex min-h-16 items-center justify-center gap-3 rounded-[30px] bg-gradient-to-r from-lime-300 via-amber-300 to-amber-400 px-6 py-4 text-lg font-black text-slate-950 shadow-glow transition active:scale-[0.98]"
+          data-testid="start-forest-map"
+          href="/adventure/forest-map"
+        >
+          开始森林小地图探索
+          <ChevronRight size={24} />
+        </Link>
         <ParentTestLinks />
       </div>
     </main>
@@ -340,6 +356,7 @@ function ParentTestLinks() {
         家长 / 测试入口
       </summary>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <TestLink href="/adventure/forest-map">测试：森林小地图探索版</TestLink>
         <TestLink href="/map">进入星球地图</TestLink>
         <TestLink href="/adventure/multiples-sea">直接进入倍数海</TestLink>
         <TestLink href="/adventure/forest-island">直接进入森林岛</TestLink>
