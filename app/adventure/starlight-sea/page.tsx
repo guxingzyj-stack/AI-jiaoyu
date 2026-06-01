@@ -245,7 +245,7 @@ export default function StarlightSeaPage() {
                 onClick={() => goTo(loc.id)}
                 type="button"
               >
-                <span className={`h-8 w-8 bg-contain bg-center bg-no-repeat ${st === "locked" ? "opacity-50 grayscale" : ""}`} style={{ backgroundImage: `url(${nodeImage(loc.id)})` }} />
+                <CoinImg className={`h-9 w-9 ${st === "locked" ? "opacity-50 grayscale" : ""}`} src={nodeImage(loc.id)} />
                 {st === "locked" && <span className="absolute -right-1 -top-1 text-xs">🔒</span>}
                 {done && <span className="absolute -right-1 -top-1 text-xs">✅</span>}
                 <span className="pointer-events-none absolute -bottom-4 whitespace-nowrap rounded-full bg-[#06122c]/85 px-1.5 text-[9px] font-black text-cyan-50">{loc.short}</span>
@@ -259,7 +259,7 @@ export default function StarlightSeaPage() {
             style={{ left: `${boatPos.x}%`, top: `calc(${boatPos.y}% - 30px)`, transition: "left 0.6s ease, top 0.6s ease" }}
             aria-label="小星船"
           >
-            <span className="h-7 w-7 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${starlightSeaAssets.boatNode})` }} />
+            <CoinImg className="h-8 w-8" src={starlightSeaAssets.boatNode} />
           </span>
         </section>
 
@@ -274,8 +274,8 @@ export default function StarlightSeaPage() {
           <p className="mt-1 text-xs font-bold leading-5 text-cyan-100/90">{current.blurb}</p>
 
           <div className="mt-2 flex items-start gap-2 rounded-[16px] border border-violet-300/25 bg-[#06122c]/55 p-2">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-cyan-200/40 bg-[#0b2a55]/80" aria-label="Nova">
-              <span className="h-7 w-7 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${starlightSeaAssets.novaCompanion})` }} />
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-cyan-200/40 bg-[#0b2a55]/80" aria-label="Nova">
+              <CoinImg className="h-9 w-9" src={starlightSeaAssets.novaCompanion} zoom={1.2} />
             </span>
             <p className="text-xs font-bold leading-5 text-cyan-50">{message}</p>
           </div>
@@ -298,8 +298,8 @@ export default function StarlightSeaPage() {
           <div className="relative my-auto w-full max-w-sm overflow-hidden rounded-[28px] border border-amber-200/40 bg-[#0d1f47]/95 p-5 text-center shadow-[0_0_40px_rgba(252,211,77,0.35)]">
             <div className="absolute inset-0" style={{ backgroundImage: seaGlow, opacity: 0.5 }} />
             <div className="relative">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-amber-300/70 bg-[radial-gradient(circle_at_50%_36%,#1a4684,#0a1c40)] shadow-[0_0_26px_rgba(252,211,77,0.55)]">
-                <span className="h-14 w-14 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${starlightSeaAssets.lighthouseNode})` }} aria-label="海星灯塔" />
+              <div className="mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-amber-300/70 bg-[radial-gradient(circle_at_50%_36%,#1a4684,#0a1c40)] shadow-[0_0_26px_rgba(252,211,77,0.55)]" aria-label="海星灯塔">
+                <CoinImg className="h-[72px] w-[72px]" src={starlightSeaAssets.lighthouseNode} zoom={1.25} />
               </div>
               <h2 className="mt-3 text-xl font-black text-amber-100">第二章完成！</h2>
               <p className="mt-2 text-sm font-bold leading-6 text-cyan-50">{SEA_COPY.coreComplete}</p>
@@ -505,12 +505,24 @@ function Legend({ color, label }: { color: string; label: string }) {
   );
 }
 
+// 把自带近白底的图标当「圆形徽章」显示：圆形裁切 + cover + 轻微放大，去掉白方块、突出主体。
+function CoinImg({ className = "", src, zoom = 1.3 }: { className?: string; src: string; zoom?: number }) {
+  return (
+    <span className={`block overflow-hidden rounded-full ${className}`}>
+      <span
+        className="block h-full w-full bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${src})`, backgroundSize: `${Math.round(zoom * 100)}%` }}
+      />
+    </span>
+  );
+}
+
 function HudPill({ glyph, img, label, value, tone }: { glyph?: string; img?: string; label: string; value: string; tone: "emerald" | "amber" | "cyan" }) {
   const border = tone === "emerald" ? "border-emerald-200/30 text-emerald-100" : tone === "amber" ? "border-amber-200/30 text-amber-100" : "border-cyan-200/30 text-cyan-100";
   return (
     <div className={`flex flex-col items-center justify-center rounded-[14px] border bg-[#06122c]/55 px-1 py-1.5 text-center ${border}`}>
       {img ? (
-        <span className="h-4 w-4 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${img})` }} />
+        <CoinImg className="h-[18px] w-[18px]" src={img} zoom={1.2} />
       ) : (
         <span className="text-sm leading-none">{glyph}</span>
       )}

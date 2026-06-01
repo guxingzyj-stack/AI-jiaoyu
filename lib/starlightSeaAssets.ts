@@ -1,14 +1,18 @@
-// 星光海正式视觉资产（压缩后的 WebP）。原图在本地 _incoming-starlight-sea-assets/（已 gitignore），
-// 由 scripts/optimize-starlight-sea-assets.mjs 压缩输出到 public/assets/starlight-sea/。代码只引用英文名 WebP。
+// 星光海视觉资产路径。直接引用 public/assets/starlight-sea/ 下用户手动放入的图片，按真实扩展名书写：
+// 7 张节点/图标为 .png（用户手动放入），3 张场景图为 .webp（沿用之前压缩好的）。带版本号破除缓存。
+// 注意：当前 .png 图标自带近白底（非真透明），页面用「圆形裁切 + cover」当徽章显示，避免白方块。
+const assetVersion = "s4e2-r5-manual-assets";
+const v = (path: string) => `${path}?v=${assetVersion}`;
+
 export const starlightSeaAssets = {
-  background: "/assets/starlight-sea/sea-background.webp",
-  routePath: "/assets/starlight-sea/sea-route-path.webp",
-  platform: "/assets/starlight-sea/sea-platform.webp",
-  dockNode: "/assets/starlight-sea/dock-node.webp",
-  boatNode: "/assets/starlight-sea/boat-node.webp",
-  lighthouseNode: "/assets/starlight-sea/lighthouse-node.webp",
-  vortexGateNode: "/assets/starlight-sea/vortex-gate-node.webp",
-  lighthouseCoreNode: "/assets/starlight-sea/lighthouse-core-node.webp",
-  seaFragment: "/assets/starlight-sea/sea-fragment.webp",
-  novaCompanion: "/assets/starlight-sea/nova-companion.webp"
+  background: v("/assets/starlight-sea/sea-background.webp"),
+  routePath: v("/assets/starlight-sea/sea-route-path.webp"),
+  platform: v("/assets/starlight-sea/sea-platform.webp"),
+  dockNode: v("/assets/starlight-sea/dock-node.png"),
+  boatNode: v("/assets/starlight-sea/boat-node.png"),
+  lighthouseNode: v("/assets/starlight-sea/lighthouse-node.png"),
+  vortexGateNode: v("/assets/starlight-sea/vortex-gate-node.png"),
+  lighthouseCoreNode: v("/assets/starlight-sea/lighthouse-core-node.png"),
+  seaFragment: v("/assets/starlight-sea/sea-fragment.png"),
+  novaCompanion: v("/assets/starlight-sea/nova-companion.png")
 } as const;
