@@ -206,7 +206,7 @@ export default function StarlightSeaPage() {
           <div className="mt-2 grid grid-cols-3 gap-1.5">
             <HudPill img={starlightSeaAssets.seaFragment} label="星潮碎片" value={`${fragments}/${TOTAL_ROUTES}`} tone="amber" />
             <HudPill glyph="🧭" label="已点亮航线" value={`${routesLit}/${TOTAL_ROUTES}`} tone="cyan" />
-            <HudPill glyph="🗼" label="海星灯塔" value={seaCoreDone ? "已点亮" : "未点亮"} tone="emerald" />
+            <HudPill img={starlightSeaAssets.lighthouseNode} label="海星灯塔" value={seaCoreDone ? "已点亮" : "未点亮"} tone="emerald" />
           </div>
           <p className="mt-2 text-center text-[11px] font-bold leading-4 text-cyan-200/90">目标：{SEA_COPY.goal}</p>
         </header>
@@ -214,9 +214,8 @@ export default function StarlightSeaPage() {
         {/* 小地图（星光海） */}
         <section className="relative w-full overflow-hidden rounded-[24px] border border-cyan-300/25 shadow-[0_0_30px_rgba(71,150,255,0.25)]" style={{ aspectRatio: "1 / 1" }}>
           <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${starlightSeaAssets.background})` }} />
-          <div className="absolute inset-0 bg-[#06122c]/35" />
-          <div className="pointer-events-none absolute inset-x-[16%] bottom-[6%] top-[42%] bg-contain bg-bottom bg-no-repeat opacity-[0.18]" style={{ backgroundImage: `url(${starlightSeaAssets.platform})` }} />
-          <div className="absolute inset-0 transition-opacity duration-700" style={{ backgroundImage: seaGlow, opacity: brightOpacity * 0.85 }} />
+          <div className="absolute inset-0 bg-[#06122c]/45" />
+          <div className="pointer-events-none absolute inset-0 transition-opacity duration-700" style={{ backgroundImage: seaGlow, opacity: brightOpacity * 0.8 }} />
 
           <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
             {SEA_EDGES.map(([a, b]) => {
@@ -232,10 +231,10 @@ export default function StarlightSeaPage() {
             const isCurrent = loc.id === currentLocation;
             const ring =
               st === "locked"
-                ? "border-slate-400/40 bg-slate-800/70 opacity-70"
+                ? "border-slate-400/45 bg-[#1b2740]/85 opacity-80"
                 : done
-                  ? "border-amber-300/80 bg-amber-400/15 shadow-[0_0_16px_rgba(252,211,77,0.6)]"
-                  : "border-cyan-200/80 bg-cyan-300/15 shadow-[0_0_16px_rgba(34,211,238,0.6)]";
+                  ? "border-amber-300/85 bg-[#0b1f44]/85 shadow-[0_0_16px_rgba(252,211,77,0.6)]"
+                  : "border-cyan-200/85 bg-[#0b1f44]/85 shadow-[0_0_16px_rgba(34,211,238,0.6)]";
             return (
               <button
                 key={loc.id}
@@ -254,12 +253,14 @@ export default function StarlightSeaPage() {
             );
           })}
 
-          {/* 小船（点击地点后滑过去） */}
+          {/* 小船（点击地点后滑过去）：圆形蓝色发光底 + 透明船图 */}
           <span
-            className="pointer-events-none absolute z-10 h-9 w-9 -translate-x-1/2 bg-contain bg-center bg-no-repeat drop-shadow-[0_0_10px_rgba(103,232,249,0.7)]"
-            style={{ left: `${boatPos.x}%`, top: `calc(${boatPos.y}% - 30px)`, backgroundImage: `url(${starlightSeaAssets.boatNode})`, transition: "left 0.6s ease, top 0.6s ease" }}
+            className="pointer-events-none absolute z-10 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-cyan-200/60 bg-[#0b2a55]/85 shadow-[0_0_14px_rgba(103,232,249,0.7)]"
+            style={{ left: `${boatPos.x}%`, top: `calc(${boatPos.y}% - 30px)`, transition: "left 0.6s ease, top 0.6s ease" }}
             aria-label="小星船"
-          />
+          >
+            <span className="h-7 w-7 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${starlightSeaAssets.boatNode})` }} />
+          </span>
         </section>
 
         {/* 底部：地点信息 + Nova + 操作 */}
@@ -273,7 +274,9 @@ export default function StarlightSeaPage() {
           <p className="mt-1 text-xs font-bold leading-5 text-cyan-100/90">{current.blurb}</p>
 
           <div className="mt-2 flex items-start gap-2 rounded-[16px] border border-violet-300/25 bg-[#06122c]/55 p-2">
-            <span className="h-7 w-7 shrink-0 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${starlightSeaAssets.novaCompanion})` }} aria-label="Nova" />
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-cyan-200/40 bg-[#0b2a55]/80" aria-label="Nova">
+              <span className="h-7 w-7 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${starlightSeaAssets.novaCompanion})` }} />
+            </span>
             <p className="text-xs font-bold leading-5 text-cyan-50">{message}</p>
           </div>
 
@@ -342,16 +345,11 @@ export default function StarlightSeaPage() {
         return (
           <div className="grid gap-3">
             <p className="text-[11px] font-black text-cyan-200">{current.id === "two-step-bay" ? "这片海的亮岛隔一个出现，选一个跳岛节奏试试。" : "这条航线更长了，选一个节奏让小船跳到发光岛。"}</p>
-            <div className="relative overflow-hidden rounded-[16px] border border-cyan-200/15 bg-[#06122c]/40 p-2">
-              <div className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-[0.16]" style={{ backgroundImage: `url(${starlightSeaAssets.routePath})` }} aria-hidden />
-              <div className="relative">
-                <IslandRow
-                  max={rd.maxIsland}
-                  boatIsland={boatIsland}
-                  variant={(n) => (litSoFar.includes(n) ? "lit" : rd.goalIslands.includes(n) ? "goal" : "off")}
-                />
-              </div>
-            </div>
+            <IslandRow
+              max={rd.maxIsland}
+              boatIsland={boatIsland}
+              variant={(n) => (litSoFar.includes(n) ? "lit" : rd.goalIslands.includes(n) ? "goal" : "off")}
+            />
             <div className="grid grid-cols-3 gap-2">
               {rd.rhythmOptions.map((opt) => (
                 <button
