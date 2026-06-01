@@ -9,3 +9,5 @@ dist
 .env.*.local
 .claude/
 .DS_Store
+# 星光海原图（GPT Image 大 PNG）只在本地，不提交；public 里只放压缩后的 .webp
+_incoming-starlight-sea-assets/
