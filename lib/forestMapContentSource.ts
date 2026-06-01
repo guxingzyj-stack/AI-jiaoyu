@@ -166,10 +166,12 @@ export const FOREST_COPY = {
   // 森林核心
   coreNotReady: "森林核心还没打开，需要 3 位森林朋友和 3 片星光碎片。",
   coreComplete: "星光种子醒来了！睡着的森林重新发光了！三位森林朋友回到了自己的岗位。",
-  // 星光海远景预告（仅完成后出现）
-  seaPreviewLine: "森林外的远方，出现了一片蓝金色星光海。",
-  seaPreviewNova: "Nova：那边也有星光在变暗，不过今天我们先把森林救醒了。",
-  seaPreviewNext: "下一章：星光海"
+  // 下一章入口（仅第一章完成页出现；星光海已是可玩章节，不用“即将开启”）
+  seaNextTitle: "下一章：星光海 · 跳岛航线",
+  seaNextLine1: "森林外的远方，一片蓝金色星光海正在闪烁。",
+  seaNextLine2: "那里有会发光的浮岛，还有需要节奏才能点亮的航线。",
+  seaEnterLabel: "进入第二章：星光海",
+  seaRoute: "/adventure/starlight-sea"
 };
 
 const LOC_BY_ID: Record<ForestLocationId, ForestLocation> = FOREST_LOCATIONS.reduce(

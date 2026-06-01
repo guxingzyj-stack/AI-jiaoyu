@@ -320,16 +320,25 @@ export default function ForestMapPage() {
                 ))}
               </div>
 
-              {/* 星光海远景预告（只作预告，不是当前目标） */}
+              {/* 下一章：星光海（已是可玩章节，入口可点击） */}
               <div className="mt-4 rounded-[18px] border border-cyan-300/30 bg-blue-950/55 p-3 text-left">
-                <p className="text-[11px] font-bold leading-5 text-cyan-100">{FOREST_COPY.seaPreviewLine}</p>
-                <p className="mt-1 text-[11px] font-bold leading-5 text-cyan-200/90">{FOREST_COPY.seaPreviewNova}</p>
-                <p className="mt-2 inline-flex rounded-full border border-cyan-200/40 bg-cyan-300/10 px-3 py-1 text-[11px] font-black text-cyan-50">{FOREST_COPY.seaPreviewNext}</p>
+                <p className="text-[11px] font-black text-amber-200">{FOREST_COPY.seaNextTitle}</p>
+                <p className="mt-1 text-[11px] font-bold leading-5 text-cyan-100">{FOREST_COPY.seaNextLine1}</p>
+                <p className="mt-0.5 text-[11px] font-bold leading-5 text-cyan-200/90">{FOREST_COPY.seaNextLine2}</p>
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <button className="rounded-full bg-gradient-to-r from-amber-300 to-amber-400 py-2 text-xs font-black text-slate-950 active:scale-95" onClick={restart} type="button">再玩一次</button>
-                <Link className="inline-flex items-center justify-center rounded-full border border-cyan-200/35 bg-cyan-300/20 py-2 text-xs font-black text-cyan-50 active:scale-95" href="/adventure">回到入口</Link>
+              <div className="mt-4 grid gap-2">
+                <Link
+                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 px-4 text-sm font-black text-slate-950 shadow-[0_0_20px_rgba(252,211,77,0.4)] active:scale-95"
+                  data-testid="enter-chapter-2"
+                  href={FOREST_COPY.seaRoute}
+                >
+                  {FOREST_COPY.seaEnterLabel}
+                </Link>
+                <div className="grid grid-cols-2 gap-2">
+                  <button className="rounded-full border border-cyan-200/35 bg-cyan-300/15 py-2 text-xs font-black text-cyan-50 active:scale-95" onClick={restart} type="button">再玩一次</button>
+                  <Link className="inline-flex items-center justify-center rounded-full border border-cyan-200/35 bg-cyan-300/20 py-2 text-xs font-black text-cyan-50 active:scale-95" href="/adventure">回到入口</Link>
+                </div>
               </div>
             </div>
           </div>
