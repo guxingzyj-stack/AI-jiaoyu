@@ -19,7 +19,8 @@ export type SeaMechanismType =
   | "common-landing"
   | "restore-lighthouse";
 
-export type HopRouteData = { maxIsland: number; step: number; litIslands: number[] };
+// hop-route：孩子先选跳岛节奏(rhythmOptions)，再试航线；选中 correctStep 才点亮 goalIslands。
+export type HopRouteData = { maxIsland: number; correctStep: number; rhythmOptions: number[]; goalIslands: number[]; wrongHint: string };
 export type RhythmData = { maxIsland: number; options: number[]; answer: number; routes: Record<number, number[]> };
 export type LandingData = { maxIsland: number; stepA: number; stepB: number; litA: number[]; litB: number[]; common: number[]; answer: number };
 
@@ -60,26 +61,26 @@ export const SEA_LOCATIONS: SeaLocation[] = [
     name: "二步跳岛湾",
     short: "二步湾",
     icon: "🌊",
-    blurb: "一排浮岛从 1 到 8。小船每次跳 2 格，看看会踩亮哪些岛。",
+    blurb: "这片海的亮岛隔一个出现，选一个跳岛节奏试试。",
     pos: { x: 40, y: 70 },
     mechanism: "hop-route",
     unlockRequirement: "先在星光码头扬帆出发。",
     successEffect: "第一条星光航线点亮了。",
-    novaHint: "你看，小船每次跳 2 格，会踩到哪些岛？",
-    routeData: { maxIsland: 8, step: 2, litIslands: [2, 4, 6, 8] }
+    novaHint: "这些亮岛隔一个出现，试试哪种跳岛节奏能把它们连起来。",
+    routeData: { maxIsland: 8, correctStep: 2, rhythmOptions: [1, 2, 3], goalIslands: [2, 4, 6, 8], wrongHint: "这条航线没有把亮岛连起来，换个节奏试试。" }
   },
   {
     id: "three-step-route",
     name: "三步航线",
     short: "三步线",
     icon: "🌊",
-    blurb: "浮岛从 1 到 12。这次小船每次跳 3 格。",
+    blurb: "这条航线更长了，选一个节奏让小船跳到发光岛。",
     pos: { x: 62, y: 56 },
     mechanism: "hop-route",
     unlockRequirement: "先点亮二步跳岛湾的航线。",
     successEffect: "第二条星光航线点亮了。",
-    novaHint: "试试 3 拍航线，小船每次跳 3 格会落在哪些岛？",
-    routeData: { maxIsland: 12, step: 3, litIslands: [3, 6, 9, 12] }
+    novaHint: "这条航线更长，换几种节奏，看哪种能踩到所有发光岛。",
+    routeData: { maxIsland: 12, correctStep: 3, rhythmOptions: [2, 3, 4], goalIslands: [3, 6, 9, 12], wrongHint: "这条节奏还没连上三步航线，再换一个试试。" }
   },
   {
     id: "starfish-lighthouse",

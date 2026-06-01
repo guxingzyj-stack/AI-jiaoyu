@@ -17,6 +17,13 @@ type LocationStatus = "locked" | "available" | "completed";
 
 const byId = (id: SeaLocationId): SeaLocation => SEA_LOCATIONS.find((l) => l.id === id) as SeaLocation;
 
+// 某节奏下小船会落到的浮岛（step, 2*step, ... <= max）。
+function landingsOf(step: number, max: number): number[] {
+  const out: number[] = [];
+  for (let p = step; p <= max; p += step) out.push(p);
+  return out;
+}
+
 export default function StarlightSeaPage() {
   const [currentLocation, setCurrentLocation] = useState<SeaLocationId>("starlight-dock");
   const [boatAt, setBoatAt] = useState<SeaLocationId>("starlight-dock");
@@ -25,6 +32,7 @@ export default function StarlightSeaPage() {
   const [moving, setMoving] = useState(false);
   const [hopCount, setHopCount] = useState(0); // 跳岛动画：已点亮的浮岛数
   const [hopRunning, setHopRunning] = useState(false);
+  const [hopRhythm, setHopRhythm] = useState<number | null>(null); // 跳岛湾/航线先选的节奏
   const [rhythm, setRhythm] = useState<number | null>(null); // 海星灯塔选的节奏
   const [landingPick, setLandingPick] = useState<number | null>(null); // 漩涡门点的浮岛
 
@@ -61,6 +69,7 @@ export default function StarlightSeaPage() {
   const resetMechState = () => {
     setHopCount(0);
     setHopRunning(false);
+    setHopRhythm(null);
     setRhythm(null);
     setLandingPick(null);
   };
@@ -91,17 +100,25 @@ export default function StarlightSeaPage() {
   // 星光码头：扬帆出发
   const launch = () => complete("starlight-dock", "扬帆出发！沿着浮岛去修复星光航线吧。");
 
-  // 跳岛航线：小船按节奏一格格点亮浮岛
-  const runHop = (loc: SeaLocation) => {
-    if (busy || !loc.routeData) return;
-    const lit = loc.routeData.litIslands;
+  // 跳岛航线：孩子先选节奏(hopRhythm)，点「试试这条航线」后小船按所选节奏一格格跳岛点亮，
+  // 跳完才判定：选中 correctStep 才点亮目标岛、过关；否则提示换节奏、可重试。
+  const tryHopRoute = (loc: SeaLocation) => {
+    if (busy || !loc.routeData || hopRhythm === null) return;
+    const step = hopRhythm;
+    const landings = landingsOf(step, loc.routeData.maxIsland);
     setHopRunning(true);
     setHopCount(0);
-    lit.forEach((_, i) => window.setTimeout(() => setHopCount(i + 1), (i + 1) * 450));
+    landings.forEach((_, i) => window.setTimeout(() => setHopCount(i + 1), (i + 1) * 450));
     window.setTimeout(() => {
       setHopRunning(false);
-      complete(loc.id, SEA_COPY.hopSummary[loc.id] ?? loc.successEffect ?? "航线点亮了！");
-    }, lit.length * 450 + 350);
+      if (step === loc.routeData!.correctStep) {
+        complete(loc.id, SEA_COPY.hopSummary[loc.id] ?? loc.successEffect ?? "航线点亮了！");
+      } else {
+        setMessage(loc.routeData!.wrongHint);
+        setHopCount(0);
+        setHopRhythm(null);
+      }
+    }, landings.length * 450 + 350);
   };
 
   // 海星灯塔：选节奏
@@ -291,22 +308,42 @@ export default function StarlightSeaPage() {
 
       case "hop-route": {
         const rd = current.routeData!;
-        const litSoFar = rd.litIslands.slice(0, hopCount);
+        const attemptLandings = hopRhythm ? landingsOf(hopRhythm, rd.maxIsland) : [];
+        const litSoFar = attemptLandings.slice(0, hopCount);
         const boatIsland = litSoFar.length ? litSoFar[litSoFar.length - 1] : 0;
+        if (currentDone) {
+          return (
+            <div className="grid gap-3">
+              <IslandRow max={rd.maxIsland} variant={(n) => (rd.goalIslands.includes(n) ? "lit" : "off")} />
+              <DonePill>{SEA_COPY.hopSummary[current.id] ?? "航线点亮了！"}</DonePill>
+            </div>
+          );
+        }
         return (
           <div className="grid gap-3">
+            <p className="text-[11px] font-black text-cyan-200">{current.id === "two-step-bay" ? "这片海的亮岛隔一个出现，选一个跳岛节奏试试。" : "这条航线更长了，选一个节奏让小船跳到发光岛。"}</p>
             <IslandRow
               max={rd.maxIsland}
-              variant={(n) => (litSoFar.includes(n) ? "lit" : "off")}
               boatIsland={boatIsland}
+              variant={(n) => (litSoFar.includes(n) ? "lit" : rd.goalIslands.includes(n) ? "goal" : "off")}
             />
-            {currentDone ? (
-              <DonePill>{SEA_COPY.hopSummary[current.id] ?? "航线点亮了！"}</DonePill>
-            ) : (
-              <ActionButton dataTestId="action-hop" disabled={hopRunning} onClick={() => runHop(current)}>
-                {`按 ${rd.step} 拍跳岛`}
-              </ActionButton>
-            )}
+            <div className="grid grid-cols-3 gap-2">
+              {rd.rhythmOptions.map((opt) => (
+                <button
+                  key={opt}
+                  data-testid={`hop-rhythm-${opt}`}
+                  className={`flex h-12 items-center justify-center rounded-[16px] border text-sm font-black transition active:scale-95 disabled:opacity-50 ${hopRhythm === opt ? "border-amber-200/80 bg-amber-300/25 text-amber-50" : "border-cyan-200/45 bg-cyan-300/12 text-cyan-50"}`}
+                  disabled={hopRunning}
+                  onClick={() => setHopRhythm(opt)}
+                  type="button"
+                >
+                  {opt} 拍
+                </button>
+              ))}
+            </div>
+            <ActionButton dataTestId="action-try-route" disabled={hopRhythm === null || hopRunning} onClick={() => tryHopRoute(current)}>
+              试试这条航线
+            </ActionButton>
           </div>
         );
       }
@@ -379,7 +416,7 @@ export default function StarlightSeaPage() {
   }
 }
 
-type IslandVariant = "off" | "lit" | "blue" | "gold" | "both";
+type IslandVariant = "off" | "lit" | "goal" | "blue" | "gold" | "both";
 
 function IslandRow({
   boatIsland,
@@ -401,6 +438,8 @@ function IslandRow({
     switch (v) {
       case "lit":
         return "border-amber-200/80 bg-amber-300/30 text-amber-50 shadow-[0_0_12px_rgba(252,211,77,0.65)]";
+      case "goal":
+        return "border-amber-200/40 border-dashed bg-amber-300/5 text-amber-200/70";
       case "blue":
         return "border-cyan-300/70 bg-cyan-400/30 text-cyan-50 shadow-[0_0_10px_rgba(34,211,238,0.5)]";
       case "gold":
