@@ -4,12 +4,15 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   BAG_CAPACITY,
+  BALANCE_PUZZLE,
   FOREST_COPY,
   FOREST_EDGES,
   FOREST_LOCATIONS,
   FOREST_MAP_ASSETS,
   FRAGMENT_SOURCES,
   FRUIT_VALUES,
+  MAKE_TEN_TARGET,
+  PATTERN_PUZZLE,
   SPIRIT_IDS,
   TOTAL_FRAGMENTS,
   getNovaHint,
@@ -48,6 +51,7 @@ export default function ForestMapPage() {
   const [completed, setCompleted] = useState<ForestLocationId[]>([]);
   const [message, setMessage] = useState<string>(FOREST_COPY.intro);
   const [moving, setMoving] = useState(false);
+  const [balancePlaced, setBalancePlaced] = useState<number | null>(null); // 星光桥右侧放上的能量果
 
   // 派生进度（碎片 / 朋友 / 各门状态都从 completed 推导，避免多份状态漂移）。
   const companions = completed.filter((id) => SPIRIT_IDS.includes(id));
@@ -84,7 +88,7 @@ export default function ForestMapPage() {
     [currentLocation, inventory, fragments, companions.length, gateOpen]
   );
 
-  // ---- 操作 ----
+  // ---- 移动 / 背包 ----
   const goTo = (id: ForestLocationId) => {
     if (moving) return;
     const st = statusOf(id);
@@ -98,6 +102,7 @@ export default function ForestMapPage() {
     }
     // 角色沿地图滑过去（CSS 过渡），到达后再切换底部地点信息，不是瞬间切页面。
     setMoving(true);
+    setBalancePlaced(null);
     setPlayerAt(id);
     window.setTimeout(() => {
       setCurrentLocation(id);
@@ -118,45 +123,54 @@ export default function ForestMapPage() {
   const removeFruit = (index: number) => setInventory(inventory.filter((_, i) => i !== index));
   const clearBag = () => {
     setInventory([]);
-    setMessage("背包清空了，可以重新挑两颗。");
+    setMessage("背包清空了，可以重新挑能量果。");
   };
 
-  const tryLight = (id: ForestLocationId) => {
+  // ---- 机关：凑 10（小精灵）----
+  const tryMakeTen = (id: ForestLocationId) => {
     if (inventory.length < BAG_CAPACITY) {
       setMessage(FOREST_COPY.needTwoFruits);
       return;
     }
-    if (bagSum < 10) {
-      setMessage(FOREST_COPY.sumLow);
+    if (bagSum < MAKE_TEN_TARGET) {
+      setMessage(FOREST_COPY.makeTenLow);
       return;
     }
-    if (bagSum > 10) {
-      setMessage(FOREST_COPY.sumHigh);
+    if (bagSum > MAKE_TEN_TARGET) {
+      setMessage(FOREST_COPY.makeTenHigh);
       return;
     }
-    const success =
-      id === "sleepy-spirit-1"
-        ? FOREST_COPY.spirit1Success
-        : id === "sleepy-spirit-2"
-          ? FOREST_COPY.spirit2Success
-          : FOREST_COPY.bridgeSuccess;
     setInventory([]);
     setCompleted((prev) => (prev.includes(id) ? prev : [...prev, id]));
-    setMessage(success);
+    setMessage(id === "sleepy-spirit-1" ? FOREST_COPY.spirit1Success : FOREST_COPY.spirit2Success);
   };
 
-  const openGate = () => {
-    if (companions.length < 2) {
-      setMessage(FOREST_COPY.lockReason["mist-gate"] ?? "");
+  // ---- 机关：找规律（迷雾门）----
+  const tryPattern = (value: number) => {
+    if (value !== PATTERN_PUZZLE.answer) {
+      setMessage(FOREST_COPY.patternWrong);
       return;
     }
     setCompleted((prev) => (prev.includes("mist-gate") ? prev : [...prev, "mist-gate"]));
-    setMessage(FOREST_COPY.gateOpened);
+    setMessage(FOREST_COPY.patternOk);
   };
 
+  // ---- 机关：左右平衡（星光桥）----
+  const tryBalance = (value: number) => {
+    setBalancePlaced(value);
+    if (value === BALANCE_PUZZLE.needValue) {
+      setInventory([]);
+      setCompleted((prev) => (prev.includes("star-bridge") ? prev : [...prev, "star-bridge"]));
+      setMessage(FOREST_COPY.balanceOk);
+      return;
+    }
+    setMessage(value < BALANCE_PUZZLE.needValue ? FOREST_COPY.balanceLight : FOREST_COPY.balanceHeavy);
+  };
+
+  // ---- 机关：放回碎片（森林中心）----
   const awakenSeed = () => {
     if (fragments < TOTAL_FRAGMENTS) {
-      setMessage(FOREST_COPY.lockReason["forest-heart"] ?? "");
+      setMessage(FOREST_COPY.heartLow);
       return;
     }
     setCompleted((prev) => (prev.includes("forest-heart") ? prev : [...prev, "forest-heart"]));
@@ -168,6 +182,7 @@ export default function ForestMapPage() {
     setInventory([]);
     setCurrentLocation("forest-entrance");
     setPlayerAt("forest-entrance");
+    setBalancePlaced(null);
     setMoving(false);
     setMessage(FOREST_COPY.intro);
   };
@@ -191,17 +206,11 @@ export default function ForestMapPage() {
           </div>
           <div className="mt-2 grid grid-cols-2 gap-2">
             <div className="flex items-center justify-center gap-1 rounded-[14px] border border-amber-200/30 bg-blue-950/55 px-2 py-1.5 text-xs font-black text-amber-100">
-              <span
-                className="inline-block h-4 w-4 bg-contain bg-center bg-no-repeat"
-                style={{ backgroundImage: `url(${FOREST_MAP_ASSETS.fragment})` }}
-              />
+              <span className="inline-block h-4 w-4 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${FOREST_MAP_ASSETS.fragment})` }} />
               星光碎片 {fragments}/{TOTAL_FRAGMENTS}
             </div>
             <div className="flex items-center justify-center gap-1 rounded-[14px] border border-emerald-200/30 bg-blue-950/55 px-2 py-1.5 text-xs font-black text-emerald-100">
-              <span
-                className="inline-block h-4 w-4 bg-contain bg-center bg-no-repeat"
-                style={{ backgroundImage: `url(${FOREST_MAP_ASSETS.awakeSpirit})` }}
-              />
+              <span className="inline-block h-4 w-4 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${FOREST_MAP_ASSETS.awakeSpirit})` }} />
               森林朋友 {companions.length}/2
             </div>
           </div>
@@ -211,24 +220,17 @@ export default function ForestMapPage() {
         {/* 小地图 */}
         <section className="relative w-full overflow-hidden rounded-[24px] border border-cyan-300/25 shadow-[0_0_30px_rgba(71,150,255,0.25)]" style={{ aspectRatio: "1 / 1" }}>
           <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${FOREST_MAP_ASSETS.bgDark})` }} />
-          <div
-            className="absolute inset-0 bg-cover bg-center transition-opacity duration-700"
-            style={{ backgroundImage: `url(${FOREST_MAP_ASSETS.bgBright})`, opacity: brightOpacity }}
-          />
+          <div className="absolute inset-0 bg-cover bg-center transition-opacity duration-700" style={{ backgroundImage: `url(${FOREST_MAP_ASSETS.bgBright})`, opacity: brightOpacity }} />
           <div className="absolute inset-0 bg-[#070b2c]/35" />
 
-          {/* 连线 */}
           <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
             {FOREST_EDGES.map(([a, b]) => {
               const pa = byId(a).pos;
               const pb = byId(b).pos;
-              return (
-                <line key={`${a}-${b}`} x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y} stroke="rgba(190,242,255,0.35)" strokeWidth={0.8} strokeDasharray="2 2" />
-              );
+              return <line key={`${a}-${b}`} x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y} stroke="rgba(190,242,255,0.35)" strokeWidth={0.8} strokeDasharray="2 2" />;
             })}
           </svg>
 
-          {/* 节点 */}
           {FOREST_LOCATIONS.map((loc) => {
             const st = statusOf(loc.id);
             const done = st === "completed";
@@ -249,10 +251,7 @@ export default function ForestMapPage() {
                 onClick={() => goTo(loc.id)}
                 type="button"
               >
-                <span
-                  className={`h-8 w-8 bg-contain bg-center bg-no-repeat ${st === "locked" ? "opacity-50 grayscale" : ""}`}
-                  style={{ backgroundImage: `url(${nodeSprite(loc, done)})` }}
-                />
+                <span className={`h-8 w-8 bg-contain bg-center bg-no-repeat ${st === "locked" ? "opacity-50 grayscale" : ""}`} style={{ backgroundImage: `url(${nodeSprite(loc, done)})` }} />
                 {st === "locked" && <span className="absolute -right-1 -top-1 text-xs">🔒</span>}
                 {done && <span className="absolute -right-1 -top-1 text-xs">✅</span>}
                 <span className="pointer-events-none absolute -bottom-4 whitespace-nowrap rounded-full bg-blue-950/80 px-1.5 text-[9px] font-black text-cyan-50">{loc.short}</span>
@@ -260,15 +259,9 @@ export default function ForestMapPage() {
             );
           })}
 
-          {/* 玩家角色（点击地点后滑过去） */}
           <span
             className="pointer-events-none absolute z-10 h-9 w-9 -translate-x-1/2 bg-contain bg-bottom bg-no-repeat drop-shadow-[0_0_10px_rgba(103,232,249,0.6)]"
-            style={{
-              left: `${playerPos.x}%`,
-              top: `calc(${playerPos.y}% - 30px)`,
-              backgroundImage: `url(${FOREST_MAP_ASSETS.player})`,
-              transition: "left 0.6s ease, top 0.6s ease"
-            }}
+            style={{ left: `${playerPos.x}%`, top: `calc(${playerPos.y}% - 30px)`, backgroundImage: `url(${FOREST_MAP_ASSETS.player})`, transition: "left 0.6s ease, top 0.6s ease" }}
           />
         </section>
 
@@ -282,7 +275,6 @@ export default function ForestMapPage() {
           </div>
           <p className="mt-1 text-xs font-bold leading-5 text-cyan-100/90">{current.blurb}</p>
 
-          {/* Nova 提示 */}
           <div className="mt-2 flex items-start gap-2 rounded-[16px] border border-violet-300/25 bg-blue-950/55 p-2">
             <span className="mt-0.5 h-7 w-7 shrink-0 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${FOREST_MAP_ASSETS.nova})` }} aria-label="Nova" />
             <p className="text-xs font-bold leading-5 text-cyan-50">{message}</p>
@@ -296,27 +288,17 @@ export default function ForestMapPage() {
               return v === undefined ? (
                 <span key={`slot-${i}`} className="flex h-10 w-10 items-center justify-center rounded-[12px] border-2 border-dashed border-cyan-100/35 bg-blue-950/40 text-[10px] text-cyan-200/60">空</span>
               ) : (
-                <button
-                  key={`slot-${i}`}
-                  aria-label={`放回 ${v}`}
-                  data-testid={`bag-slot-${i}`}
-                  className="relative flex h-10 w-10 items-center justify-center rounded-[12px] border-2 border-amber-200/60 bg-amber-300/15 active:scale-95"
-                  onClick={() => removeFruit(i)}
-                  type="button"
-                >
+                <button key={`slot-${i}`} aria-label={`放回 ${v}`} data-testid={`bag-slot-${i}`} className="relative flex h-10 w-10 items-center justify-center rounded-[12px] border-2 border-amber-200/60 bg-amber-300/15 active:scale-95" onClick={() => removeFruit(i)} type="button">
                   <span className="absolute inset-1 bg-contain bg-center bg-no-repeat opacity-90" style={{ backgroundImage: `url(${FOREST_MAP_ASSETS.fruit})` }} />
                   <span className="relative text-base font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{v}</span>
                 </button>
               );
             })}
             {inventory.length > 0 && (
-              <button className="ml-auto rounded-full border border-cyan-300/35 bg-blue-950/55 px-3 py-1 text-[11px] font-black text-cyan-50 active:scale-95" onClick={clearBag} type="button">
-                清空
-              </button>
+              <button className="ml-auto rounded-full border border-cyan-300/35 bg-blue-950/55 px-3 py-1 text-[11px] font-black text-cyan-50 active:scale-95" onClick={clearBag} type="button">清空</button>
             )}
           </div>
 
-          {/* 操作区（随地点变化） */}
           <div className="mt-3">{renderAction()}</div>
 
           <button className="mt-3 w-full rounded-full border border-violet-300/30 bg-violet-500/20 py-2 text-xs font-black text-violet-50 active:scale-95" onClick={askNova} type="button">
@@ -356,56 +338,114 @@ export default function ForestMapPage() {
 
   function renderAction() {
     if (moving) return <p className="text-xs font-bold text-cyan-200/80">正在走过去…</p>;
-    switch (current.kind) {
-      case "grove":
+
+    // 果园：挑能量果
+    if (current.kind === "grove") {
+      return (
+        <div className="grid gap-2">
+          <p className="text-[11px] font-black text-amber-200">挑能量果（背包最多 {BAG_CAPACITY} 颗）：</p>
+          <div className="grid grid-cols-3 gap-2">
+            {FRUIT_VALUES.map((v, i) => (
+              <button key={`${v}-${i}`} data-testid={`grove-fruit-${v}`} className="relative flex h-14 items-center justify-center rounded-[16px] border border-amber-200/45 bg-amber-300/12 active:scale-95 disabled:opacity-40" disabled={inventory.length >= BAG_CAPACITY} onClick={() => pickFruit(v)} type="button">
+                <span className="absolute inset-2 bg-contain bg-center bg-no-repeat opacity-85" style={{ backgroundImage: `url(${FOREST_MAP_ASSETS.fruit})` }} />
+                <span className="relative text-2xl font-black text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]">{v}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    switch (current.mechanism) {
+      // 凑 10：第一只 / 第二只小精灵
+      case "make-ten":
+      case "make-ten-practice":
+        if (currentDone) return <p className="rounded-[14px] bg-emerald-400/15 p-2 text-center text-xs font-black text-emerald-100">这只小精灵已经醒来，成了你的森林朋友。</p>;
         return (
-          <div className="grid gap-2">
-            <p className="text-[11px] font-black text-amber-200">挑两颗能量果（最多 2 颗）：</p>
+          <ActionButton dataTestId="action-wake-spirit" disabled={inventory.length < BAG_CAPACITY} onClick={() => tryMakeTen(currentLocation)}>
+            用能量果点亮星光灯
+          </ActionButton>
+        );
+
+      // 找规律：迷雾门
+      case "pattern":
+        if (currentDone) return <p className="rounded-[14px] bg-emerald-400/15 p-2 text-center text-xs font-black text-emerald-100">迷雾门已经打开，星光桥出现了。</p>;
+        return (
+          <div className="grid gap-3">
+            <p className="text-[11px] font-black text-cyan-200">门上的数字，下一个是几？</p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {PATTERN_PUZZLE.display.map((n, i) => (
+                <span key={`seq-${i}`} className="flex items-center gap-2">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full border border-cyan-200/50 bg-blue-950/70 text-xl font-black text-cyan-50">{n}</span>
+                  <span className="text-cyan-200/80">→</span>
+                </span>
+              ))}
+              <span className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-dashed border-amber-200/70 bg-amber-300/10 text-xl font-black text-amber-200">?</span>
+            </div>
             <div className="grid grid-cols-3 gap-2">
-              {FRUIT_VALUES.map((v, i) => (
-                <button
-                  key={`${v}-${i}`}
-                  data-testid={`grove-fruit-${v}`}
-                  className="relative flex h-14 items-center justify-center rounded-[16px] border border-amber-200/45 bg-amber-300/12 active:scale-95 disabled:opacity-40"
-                  disabled={inventory.length >= BAG_CAPACITY}
-                  onClick={() => pickFruit(v)}
-                  type="button"
-                >
-                  <span className="absolute inset-2 bg-contain bg-center bg-no-repeat opacity-85" style={{ backgroundImage: `url(${FOREST_MAP_ASSETS.fruit})` }} />
-                  <span className="relative text-2xl font-black text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]">{v}</span>
+              {PATTERN_PUZZLE.options.map((opt) => (
+                <button key={opt} data-testid={`pattern-option-${opt}`} className="flex h-14 items-center justify-center rounded-[16px] border border-cyan-200/45 bg-gradient-to-br from-violet-700 via-blue-700 to-cyan-500 text-2xl font-black text-white shadow-[0_0_14px_rgba(34,211,238,0.3)] active:scale-95" onClick={() => tryPattern(opt)} type="button">
+                  {opt}
                 </button>
               ))}
             </div>
           </div>
         );
-      case "spirit":
-        if (currentDone) return <p className="rounded-[14px] bg-emerald-400/15 p-2 text-center text-xs font-black text-emerald-100">这只小精灵已经醒来，成了你的森林朋友。</p>;
+
+      // 左右平衡：星光桥
+      case "balance":
+        if (currentDone) return <p className="rounded-[14px] bg-emerald-400/15 p-2 text-center text-xs font-black text-emerald-100">星光桥两边平衡了，桥已修好，可以去森林中心了。</p>;
         return (
-          <ActionButton dataTestId="action-wake-spirit" disabled={inventory.length < BAG_CAPACITY} onClick={() => tryLight(currentLocation)}>
-            用能量果唤醒小精灵
-          </ActionButton>
+          <div className="grid gap-3">
+            <p className="text-[11px] font-black text-cyan-200">让桥两边一样重：</p>
+            <div className="flex items-center justify-center gap-3">
+              <BalancePan label="桥左边" value={BALANCE_PUZZLE.leftFixed} />
+              <span className="text-lg font-black text-cyan-200/80">⟺</span>
+              <BalancePan label="桥右边" value={balancePlaced} placeholder />
+            </div>
+            {inventory.length === 0 ? (
+              <p className="rounded-[12px] border border-amber-200/25 bg-amber-300/10 p-2 text-center text-[11px] font-bold text-amber-100">{FOREST_COPY.balanceNeedFruit}</p>
+            ) : (
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {inventory.map((v, i) => (
+                  <button key={`place-${i}`} data-testid={`balance-place-${v}`} className="relative flex h-12 w-12 items-center justify-center rounded-[14px] border border-amber-200/55 bg-amber-300/15 active:scale-95" onClick={() => tryBalance(v)} type="button">
+                    <span className="absolute inset-1 bg-contain bg-center bg-no-repeat opacity-85" style={{ backgroundImage: `url(${FOREST_MAP_ASSETS.fruit})` }} />
+                    <span className="relative text-lg font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{v}</span>
+                  </button>
+                ))}
+                <span className="w-full text-center text-[10px] font-bold text-cyan-200/70">点一颗放到桥右边试试</span>
+              </div>
+            )}
+          </div>
         );
-      case "gate":
-        if (currentDone) return <p className="rounded-[14px] bg-emerald-400/15 p-2 text-center text-xs font-black text-emerald-100">迷雾门已经打开，星光桥出现了。</p>;
-        return (
-          <ActionButton dataTestId="action-open-gate" onClick={openGate}>打开迷雾门</ActionButton>
-        );
-      case "bridge":
-        if (currentDone) return <p className="rounded-[14px] bg-emerald-400/15 p-2 text-center text-xs font-black text-emerald-100">星光桥已经修好，可以去森林中心了。</p>;
-        return (
-          <ActionButton dataTestId="action-light-bridge" disabled={inventory.length < BAG_CAPACITY} onClick={() => tryLight(currentLocation)}>
-            点亮桥心灯
-          </ActionButton>
-        );
-      case "heart":
-        return (
-          <ActionButton dataTestId="action-awaken-seed" onClick={awakenSeed}>放入星光碎片，唤醒星光种子</ActionButton>
-        );
-      case "entrance":
+
+      // 放回碎片：森林中心
+      case "restore-seed":
+        return <ActionButton dataTestId="action-awaken-seed" onClick={awakenSeed}>放入星光碎片，唤醒星光种子</ActionButton>;
+
+      // 入口等
       default:
-        return <p className="text-xs font-bold leading-5 text-cyan-100/80">点地图上的地点去探索：先去果园拿果子，再去叫醒小精灵。</p>;
+        return <p className="text-xs font-bold leading-5 text-cyan-100/80">点地图上的地点去探索：先去果园拿能量果，不同的地方需要不同的办法。</p>;
     }
   }
+}
+
+function BalancePan({ label, placeholder, value }: { label: string; placeholder?: boolean; value: number | null }) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div className={`relative flex h-14 w-14 items-center justify-center rounded-[16px] border-2 ${value === null ? "border-dashed border-cyan-100/40 bg-blue-950/40" : "border-amber-200/60 bg-amber-300/15"}`}>
+        {value === null ? (
+          <span className="text-xl font-black text-cyan-200/60">{placeholder ? "?" : ""}</span>
+        ) : (
+          <>
+            <span className="absolute inset-1 bg-contain bg-center bg-no-repeat opacity-85" style={{ backgroundImage: `url(${FOREST_MAP_ASSETS.fruit})` }} />
+            <span className="relative text-2xl font-black text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]">{value}</span>
+          </>
+        )}
+      </div>
+      <span className="text-[10px] font-black text-cyan-200/80">{label}</span>
+    </div>
+  );
 }
 
 function ActionButton({
