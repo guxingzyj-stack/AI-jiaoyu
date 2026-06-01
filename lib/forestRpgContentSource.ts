@@ -51,6 +51,9 @@ export type ForestRpgContent = {
     completeTitle: string;
     completeLine: string;
     friendLine: string;
+    rewardTitle: string;
+    pathProgress: string;
+    hookLine: string;
   };
   novaLines: {
     intro: string;
@@ -79,7 +82,7 @@ export type ForestRpgContent = {
 
 export const forestRpgContent: ForestRpgContent = {
   id: "forest-rpg-starlight-lamp",
-  name: "森林小路 · 星光灯救援",
+  name: "森林小路 · 星光唤醒",
   route: "/adventure/forest-rpg",
   targetEnergy: 10,
   fruits: [
@@ -120,7 +123,10 @@ export const forestRpgContent: ForestRpgContent = {
     resultSuccessTitle: "成功点亮！",
     completeTitle: "森林小路亮起来了一小段",
     completeLine: "你和 Nova 救醒了第一个小精灵。",
-    friendLine: "它现在是你的森林朋友了！"
+    friendLine: "它现在是你的森林朋友了！",
+    rewardTitle: "获得：第一片星光碎片",
+    pathProgress: "森林小路亮起 1/3",
+    hookLine: "前面好像还有一团瞌睡迷雾……也许还有小伙伴在等我们。"
   },
   novaLines: {
     intro: "小精灵睡着了。我们去帮它点亮星光灯吧。",
@@ -134,7 +140,7 @@ export const forestRpgContent: ForestRpgContent = {
     tooHigh: "能量太多啦，星光灯有点晃。换一颗小一点的试试。",
     justRight: "刚刚好！星光灯亮起来了！",
     successSummary: (x, y) => `原来 ${x} 和 ${y} 放在一起，刚好能点亮星光灯。`,
-    complete: "你看，小精灵醒来了，森林也亮起来了一小段。"
+    complete: "前面好像还有一团瞌睡迷雾……也许还有小伙伴在等我们。"
   },
   buttons: {
     start: "和 Nova 出发",
