@@ -34,13 +34,31 @@ export default function ForestRpgPage() {
   const [lastTry, setLastTry] = useState<{ fruits: ForestFruit[]; sum: number } | null>(null);
 
   const bagSum = selectedFruits.reduce((sum, fruit) => sum + fruit.value, 0);
+  const isAwake = stage === "result" || stage === "complete";
+  const isTryingLamp = stage === "lamp";
+  const hasFailedTry = (lampState === "too-low" || lampState === "too-high") && stage !== "result" && stage !== "complete";
+  const isBagReady = selectedFruits.length === 2 && !hasFailedTry;
+  const playerPoint = getPoint(moving ? targetPosition : playerPosition);
+
   const stageLabel = useMemo(() => {
-    if (stage === "intro") return "小路变暗";
-    if (stage === "map" || stage === "collect") return "采集能量果";
-    if (stage === "lamp") return "星光灯";
-    if (stage === "result") return lampState === "lit" && attemptCount === 1 ? "完美点亮" : "成功点亮";
-    return "完成";
-  }, [attemptCount, lampState, stage]);
+    if (stage === "intro") return content.stageLabels.intro;
+    if (stage === "result") return attemptCount === 1 ? content.stageLabels.perfect : content.stageLabels.success;
+    if (stage === "complete") return content.stageLabels.complete;
+    if (isTryingLamp) return content.stageLabels.lamp;
+    return content.stageLabels.collect;
+  }, [attemptCount, content.stageLabels, isTryingLamp, stage]);
+
+  const taskPrompt = useMemo(() => {
+    if (stage === "intro") return content.prompts.intro;
+    if (stage === "result") return content.prompts.result;
+    if (stage === "complete") return content.prompts.complete;
+    if (isTryingLamp) return content.prompts.tryingLamp;
+    if (lampState === "too-low") return content.prompts.tooLow;
+    if (lampState === "too-high") return content.prompts.tooHigh;
+    if (selectedFruits.length === 0) return content.prompts.emptyBag;
+    if (selectedFruits.length === 1) return content.prompts.oneFruit;
+    return content.prompts.bagReady;
+  }, [content.prompts, isTryingLamp, lampState, selectedFruits.length, stage]);
 
   const startAdventure = () => {
     playClickSound();
@@ -55,34 +73,26 @@ export default function ForestRpgPage() {
       setPlayerPosition(position);
       setMoving(false);
       done?.();
-    }, 760);
+    }, 700);
   };
 
   const collectFruit = (fruit: ForestFruit) => {
     if (stage === "intro" || stage === "result" || stage === "complete") return;
-    if (pickedFruitIds.includes(fruit.id) || moving) return;
+    if (pickedFruitIds.includes(fruit.id) || moving || selectedFruits.length >= 2 || hasFailedTry) return;
 
     playClickSound();
     moveTo(fruit.id, () => {
-      if (selectedFruits.length >= 2) {
-        setNovaLine(content.novaLines.bagFull);
-        return;
-      }
-
       playRewardSound();
       const next = [...selectedFruits, fruit];
       setSelectedFruits(next);
       setPickedFruitIds((prev) => [...prev, fruit.id]);
       setStage("collect");
-      if (next.length === 1) {
-        setNovaLine(content.novaLines.firstFruit(fruit.value));
-      } else {
-        setNovaLine(content.novaLines.bagFull);
-      }
+      setLampState("sleeping");
+      setNovaLine(next.length === 1 ? content.novaLines.firstFruit(fruit.value) : content.novaLines.bagFull);
     });
   };
 
-  const clearBag = () => {
+  const resetBag = () => {
     playClickSound();
     setSelectedFruits([]);
     setPickedFruitIds([]);
@@ -92,14 +102,28 @@ export default function ForestRpgPage() {
     setNovaLine(content.novaLines.map);
   };
 
-  const tryLamp = () => {
-    if (selectedFruits.length < 2 || moving) {
-      setNovaLine(selectedFruits.length === 0 ? content.novaLines.map : content.novaLines.firstFruit(selectedFruits[0].value));
+  const handleLampClick = () => {
+    if (stage === "intro" || stage === "result" || stage === "complete" || moving) return;
+    if (selectedFruits.length === 0) {
+      playClickSound();
+      setNovaLine(content.novaLines.needTwoFruits);
       return;
     }
+    if (selectedFruits.length === 1) {
+      playClickSound();
+      setNovaLine(content.novaLines.needOneFruit);
+      return;
+    }
+    if (hasFailedTry) return;
+    tryLamp();
+  };
+
+  const tryLamp = () => {
+    if (selectedFruits.length < 2 || moving) return;
 
     playClickSound();
     setStage("lamp");
+    setLampState("charging");
     setNovaLine(content.novaLines.goLamp);
     moveTo("lamp", () => {
       const sum = selectedFruits.reduce((total, fruit) => total + fruit.value, 0);
@@ -122,11 +146,7 @@ export default function ForestRpgPage() {
       playWrongSound();
       setLampState(sum < content.targetEnergy ? "too-low" : "too-high");
       setNovaLine(sum < content.targetEnergy ? content.novaLines.tooLow : content.novaLines.tooHigh);
-      window.setTimeout(() => {
-        setSelectedFruits([]);
-        setPickedFruitIds([]);
-        setStage("map");
-      }, 900);
+      setStage("collect");
     });
   };
 
@@ -151,42 +171,48 @@ export default function ForestRpgPage() {
     setLastTry(null);
   };
 
-  const isAwake = stage === "result" || stage === "complete";
-  const playerPoint = getPoint(targetPosition);
-  const playerRestPoint = getPoint(playerPosition);
-  const visiblePlayerPoint = moving ? playerPoint : playerRestPoint;
-
   return (
     <main className={`min-h-screen overflow-hidden bg-[#07102f] text-white ${isAwake ? "forest-lit" : ""}`}>
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(70,230,255,0.24),transparent_34%),radial-gradient(circle_at_82%_20%,rgba(168,85,247,0.26),transparent_34%),linear-gradient(180deg,#121d62,#07102f_58%,#05101e)]" />
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_24px_24px,rgba(255,255,255,0.13)_1px,transparent_2px)] bg-[size:34px_34px] opacity-30" />
 
-      <section className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-3 px-3 py-3 sm:px-5 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:grid-rows-[auto_1fr] lg:gap-4 lg:py-5">
-        <header className="flex items-center justify-between gap-2 rounded-[24px] border border-cyan-200/25 bg-blue-950/70 px-3 py-2 shadow-[0_0_30px_rgba(34,211,238,0.16)] backdrop-blur-xl lg:col-span-2">
-          <Link className="inline-flex min-h-10 items-center rounded-full border border-cyan-200/25 bg-cyan-200/10 px-3 text-xs font-black text-cyan-50" href="/adventure">
+      <section className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-3 px-3 py-3 sm:px-5 lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:grid-rows-[auto_1fr] lg:gap-4 lg:py-5">
+        <header className="flex items-center justify-between gap-2 rounded-[22px] border border-cyan-200/25 bg-blue-950/70 px-3 py-2 shadow-[0_0_30px_rgba(34,211,238,0.16)] backdrop-blur-xl lg:col-span-2">
+          <Link className="inline-flex min-h-10 shrink-0 items-center rounded-full border border-cyan-200/25 bg-cyan-200/10 px-3 text-xs font-black text-cyan-50" href="/adventure">
             ← 入口
           </Link>
           <div className="min-w-0 text-center">
             <h1 className="truncate text-base font-black sm:text-2xl">{content.name}</h1>
             <p className="mt-0.5 text-[10px] font-black text-amber-200 sm:text-xs">{stageLabel}</p>
           </div>
-          <div className="rounded-full border border-amber-200/35 bg-amber-300/10 px-3 py-2 text-xs font-black text-amber-100">
+          <div className="shrink-0 rounded-full border border-amber-200/35 bg-amber-300/10 px-3 py-2 text-xs font-black text-amber-100">
             碎片 {stage === "complete" ? content.rewards.amount : 0}
           </div>
         </header>
 
-        <section className="relative min-h-[560px] overflow-hidden rounded-[30px] border border-cyan-200/25 bg-[#0d1850]/82 shadow-[0_0_42px_rgba(34,211,238,0.2)] sm:min-h-[640px] lg:min-h-[700px]">
+        <section className="relative min-h-[640px] overflow-hidden rounded-[30px] border border-cyan-200/25 bg-[#0d1850]/82 shadow-[0_0_42px_rgba(34,211,238,0.2)] sm:min-h-[680px] lg:min-h-[700px]">
           <ForestMap
             contentFruits={content.fruits}
+            hasFailedTry={hasFailedTry}
             isAwake={isAwake}
+            isBagReady={isBagReady}
             lampPulse={lampPulse}
             lampState={lampState}
             onCollect={collectFruit}
+            onLampClick={handleLampClick}
             pickedFruitIds={pickedFruitIds}
-            playerPoint={visiblePlayerPoint}
+            playerPoint={playerPoint}
             selectedFruits={selectedFruits}
             showMap={stage !== "intro"}
           />
+
+          {stage !== "intro" && (
+            <div className="pointer-events-none absolute left-3 right-3 top-3 z-50 flex justify-center">
+              <div className={`max-w-[340px] rounded-full border px-4 py-2 text-center text-sm font-black shadow-[0_0_24px_rgba(34,211,238,0.18)] backdrop-blur-xl ${isBagReady ? "border-amber-200/60 bg-amber-300/95 text-slate-950" : "border-cyan-200/28 bg-blue-950/72 text-cyan-50"}`}>
+                {taskPrompt}
+              </div>
+            </div>
+          )}
 
           {stage === "intro" && (
             <SceneCard className="bottom-4 left-4 right-4 sm:left-6 sm:right-auto sm:w-[380px]">
@@ -197,28 +223,17 @@ export default function ForestRpgPage() {
             </SceneCard>
           )}
 
-          {(stage === "map" || stage === "collect") && (
-            <SceneCard className="bottom-4 left-4 right-4 sm:left-6 sm:right-auto sm:w-[400px]">
-              <p className="text-xs font-black tracking-[0.22em] text-cyan-200">森林小路</p>
-              <h2 className="mt-2 text-2xl font-black leading-tight">找到两颗能量果</h2>
-              <p className="mt-2 text-sm font-bold leading-6 text-cyan-50/88">{content.narrative.mapGoal}</p>
-              <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
-                <Bag fruits={selectedFruits} />
-                <button className="rounded-[18px] border border-cyan-200/25 bg-cyan-200/10 px-3 text-xs font-black text-cyan-50 transition active:scale-95" onClick={clearBag} type="button">
-                  {content.buttons.clearBag}
-                </button>
-              </div>
-              <PrimaryButton onClick={tryLamp}>{content.buttons.tryLamp}</PrimaryButton>
-            </SceneCard>
-          )}
-
-          {stage === "lamp" && (
-            <SceneCard className="bottom-4 left-4 right-4 text-center sm:left-1/2 sm:w-[420px] sm:-translate-x-1/2">
-              <p className="text-xs font-black tracking-[0.22em] text-amber-200">试试星光灯</p>
-              <h2 className="mt-2 text-2xl font-black">{content.narrative.lampTitle}</h2>
-              <LampMeter state={lampState} sum={bagSum} />
-              <Bag fruits={selectedFruits} />
-            </SceneCard>
+          {(stage === "map" || stage === "collect" || stage === "lamp") && (
+            <div className="absolute bottom-3 left-3 right-3 z-50 mx-auto max-w-[440px]">
+              <InventoryDock fruits={selectedFruits} hasFailedTry={hasFailedTry} onReset={resetBag} />
+              {isTryingLamp && <LampMeter state={lampState} sum={bagSum} />}
+              {hasFailedTry && (
+                <SecondaryAction onClick={resetBag}>{content.buttons.retry}</SecondaryAction>
+              )}
+              {isBagReady && (
+                <PrimaryButton onClick={tryLamp}>{content.buttons.tryLamp}</PrimaryButton>
+              )}
+            </div>
           )}
 
           {stage === "result" && lastTry && (
@@ -255,18 +270,13 @@ export default function ForestRpgPage() {
           )}
         </section>
 
-        <aside className="rounded-[28px] border border-cyan-200/25 bg-blue-950/72 p-3 shadow-[0_0_30px_rgba(34,211,238,0.14)] backdrop-blur-xl lg:p-4">
-          <div className="grid grid-cols-[72px_minmax(0,1fr)] items-center gap-3 lg:grid-cols-1">
-            <div className="nova-bot relative mx-auto flex h-[72px] w-[72px] items-center justify-center rounded-[24px] border border-cyan-100/35 bg-[radial-gradient(circle_at_50%_30%,#dffbff,#38bdf8_48%,#1d4ed8)] shadow-[0_0_26px_rgba(34,211,238,0.32)] lg:h-40 lg:w-40 lg:rounded-[38px]" aria-label="Nova" />
+        <aside className="rounded-[24px] border border-cyan-200/20 bg-blue-950/62 p-2 shadow-[0_0_24px_rgba(34,211,238,0.12)] backdrop-blur-xl lg:p-4">
+          <div className="grid grid-cols-[56px_minmax(0,1fr)] items-center gap-2 lg:grid-cols-1 lg:gap-3">
+            <div className="nova-bot relative mx-auto flex h-14 w-14 items-center justify-center rounded-[20px] border border-cyan-100/35 bg-[radial-gradient(circle_at_50%_30%,#dffbff,#38bdf8_48%,#1d4ed8)] shadow-[0_0_20px_rgba(34,211,238,0.28)] lg:h-32 lg:w-32 lg:rounded-[34px]" aria-label="Nova" />
             <div className="min-w-0">
-              <p className="text-sm font-black text-cyan-100 lg:text-center lg:text-xl">Nova</p>
-              <p className="mt-1 rounded-[18px] border border-cyan-200/20 bg-slate-950/36 p-3 text-sm font-bold leading-6 text-cyan-50">{novaLine}</p>
+              <p className="text-xs font-black text-cyan-100 lg:text-center lg:text-lg">Nova</p>
+              <p className="mt-1 rounded-[16px] border border-cyan-200/16 bg-slate-950/28 p-2 text-xs font-bold leading-5 text-cyan-50 lg:p-3 lg:text-sm lg:leading-6">{novaLine}</p>
             </div>
-          </div>
-
-          <div className="mt-3 rounded-[22px] border border-amber-200/25 bg-amber-300/10 p-3">
-            <p className="text-xs font-black tracking-[0.18em] text-amber-200">背包</p>
-            <Bag fruits={selectedFruits} compact />
           </div>
         </aside>
       </section>
@@ -277,15 +287,20 @@ export default function ForestRpgPage() {
           50% { transform: translateX(10px) scale(1.06); opacity: 0.7; }
         }
         @keyframes fruitGlow {
-          0%, 100% { box-shadow: 0 0 18px rgba(250,204,21,0.34); }
-          50% { box-shadow: 0 0 34px rgba(250,204,21,0.72); }
+          0%, 100% { box-shadow: 0 0 18px rgba(250,204,21,0.42), 0 0 0 0 rgba(250,204,21,0.32); }
+          50% { box-shadow: 0 0 34px rgba(250,204,21,0.84), 0 0 0 10px rgba(250,204,21,0); }
         }
         @keyframes lampGlow {
           0%, 100% { box-shadow: 0 0 22px rgba(250,204,21,0.28); }
           50% { box-shadow: 0 0 54px rgba(250,204,21,0.78); }
         }
-        .energy-fruit { animation: fruitGlow 2.8s ease-in-out infinite; }
-        .lamp-lit { animation: lampGlow 1.8s ease-in-out infinite; }
+        @keyframes nudge {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
+        }
+        .energy-fruit { animation: fruitGlow 2.2s ease-in-out infinite; }
+        .lamp-ready, .lamp-lit { animation: lampGlow 1.7s ease-in-out infinite; }
+        .tap-hint { animation: nudge 1.3s ease-in-out infinite; }
         .sleepy-mist { animation: mistDrift 4s ease-in-out infinite; }
         .forest-lit .sleepy-mist { opacity: 0; transition: opacity 0.8s ease; }
         .forest-lit .forest-light { opacity: 1; }
@@ -301,14 +316,14 @@ export default function ForestRpgPage() {
         .nova-bot::after {
           content: "";
           position: absolute;
-          width: 8px;
-          height: 8px;
+          width: 7px;
+          height: 7px;
           border-radius: 999px;
           background: #67e8f9;
-          box-shadow: 18px 0 #67e8f9, 0 0 10px #67e8f9, 18px 0 10px #67e8f9;
+          box-shadow: 15px 0 #67e8f9, 0 0 9px #67e8f9, 15px 0 9px #67e8f9;
         }
         @media (prefers-reduced-motion: reduce) {
-          .energy-fruit, .lamp-lit, .sleepy-mist { animation: none; }
+          .energy-fruit, .lamp-ready, .lamp-lit, .sleepy-mist, .tap-hint { animation: none; }
         }
       `}</style>
     </main>
@@ -324,20 +339,26 @@ export default function ForestRpgPage() {
 
 function ForestMap({
   contentFruits,
+  hasFailedTry,
   isAwake,
+  isBagReady,
   lampPulse,
   lampState,
   onCollect,
+  onLampClick,
   pickedFruitIds,
   playerPoint,
   selectedFruits,
   showMap
 }: {
   contentFruits: ForestFruit[];
+  hasFailedTry: boolean;
   isAwake: boolean;
+  isBagReady: boolean;
   lampPulse: boolean;
   lampState: LampState;
   onCollect: (fruit: ForestFruit) => void;
+  onLampClick: () => void;
   pickedFruitIds: string[];
   playerPoint: { x: number; y: number };
   selectedFruits: ForestFruit[];
@@ -361,13 +382,20 @@ function ForestMap({
       ))}
 
       <div className="absolute left-[58%] top-[45%] z-20 -translate-x-1/2 -translate-y-1/2">
-        <div className={`relative flex h-24 w-20 items-center justify-center rounded-[34px] border border-amber-100/50 bg-blue-950/72 shadow-[0_0_26px_rgba(250,204,21,0.18)] ${lampState === "lit" ? "lamp-lit bg-amber-300/80" : ""} ${lampPulse ? "scale-105" : ""}`} data-testid="starlight-lamp">
-          <div className={`h-12 w-10 rounded-full ${lampState === "lit" ? "bg-amber-100" : lampState === "too-low" ? "bg-amber-200/45" : lampState === "too-high" ? "bg-violet-300/55" : "bg-cyan-200/24"} transition`} />
+        <button
+          aria-label="星光灯"
+          className={`relative flex h-24 w-20 items-center justify-center rounded-[34px] border border-amber-100/50 bg-blue-950/72 shadow-[0_0_26px_rgba(250,204,21,0.18)] transition active:scale-95 ${isBagReady ? "lamp-ready bg-amber-300/25 ring-4 ring-amber-200/40" : ""} ${lampState === "lit" ? "lamp-lit bg-amber-300/80" : ""} ${lampPulse ? "scale-105" : ""}`}
+          data-testid="starlight-lamp"
+          onClick={onLampClick}
+          type="button"
+        >
+          <div className={`h-12 w-10 rounded-full ${lampState === "lit" ? "bg-amber-100" : lampState === "charging" ? "bg-amber-200/65" : lampState === "too-low" ? "bg-amber-200/45" : lampState === "too-high" ? "bg-violet-300/55" : "bg-cyan-200/24"} transition`} />
           <span className="absolute -bottom-7 whitespace-nowrap rounded-full bg-blue-950/70 px-2 py-1 text-[10px] font-black text-amber-100">星光灯</span>
-        </div>
+          {isBagReady && <span className="tap-hint absolute -top-7 rounded-full bg-amber-300 px-2 py-1 text-[10px] font-black text-slate-950">点这里</span>}
+        </button>
       </div>
 
-      <div className="absolute right-[14%] top-[24%] z-20 flex flex-col items-center gap-2 sm:right-[18%]">
+      <div className="absolute right-[12%] top-[24%] z-20 flex flex-col items-center gap-2 sm:right-[18%]">
         <div className={`relative h-20 w-20 rounded-[42%] border border-cyan-100/35 ${spiritAwake ? "bg-[radial-gradient(circle_at_50%_30%,#fef3c7,#86efac_52%,#22c55e)] shadow-[0_0_42px_rgba(134,239,172,0.7)]" : "bg-[radial-gradient(circle_at_50%_30%,#dbeafe,#94a3b8_54%,#475569)] shadow-[0_0_28px_rgba(148,163,184,0.48)]"}`}>
           <span className="absolute left-5 top-8 h-2 w-2 rounded-full bg-slate-900 shadow-[28px_0_0_#0f172a]" />
           <span className="absolute bottom-4 left-1/2 h-2 w-8 -translate-x-1/2 rounded-full bg-slate-900/45" />
@@ -381,17 +409,20 @@ function ForestMap({
       {showMap && contentFruits.map((fruit) => {
         const picked = pickedFruitIds.includes(fruit.id);
         const carried = selectedFruits.some((item) => item.id === fruit.id);
+        const canPick = !picked && selectedFruits.length < 2 && !hasFailedTry;
         return (
           <button
-            className={`energy-fruit absolute z-30 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-amber-100/60 bg-[radial-gradient(circle_at_35%_28%,#fef3c7,#facc15_34%,#22c55e_72%,#15803d)] text-xl font-black text-slate-950 transition active:scale-95 ${picked ? "opacity-35 grayscale" : "hover:scale-105"} ${carried ? "ring-4 ring-cyan-100/60" : ""}`}
+            className={`absolute z-30 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-amber-100/60 bg-[radial-gradient(circle_at_35%_28%,#fef3c7,#facc15_34%,#22c55e_72%,#15803d)] text-xl font-black text-slate-950 transition active:scale-95 ${canPick ? "energy-fruit hover:scale-105" : "opacity-35 grayscale"} ${carried ? "ring-4 ring-cyan-100/60" : ""}`}
             data-testid={fruit.id}
-            disabled={picked}
+            disabled={!canPick}
             key={fruit.id}
             onClick={() => onCollect(fruit)}
             style={{ left: `${fruit.position.x}%`, top: `${fruit.position.y}%` }}
             type="button"
           >
             {fruit.label}
+            {canPick && <span className="tap-hint pointer-events-none absolute -top-7 rounded-full bg-amber-200 px-2 py-1 text-[10px] font-black text-slate-950">点我</span>}
+            {picked && <span className="pointer-events-none absolute -bottom-6 whitespace-nowrap rounded-full bg-blue-950/70 px-2 py-1 text-[10px] font-black text-cyan-50">已装入</span>}
           </button>
         );
       })}
@@ -417,17 +448,33 @@ function SceneCard({ children, className = "" }: { children: ReactNode; classNam
   );
 }
 
-function Bag({ compact, fruits }: { compact?: boolean; fruits: ForestFruit[] }) {
+function InventoryDock({ fruits, hasFailedTry, onReset }: { fruits: ForestFruit[]; hasFailedTry: boolean; onReset: () => void }) {
   return (
-    <div className={`grid grid-cols-2 gap-2 ${compact ? "mt-2" : ""}`} data-testid="fruit-bag">
-      {[0, 1].map((index) => {
-        const fruit = fruits[index];
-        return (
-          <div className="flex min-h-12 items-center justify-center rounded-[18px] border border-cyan-100/28 bg-blue-950/50 px-2 text-sm font-black text-cyan-50" key={index}>
-            {fruit ? `${fruit.label} 号果` : "空"}
-          </div>
-        );
-      })}
+    <div className="rounded-[24px] border border-amber-200/30 bg-blue-950/72 p-3 shadow-[0_0_28px_rgba(34,211,238,0.16)] backdrop-blur-xl" data-testid="fruit-bag">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-black tracking-[0.18em] text-amber-200">背包</p>
+        {(fruits.length > 0 || hasFailedTry) && (
+          <button className="rounded-full border border-cyan-200/25 bg-cyan-200/10 px-3 py-1 text-xs font-black text-cyan-50 transition active:scale-95" onClick={onReset} type="button">
+            换果子
+          </button>
+        )}
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        {[0, 1].map((index) => {
+          const fruit = fruits[index];
+          return (
+            <div className={`flex min-h-12 items-center justify-center rounded-[18px] border px-2 text-sm font-black ${fruit ? "border-amber-100/55 bg-amber-300/18 text-amber-50 shadow-[0_0_18px_rgba(250,204,21,0.2)]" : "border-cyan-100/18 bg-slate-950/22 text-cyan-50/55"}`} key={index}>
+              {fruit ? (
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-amber-100/60 bg-[radial-gradient(circle_at_35%_28%,#fef3c7,#facc15_38%,#22c55e_76%)] text-base font-black text-slate-950">
+                  {fruit.label}
+                </span>
+              ) : (
+                <span>空</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -437,9 +484,9 @@ function LampMeter({ state, sum }: { state: LampState; sum: number }) {
   const color = state === "too-high" ? "from-violet-300 to-fuchsia-300" : state === "lit" ? "from-amber-200 to-yellow-300" : "from-cyan-200 to-emerald-200";
 
   return (
-    <div className="my-4 rounded-[22px] border border-cyan-200/25 bg-slate-950/40 p-3" data-testid="lamp-meter">
+    <div className="mt-2 rounded-[20px] border border-cyan-200/25 bg-slate-950/48 p-3" data-testid="lamp-meter">
       <p className="text-xs font-black tracking-[0.18em] text-cyan-200">星光灯能量</p>
-      <div className="mt-2 h-5 overflow-hidden rounded-full bg-slate-950/70">
+      <div className="mt-2 h-4 overflow-hidden rounded-full bg-slate-950/70">
         <div className={`h-full rounded-full bg-gradient-to-r ${color} transition-all duration-500`} style={{ width: `${width}%` }} />
       </div>
     </div>
@@ -448,7 +495,15 @@ function LampMeter({ state, sum }: { state: LampState; sum: number }) {
 
 function PrimaryButton({ children, onClick }: { children: ReactNode; onClick: () => void }) {
   return (
-    <button className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-[22px] bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 px-5 text-base font-black text-slate-950 shadow-[0_0_28px_rgba(250,204,21,0.42)] transition active:scale-95" onClick={onClick} type="button">
+    <button className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-[22px] bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 px-5 text-base font-black text-slate-950 shadow-[0_0_28px_rgba(250,204,21,0.42)] transition active:scale-95" onClick={onClick} type="button">
+      {children}
+    </button>
+  );
+}
+
+function SecondaryAction({ children, onClick }: { children: ReactNode; onClick: () => void }) {
+  return (
+    <button className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-[20px] border border-cyan-200/30 bg-cyan-200/12 px-4 text-sm font-black text-cyan-50 transition active:scale-95" onClick={onClick} type="button">
       {children}
     </button>
   );
