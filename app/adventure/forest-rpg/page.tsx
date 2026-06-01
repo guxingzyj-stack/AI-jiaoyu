@@ -35,6 +35,7 @@ export default function ForestRpgPage() {
   const [moving, setMoving] = useState(false);
   const [lampPulse, setLampPulse] = useState(false);
   const [lastTry, setLastTry] = useState<{ fruits: ForestFruit[]; sum: number } | null>(null);
+  const [seedFragmentCount, setSeedFragmentCount] = useState(0);
 
   const currentEncounter = content.encounters[encounterIndex];
   const currentFragmentCount =
@@ -42,19 +43,20 @@ export default function ForestRpgPage() {
       ? 3
       : stage === "result"
         ? encounterIndex + 1
-        : stage === "gate" || stage === "bridgeIntro"
+        : stage === "gate" || stage === "gateOpening" || stage === "bridgeIntro"
           ? 2
           : stage === "follow" || encounterIndex > 0
             ? encounterIndex
             : 0;
   const bagSum = selectedFruits.reduce((sum, fruit) => sum + fruit.value, 0);
-  const sceneMode = stage === "forestCenter" || stage === "seedAwake" || stage === "complete" ? "center" : stage === "gate" ? "gate" : currentEncounter.id === "star-bridge" ? "bridge" : "forest";
-  const followerCount = stage === "complete" || stage === "forestCenter" || stage === "seedAwake" || stage === "gate" || sceneMode === "bridge" ? 2 : currentFragmentCount >= 1 && stage !== "result" && stage !== "follow" ? 1 : 0;
-  const isAwake = stage === "result" || stage === "follow" || stage === "gate" || stage === "bridgeIntro" || stage === "forestCenter" || stage === "seedAwake" || stage === "complete";
+  const sceneMode = stage === "forestCenter" || stage === "seedAwake" || stage === "complete" ? "center" : stage === "gate" || stage === "gateOpening" ? "gate" : currentEncounter.id === "star-bridge" ? "bridge" : encounterIndex === 1 ? "deepForest" : "forest";
+  const followerCount = stage === "complete" || stage === "forestCenter" || stage === "seedAwake" || stage === "gate" || stage === "gateOpening" || sceneMode === "bridge" ? 2 : currentFragmentCount >= 1 && stage !== "result" && stage !== "follow" ? 1 : 0;
+  const isAwake = stage === "result" || stage === "follow" || stage === "gate" || stage === "gateOpening" || stage === "bridgeIntro" || stage === "forestCenter" || stage === "seedAwake" || stage === "complete";
   const isTryingLamp = stage === "lamp";
-  const hasFailedTry = (lampState === "too-low" || lampState === "too-high") && stage !== "result" && stage !== "follow" && stage !== "gate" && stage !== "bridgeIntro" && stage !== "forestCenter" && stage !== "seedAwake" && stage !== "complete";
+  const hasFailedTry = (lampState === "too-low" || lampState === "too-high") && stage !== "result" && stage !== "follow" && stage !== "gate" && stage !== "gateOpening" && stage !== "bridgeIntro" && stage !== "forestCenter" && stage !== "seedAwake" && stage !== "complete";
   const isBagReady = selectedFruits.length === 2 && !hasFailedTry;
   const showAwakeningBurst = lampState === "lit" || stage === "result" || stage === "gate" || stage === "seedAwake" || stage === "complete";
+  const displayedSeedFragments = stage === "seedAwake" || stage === "complete" ? 3 : seedFragmentCount;
   const playerPoint = getPoint(moving ? targetPosition : playerPosition);
 
   const taskPrompt = useMemo(() => {
@@ -63,6 +65,7 @@ export default function ForestRpgPage() {
     if (stage === "result") return content.prompts.result;
     if (stage === "follow") return content.prompts.follow;
     if (stage === "gate") return content.prompts.gate;
+    if (stage === "gateOpening") return content.prompts.gateOpening;
     if (stage === "bridgeIntro") return content.prompts.bridgeIntro;
     if (stage === "forestCenter") return content.prompts.forestCenter;
     if (stage === "seedAwake") return content.prompts.seedAwake;
@@ -98,7 +101,7 @@ export default function ForestRpgPage() {
   };
 
   const collectFruit = (fruit: ForestFruit) => {
-    if (stage === "intro" || stage === "mission" || stage === "result" || stage === "follow" || stage === "gate" || stage === "bridgeIntro" || stage === "forestCenter" || stage === "seedAwake" || stage === "complete") return;
+    if (stage === "intro" || stage === "mission" || stage === "result" || stage === "follow" || stage === "gate" || stage === "gateOpening" || stage === "bridgeIntro" || stage === "forestCenter" || stage === "seedAwake" || stage === "complete") return;
     if (pickedFruitIds.includes(fruit.id) || moving || selectedFruits.length >= 2 || hasFailedTry) return;
 
     playClickSound();
@@ -124,7 +127,7 @@ export default function ForestRpgPage() {
   };
 
   const handleLampClick = () => {
-    if (stage === "intro" || stage === "mission" || stage === "result" || stage === "follow" || stage === "gate" || stage === "bridgeIntro" || stage === "forestCenter" || stage === "seedAwake" || stage === "complete" || moving) return;
+    if (stage === "intro" || stage === "mission" || stage === "result" || stage === "follow" || stage === "gate" || stage === "gateOpening" || stage === "bridgeIntro" || stage === "forestCenter" || stage === "seedAwake" || stage === "complete" || moving) return;
     if (selectedFruits.length === 0) {
       playClickSound();
       setNovaLine(content.novaLines.needTwoFruits);
@@ -187,6 +190,7 @@ export default function ForestRpgPage() {
     }
 
     playRewardSound();
+    setSeedFragmentCount(0);
     setStage("forestCenter");
     setNovaLine(content.forestCenter.novaLine);
   };
@@ -206,6 +210,12 @@ export default function ForestRpgPage() {
 
   const enterMistGate = () => {
     playRewardSound();
+    setStage("gateOpening");
+    setNovaLine(content.gateScene.openingNovaLine);
+  };
+
+  const walkThroughMistGate = () => {
+    playRewardSound();
     setStage("bridgeIntro");
     setNovaLine(content.bridgeScene.novaLine);
   };
@@ -223,10 +233,19 @@ export default function ForestRpgPage() {
     setNovaLine(content.encounters[2].mapLine);
   };
 
-  const placeFragments = () => {
+  const placeNextFragment = () => {
+    if (seedFragmentCount >= 3) return;
     playRewardSound();
-    setStage("seedAwake");
-    setNovaLine(content.forestCenter.awakeLine);
+    const nextCount = Math.min(3, seedFragmentCount + 1);
+    setSeedFragmentCount(nextCount);
+    setNovaLine(content.forestCenter.fragmentLines[nextCount - 1] ?? content.forestCenter.actionLine);
+    if (nextCount === 3) {
+      window.setTimeout(() => {
+        playRewardSound();
+        setStage("seedAwake");
+        setNovaLine(content.forestCenter.awakeLine);
+      }, 620);
+    }
   };
 
   const completeChapter = () => {
@@ -249,6 +268,7 @@ export default function ForestRpgPage() {
     setMoving(false);
     setLampPulse(false);
     setLastTry(null);
+    setSeedFragmentCount(0);
   };
 
   const islandName = content.name.split(" · ")[0] ?? content.name;
@@ -290,6 +310,7 @@ export default function ForestRpgPage() {
             showMap={stage !== "intro" && stage !== "mission"}
             followerCount={followerCount}
             sceneMode={sceneMode}
+            seedFragmentCount={displayedSeedFragments}
             targetEnergy={currentEncounter.targetEnergy}
           />
 
@@ -413,7 +434,31 @@ export default function ForestRpgPage() {
               <p className="mt-2 rounded-full bg-amber-300 px-3 py-1.5 text-xs font-black text-slate-950">
                 {content.encounters[1].progressText}
               </p>
-              <PrimaryButton onClick={enterMistGate}>{content.buttons.enterGate}</PrimaryButton>
+              <PrimaryButton onClick={enterMistGate}>{content.buttons.openGateTogether}</PrimaryButton>
+            </SceneCard>
+          )}
+
+          {stage === "gateOpening" && (
+            <SceneCard className="awakening-card bottom-3 left-3 right-3 p-3 text-center sm:bottom-4 sm:left-1/2 sm:w-[430px] sm:-translate-x-1/2 sm:p-4">
+              <div className="mx-auto mb-2 grid w-44 grid-cols-[1fr_64px_1fr] items-center gap-2">
+                <AssetImage
+                  alt=""
+                  className="h-14 w-14 justify-self-end object-contain drop-shadow-[0_0_14px_rgba(134,239,172,0.82)]"
+                  src={forestRpgAssets.characters.awakeSpirit}
+                />
+                <div className="mist-gate h-16 w-16 rounded-full border border-cyan-100/35 bg-[radial-gradient(circle,rgba(34,211,238,0.4),rgba(88,28,135,0.22)_60%,transparent_74%)] shadow-[0_0_30px_rgba(34,211,238,0.34)]" />
+                <AssetImage
+                  alt=""
+                  className="h-14 w-14 object-contain drop-shadow-[0_0_14px_rgba(134,239,172,0.82)]"
+                  src={forestRpgAssets.characters.awakeSpirit}
+                />
+              </div>
+              <h2 className="text-2xl font-black leading-tight">{content.gateScene.openingTitle}</h2>
+              <p className="mt-2 text-xs font-bold leading-5 text-cyan-50/88 sm:text-sm sm:leading-6">{content.gateScene.openingLine}</p>
+              <p className="mt-2 rounded-[16px] border border-cyan-200/28 bg-cyan-200/12 px-3 py-2 text-xs font-bold leading-5 text-cyan-50/86">
+                {content.gateScene.openingNovaLine}
+              </p>
+              <PrimaryButton onClick={walkThroughMistGate}>{content.buttons.enterGate}</PrimaryButton>
             </SceneCard>
           )}
 
@@ -434,7 +479,7 @@ export default function ForestRpgPage() {
             <SceneCard className="awakening-card bottom-3 left-3 right-3 p-3 text-center sm:bottom-4 sm:left-1/2 sm:w-[430px] sm:-translate-x-1/2 sm:p-4">
               <div className="mx-auto mb-2 grid w-32 grid-cols-3 gap-1.5">
                 {[0, 1, 2].map((index) => (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full border border-amber-100/40 bg-amber-200/18 shadow-[0_0_18px_rgba(250,204,21,0.32)]" key={index}>
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full border shadow-[0_0_18px_rgba(250,204,21,0.32)] ${index < seedFragmentCount ? "border-amber-100/70 bg-amber-200/28" : "border-amber-100/24 bg-slate-950/24 grayscale"}`} key={index}>
                     <AssetImage
                       alt=""
                       className="h-8 w-8 object-contain drop-shadow-[0_0_12px_rgba(250,204,21,0.72)]"
@@ -446,9 +491,9 @@ export default function ForestRpgPage() {
               <h2 className="text-2xl font-black leading-tight">{content.forestCenter.title}</h2>
               <p className="mt-2 text-xs font-bold leading-5 text-cyan-50/88 sm:text-sm sm:leading-6">{content.forestCenter.line}</p>
               <p className="mt-1 rounded-[16px] border border-amber-200/28 bg-amber-300/14 px-3 py-2 text-xs font-black text-amber-50 sm:text-sm">
-                {content.forestCenter.actionLine}
+                {seedFragmentCount === 0 ? content.forestCenter.actionLine : content.forestCenter.fragmentLines[seedFragmentCount - 1]}
               </p>
-              <PrimaryButton onClick={placeFragments}>{content.buttons.placeFragments}</PrimaryButton>
+              <PrimaryButton onClick={placeNextFragment}>{content.buttons.placeFragmentButtons[Math.min(seedFragmentCount, 2)]}</PrimaryButton>
             </SceneCard>
           )}
 
@@ -480,6 +525,7 @@ export default function ForestRpgPage() {
               <div className="mt-2 grid gap-1.5 text-xs font-black text-cyan-50 sm:gap-2 sm:text-sm">
                 <p className="rounded-[16px] border border-amber-200/30 bg-amber-300/16 px-3 py-1.5">{content.finalComplete.seed}</p>
                 <p className="rounded-[16px] border border-amber-200/30 bg-amber-300/16 px-3 py-1.5">{content.finalComplete.friends}</p>
+                <p className="rounded-[16px] border border-emerald-200/30 bg-emerald-300/14 px-3 py-1.5">{content.finalComplete.friendsLine}</p>
                 <p className="rounded-[16px] border border-emerald-200/30 bg-emerald-300/14 px-3 py-1.5">{content.finalComplete.progress}</p>
                 <p className="rounded-[16px] border border-cyan-200/30 bg-cyan-300/12 px-3 py-1.5">{content.finalComplete.fragments}</p>
                 <p className="rounded-[16px] border border-violet-200/30 bg-violet-300/12 px-3 py-1.5">{content.finalComplete.bridge}</p>
@@ -589,6 +635,7 @@ function ForestMap({
   playerPoint,
   selectedFruits,
   sceneMode,
+  seedFragmentCount,
   showAwakeningBurst,
   showMap,
   targetEnergy
@@ -606,14 +653,16 @@ function ForestMap({
   pickedFruitIds: string[];
   playerPoint: { x: number; y: number };
   selectedFruits: ForestFruit[];
-  sceneMode: "forest" | "gate" | "bridge" | "center";
+  sceneMode: "forest" | "deepForest" | "gate" | "bridge" | "center";
+  seedFragmentCount: number;
   showAwakeningBurst: boolean;
   showMap: boolean;
   targetEnergy: number;
 }) {
   const spiritAwake = isAwake;
   const recommendedFruitId = getRecommendedFruitId(contentFruits, pickedFruitIds, selectedFruits, targetEnergy);
-  const backgroundAsset = isAwake ? forestRpgAssets.backgrounds.bright : forestRpgAssets.backgrounds.dark;
+  const isDeepForest = sceneMode === "deepForest";
+  const backgroundAsset = isAwake && !isDeepForest ? forestRpgAssets.backgrounds.bright : forestRpgAssets.backgrounds.dark;
   const isSecondEncounter = encounterId === "second-spirit";
   const isBridge = sceneMode === "bridge";
   const isCenter = sceneMode === "center";
@@ -624,7 +673,7 @@ function ForestMap({
     <div
       className={`absolute inset-0 overflow-hidden bg-cover bg-center ${isAwake ? "bg-emerald-500/10" : "bg-slate-950/20"}`}
       style={{
-        backgroundImage: `linear-gradient(180deg, rgba(9,18,58,0.38), rgba(5,16,30,0.52)), url(${backgroundAsset}), radial-gradient(circle at 50% 0%, rgba(34,211,238,0.22), transparent 44%), linear-gradient(180deg, #121d62, #07102f 58%, #05101e)`
+        backgroundImage: `${isDeepForest ? "linear-gradient(180deg, rgba(15,23,42,0.58), rgba(5,16,30,0.68))" : "linear-gradient(180deg, rgba(9,18,58,0.38), rgba(5,16,30,0.52))"}, url(${backgroundAsset}), radial-gradient(circle at 50% 0%, rgba(34,211,238,0.22), transparent 44%), linear-gradient(180deg, #121d62, #07102f 58%, #05101e)`
       }}
     >
       <div className="absolute inset-x-[-10%] bottom-0 h-[58%] rounded-t-[50%] bg-[radial-gradient(circle_at_50%_0%,rgba(34,197,94,0.28),rgba(21,128,61,0.22)_36%,rgba(5,46,22,0.72)_78%)]" />
@@ -641,11 +690,11 @@ function ForestMap({
       )}
       {isCenter && (
         <div className="pointer-events-none absolute left-1/2 top-[34%] z-20 flex h-40 w-40 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-amber-100/34 bg-[radial-gradient(circle_at_50%_48%,rgba(254,243,199,0.62),rgba(250,204,21,0.24)_32%,rgba(34,197,94,0.18)_56%,rgba(15,23,42,0.12)_72%)] shadow-[0_0_54px_rgba(250,204,21,0.45)] sm:h-52 sm:w-52">
-          <span className="seed-core h-16 w-16 rounded-full border border-amber-100/50 bg-[radial-gradient(circle,#fef9c3,#facc15_46%,#22c55e_82%)] shadow-[0_0_34px_rgba(250,204,21,0.72)] sm:h-20 sm:w-20" />
+          <span className={`seed-core h-16 w-16 rounded-full border border-amber-100/50 bg-[radial-gradient(circle,#fef9c3,#facc15_46%,#22c55e_82%)] sm:h-20 sm:w-20 ${seedFragmentCount >= 3 ? "shadow-[0_0_64px_rgba(250,204,21,0.95)]" : seedFragmentCount > 0 ? "shadow-[0_0_42px_rgba(250,204,21,0.72)]" : "shadow-[0_0_24px_rgba(148,163,184,0.45)] grayscale"}`} />
           {[0, 1, 2].map((index) => (
             <AssetImage
               alt=""
-              className="absolute h-9 w-9 object-contain drop-shadow-[0_0_14px_rgba(250,204,21,0.76)] sm:h-11 sm:w-11"
+              className={`absolute h-9 w-9 object-contain drop-shadow-[0_0_14px_rgba(250,204,21,0.76)] sm:h-11 sm:w-11 ${index < seedFragmentCount ? "opacity-100" : "opacity-28 grayscale"}`}
               key={index}
               src={forestRpgAssets.objects.starlightFragment}
               style={{
@@ -716,6 +765,7 @@ function ForestMap({
 
       <div className="sleepy-mist absolute right-[4%] top-[12%] z-10 h-72 w-72 rounded-full bg-slate-300/22 bg-contain bg-center bg-no-repeat blur-2xl sm:right-[12%]" style={{ backgroundImage: `url(${forestRpgAssets.objects.sleepyFog}), radial-gradient(circle, rgba(203,213,225,0.24), transparent 68%)` }} />
       <div className="sleepy-mist absolute right-[20%] top-[26%] z-10 h-48 w-64 rounded-full bg-cyan-200/16 bg-contain bg-center bg-no-repeat blur-2xl" style={{ backgroundImage: `url(${forestRpgAssets.objects.sleepyFog}), radial-gradient(circle, rgba(165,243,252,0.18), transparent 70%)` }} />
+      {isDeepForest && <div className="sleepy-mist absolute left-[2%] top-[8%] z-10 h-[58%] w-[80%] rounded-full bg-slate-300/18 bg-contain bg-center bg-no-repeat blur-3xl" style={{ backgroundImage: `url(${forestRpgAssets.objects.sleepyFog}), radial-gradient(circle, rgba(148,163,184,0.25), transparent 70%)` }} />}
       {isSecondEncounter && <div className="sleepy-mist absolute left-[56%] top-[18%] z-10 h-44 w-56 rounded-full bg-slate-300/18 bg-contain bg-center bg-no-repeat blur-2xl" style={{ backgroundImage: `url(${forestRpgAssets.objects.sleepyFog}), radial-gradient(circle, rgba(148,163,184,0.2), transparent 70%)` }} />}
 
       {showMap && contentFruits.map((fruit) => {

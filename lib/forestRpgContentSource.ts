@@ -7,6 +7,7 @@ export type ForestRpgStage =
   | "result"
   | "follow"
   | "gate"
+  | "gateOpening"
   | "bridgeIntro"
   | "forestCenter"
   | "seedAwake"
@@ -48,6 +49,16 @@ export type ForestRpgContent = {
   chapterTitle: string;
   name: string;
   route: string;
+  chapterActs: Array<{
+    id: string;
+    sceneName: string;
+    goal: string;
+    visualState: string;
+    novaLine: string;
+    playerAction: string;
+    result: string;
+    nextTrigger: string;
+  }>;
   encounters: ForestEncounter[];
   rewards: {
     item: string;
@@ -63,6 +74,7 @@ export type ForestRpgContent = {
     result: string;
     follow: string;
     gate: string;
+    gateOpening: string;
     bridgeIntro: string;
     forestCenter: string;
     seedAwake: string;
@@ -85,6 +97,9 @@ export type ForestRpgContent = {
     line: string;
     secondLine: string;
     novaLine: string;
+    openingTitle: string;
+    openingLine: string;
+    openingNovaLine: string;
   };
   bridgeScene: {
     title: string;
@@ -96,6 +111,7 @@ export type ForestRpgContent = {
     title: string;
     line: string;
     actionLine: string;
+    fragmentLines: [string, string, string];
     awakeTitle: string;
     awakeLine: string;
     novaLine: string;
@@ -112,6 +128,7 @@ export type ForestRpgContent = {
     hookDetail: string;
     novaHook: string;
     novaReflection: string;
+    friendsLine: string;
   };
   narrative: {
     resultPerfectTitle: string;
@@ -143,9 +160,10 @@ export type ForestRpgContent = {
     continueForward: string;
     openGate: string;
     enterGate: string;
+    openGateTogether: string;
     startBridge: string;
     goForestCenter: string;
-    placeFragments: string;
+    placeFragmentButtons: [string, string, string];
     lightForestPath: string;
     replay: string;
     backToAdventure: string;
@@ -157,6 +175,78 @@ export const forestRpgContent: ForestRpgContent = {
   chapterTitle: "第一章：森林小路 · 星光种子",
   name: "森林小路 · 星光种子",
   route: "/adventure/forest-rpg",
+  chapterActs: [
+    {
+      id: "act0_cold_open",
+      sceneName: "冷开场 · 星光熄灭",
+      goal: "发现求救光点",
+      visualState: "暗森林、灰蓝迷雾、Nova 小灯变暗",
+      novaLine: "远处有一个小小的光点……好像在求救。",
+      playerAction: "去看看那个光点",
+      result: "确认森林中心的星光种子睡着了",
+      nextTrigger: "进入森林入口"
+    },
+    {
+      id: "act1_rescue_first_spirit",
+      sceneName: "森林入口 · 求救光点",
+      goal: "救醒第一只小精灵，获得第 1 片星光碎片",
+      visualState: "入口较暗，第一只小精灵被迷雾包住",
+      novaLine: "森林睡着了，我们一起把星光叫醒吧。",
+      playerAction: "采集 6 和 4，点亮第一盏星光灯",
+      result: "第一只小精灵醒来并指向森林深处",
+      nextTrigger: "跟着小精灵往前走"
+    },
+    {
+      id: "act2_deep_forest_second_spirit",
+      sceneName: "森林深处 · 第二团迷雾",
+      goal: "救醒第二只小精灵，获得第 2 片星光碎片",
+      visualState: "雾更浓，第一只小精灵跟随，第二团迷雾出现",
+      novaLine: "这次你来找刚刚好的能量果。",
+      playerAction: "采集 7 和 3，点亮第二盏星光灯",
+      result: "两只小精灵一起发光，迷雾门出现",
+      nextTrigger: "靠近迷雾门"
+    },
+    {
+      id: "act3_mist_gate",
+      sceneName: "迷雾门",
+      goal: "让两个森林朋友合力打开新区域",
+      visualState: "两只小精灵在门两侧发光，两道星光照向门缝",
+      novaLine: "它们好像一直在守着这扇门。",
+      playerAction: "一起打开迷雾门",
+      result: "门后出现断开的星光桥",
+      nextTrigger: "走进门后"
+    },
+    {
+      id: "act4_star_bridge",
+      sceneName: "断开的星光桥",
+      goal: "修复通往森林中心的星光桥，获得第 3 片星光碎片",
+      visualState: "断开的金色光桥，桥另一边有森林中心光点",
+      novaLine: "点亮桥心灯，桥就能重新连起来。",
+      playerAction: "采集 5 和 5，点亮桥心灯",
+      result: "星光桥连起来，可以去森林中心",
+      nextTrigger: "去森林中心"
+    },
+    {
+      id: "act5_forest_heart",
+      sceneName: "森林中心 · 星光种子",
+      goal: "分 3 步放回星光碎片，唤醒星光种子",
+      visualState: "三片碎片环绕星光种子，Nova 和小精灵逐渐变亮",
+      novaLine: "3 片星光碎片都找齐了。",
+      playerAction: "依次放入三片星光碎片",
+      result: "星光种子醒来，森林小路完全亮起",
+      nextTrigger: "点亮森林小路"
+    },
+    {
+      id: "act6_chapter_complete",
+      sceneName: "第一章完成",
+      goal: "展示森林恢复和下一章星光海钩子",
+      visualState: "明亮森林、星光碎片、两个森林朋友",
+      novaLine: "你真的把森林小路叫醒了。",
+      playerAction: "再玩一次或回到入口",
+      result: "星光海方向出现新的星光变化",
+      nextTrigger: "下一章预告"
+    }
+  ],
   encounters: [
     {
       id: "first-spirit",
@@ -242,6 +332,7 @@ export const forestRpgContent: ForestRpgContent = {
     result: "星光亮起来了",
     follow: "前面还有一团瞌睡迷雾",
     gate: "迷雾门出现了",
+    gateOpening: "星光照亮了门缝",
     bridgeIntro: "门后有一座断开的星光桥",
     forestCenter: "把 3 片星光碎片送回去",
     seedAwake: "星光种子醒来了",
@@ -263,7 +354,10 @@ export const forestRpgContent: ForestRpgContent = {
     title: "迷雾门出现了",
     line: "两个森林朋友一起发出星光。",
     secondLine: "远处的迷雾裂开了一条缝，一扇迷雾门露出来了。",
-    novaLine: "它们好像一直在守着这扇门。两个森林朋友在帮我们打开它。"
+    novaLine: "它们好像一直在守着这扇门。",
+    openingTitle: "迷雾门打开了",
+    openingLine: "两个森林朋友飞到门边，星光照亮了门缝。",
+    openingNovaLine: "两个森林朋友在帮我们打开它。门后面……还有一条断开的星光桥。"
   },
   bridgeScene: {
     title: "断开的星光桥",
@@ -275,6 +369,7 @@ export const forestRpgContent: ForestRpgContent = {
     title: "森林中心",
     line: "这里就是森林中心。星光种子睡着了。",
     actionLine: "把 3 片星光碎片送回去。",
+    fragmentLines: ["第一片碎片亮起来了。", "第二片碎片亮起来了。", "第三片碎片回来了！"],
     awakeTitle: "星光种子醒来了！",
     awakeLine: "森林小路完全亮起来了！",
     novaLine: "3 片星光碎片都找齐了。现在把它们送回星光种子吧。"
@@ -290,7 +385,8 @@ export const forestRpgContent: ForestRpgContent = {
     hookLine: "桥的另一边，出现了一片蓝金色的星光海。",
     hookDetail: "海面上，好像有会发光的数字石头。",
     novaHook: "Nova：那里……也有星光在变暗。",
-    novaReflection: "你真的把森林小路叫醒了。一开始我还很紧张，现在森林又亮起来了。"
+    novaReflection: "你真的把森林小路叫醒了。一开始我还很紧张，现在森林又亮起来了。",
+    friendsLine: "两个森林朋友绕着你发光。"
   },
   narrative: {
     resultPerfectTitle: "完美点亮！",
@@ -321,10 +417,11 @@ export const forestRpgContent: ForestRpgContent = {
     retry: "重新找果子",
     continueForward: "跟着小精灵往前走",
     openGate: "靠近迷雾门",
+    openGateTogether: "一起打开迷雾门",
     enterGate: "走进门后",
     startBridge: "修复星光桥",
     goForestCenter: "去森林中心",
-    placeFragments: "放入星光碎片",
+    placeFragmentButtons: ["放入第一片碎片", "放入第二片碎片", "放入第三片碎片"],
     lightForestPath: "点亮森林小路",
     replay: "再玩一次",
     backToAdventure: "回到入口"
