@@ -357,6 +357,7 @@ function ParentTestLinks() {
       </summary>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         <TestLink href="/adventure/forest-map">测试：森林小地图探索版</TestLink>
+        <TestLink href="/adventure/starlight-sea">开始星光海跳岛航线</TestLink>
         <TestLink href="/map">进入星球地图</TestLink>
         <TestLink href="/adventure/multiples-sea">直接进入倍数海</TestLink>
         <TestLink href="/adventure/forest-island">直接进入森林岛</TestLink>
