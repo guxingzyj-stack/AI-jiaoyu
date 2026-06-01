@@ -1,4 +1,16 @@
-export type ForestRpgStage = "intro" | "map" | "collect" | "lamp" | "result" | "follow" | "gate" | "bridgeIntro" | "complete";
+export type ForestRpgStage =
+  | "intro"
+  | "mission"
+  | "map"
+  | "collect"
+  | "lamp"
+  | "result"
+  | "follow"
+  | "gate"
+  | "bridgeIntro"
+  | "forestCenter"
+  | "seedAwake"
+  | "complete";
 
 export type ForestFruit = {
   id: string;
@@ -42,6 +54,7 @@ export type ForestRpgContent = {
   };
   prompts: {
     intro: string;
+    mission: string;
     oneFruit: string;
     bagReady: string;
     tryingLamp: string;
@@ -51,31 +64,54 @@ export type ForestRpgContent = {
     follow: string;
     gate: string;
     bridgeIntro: string;
+    forestCenter: string;
+    seedAwake: string;
     complete: string;
   };
   intro: {
     title: string;
     line: string;
+    detail: string;
+  };
+  mission: {
+    title: string;
+    line: string;
+    goal: string;
+    fragmentGoal: string;
+    pathGoal: string;
   };
   gateScene: {
     title: string;
     line: string;
+    secondLine: string;
     novaLine: string;
   };
   bridgeScene: {
     title: string;
     line: string;
+    secondLine: string;
+    novaLine: string;
+  };
+  forestCenter: {
+    title: string;
+    line: string;
+    actionLine: string;
+    awakeTitle: string;
+    awakeLine: string;
     novaLine: string;
   };
   finalComplete: {
     title: string;
+    seed: string;
     friends: string;
     progress: string;
     fragments: string;
     bridge: string;
     hookTitle: string;
     hookLine: string;
+    hookDetail: string;
     novaHook: string;
+    novaReflection: string;
   };
   narrative: {
     resultPerfectTitle: string;
@@ -85,6 +121,11 @@ export type ForestRpgContent = {
     followLine: string;
     secondFollowTitle: string;
     secondFollowLine: string;
+    firstFragmentLine: string;
+    firstDirectionLine: string;
+    secondFriendsLine: string;
+    secondGateLine: string;
+    bridgeFragmentLine: string;
   };
   novaLines: {
     intro: string;
@@ -97,11 +138,15 @@ export type ForestRpgContent = {
   };
   buttons: {
     start: string;
+    startMission: string;
     retry: string;
     continueForward: string;
     openGate: string;
     enterGate: string;
     startBridge: string;
+    goForestCenter: string;
+    placeFragments: string;
+    lightForestPath: string;
     replay: string;
     backToAdventure: string;
   };
@@ -109,8 +154,8 @@ export type ForestRpgContent = {
 
 export const forestRpgContent: ForestRpgContent = {
   id: "forest-rpg-starlight-lamp",
-  chapterTitle: "森林小路 · 星光唤醒完整章",
-  name: "森林小路 · 星光唤醒",
+  chapterTitle: "第一章：森林小路 · 星光种子",
+  name: "森林小路 · 星光种子",
   route: "/adventure/forest-rpg",
   encounters: [
     {
@@ -187,7 +232,8 @@ export const forestRpgContent: ForestRpgContent = {
     item: "星光碎片"
   },
   prompts: {
-    intro: "看看森林小路发生了什么",
+    intro: "远处有一个小光点",
+    mission: "找回 3 片星光碎片",
     oneFruit: "再找一颗能量果",
     bagReady: "背包装满啦，去点亮目标",
     tryingLamp: "星光正在试能量",
@@ -197,40 +243,68 @@ export const forestRpgContent: ForestRpgContent = {
     follow: "前面还有一团瞌睡迷雾",
     gate: "迷雾门出现了",
     bridgeIntro: "门后有一座断开的星光桥",
-    complete: "森林小路亮起 3/3"
+    forestCenter: "把 3 片星光碎片送回去",
+    seedAwake: "星光种子醒来了",
+    complete: "第一章完成"
   },
   intro: {
-    title: "星光灯变暗了",
-    line: "瞌睡迷雾罩住森林小路。Nova 请求你一起把星光叫醒。"
+    title: "森林的星光变暗了",
+    line: "Nova 的小灯也变得很微弱。",
+    detail: "远处有一个小小的光点，好像在向我们求助。"
+  },
+  mission: {
+    title: "星光种子睡着了",
+    line: "森林中心的星光种子睡着了。",
+    goal: "我们要找回 3 片星光碎片，才能叫醒它。",
+    fragmentGoal: "星光碎片 0/3",
+    pathGoal: "森林小路 0/3"
   },
   gateScene: {
     title: "迷雾门出现了",
-    line: "两个森林朋友一起发光，灰蓝迷雾慢慢打开。",
-    novaLine: "它们好像能帮我们打开迷雾门。"
+    line: "两个森林朋友一起发出星光。",
+    secondLine: "远处的迷雾裂开了一条缝，一扇迷雾门露出来了。",
+    novaLine: "它们好像一直在守着这扇门。两个森林朋友在帮我们打开它。"
   },
   bridgeScene: {
     title: "断开的星光桥",
-    line: "门后有一座断开的星光桥。",
-    novaLine: "点亮桥心灯，桥就能重新连起来。"
+    line: "星光桥断开了。",
+    secondLine: "桥的另一边，就是森林中心。",
+    novaLine: "门后面……还有一条断开的星光桥。点亮桥心灯，桥就能重新连起来。"
+  },
+  forestCenter: {
+    title: "森林中心",
+    line: "这里就是森林中心。星光种子睡着了。",
+    actionLine: "把 3 片星光碎片送回去。",
+    awakeTitle: "星光种子醒来了！",
+    awakeLine: "森林小路完全亮起来了！",
+    novaLine: "3 片星光碎片都找齐了。现在把它们送回星光种子吧。"
   },
   finalComplete: {
-    title: "森林小路完全亮起来了！",
-    friends: "你救醒了 2 个森林朋友",
+    title: "第一章完成！",
+    seed: "星光种子已经醒来",
+    friends: "森林朋友 2 个",
     progress: "森林小路亮起 3/3",
-    fragments: "星光碎片 x3",
+    fragments: "星光碎片 3/3",
     bridge: "星光桥已经恢复",
-    hookTitle: "下一章：星光海即将开启",
-    hookLine: "桥的另一边，出现了一片新的星光海。",
-    novaHook: "Nova：那边好像是倍数海的方向……"
+    hookTitle: "下一章：星光海",
+    hookLine: "桥的另一边，出现了一片蓝金色的星光海。",
+    hookDetail: "海面上，好像有会发光的数字石头。",
+    novaHook: "Nova：那里……也有星光在变暗。",
+    novaReflection: "你真的把森林小路叫醒了。一开始我还很紧张，现在森林又亮起来了。"
   },
   narrative: {
     resultPerfectTitle: "完美点亮！",
     resultSuccessTitle: "成功点亮！",
     friendLine: "它现在是你的森林朋友了。",
     followTitle: "它跟上来了！",
-    followLine: "前面好像还有一团瞌睡迷雾……我们去看看？",
+    followLine: "它轻轻指向森林深处。前面还有一个朋友在睡觉。",
     secondFollowTitle: "两个森林朋友都跟上来了",
-    secondFollowLine: "远处有一扇被迷雾盖住的门。"
+    secondFollowLine: "远处有一扇被迷雾盖住的门。",
+    firstFragmentLine: "它把一片星光碎片交给你。",
+    firstDirectionLine: "它轻轻指向森林深处。",
+    secondFriendsLine: "两个森林朋友一起发出星光。",
+    secondGateLine: "远处的迷雾裂开了一条缝。",
+    bridgeFragmentLine: "你找到了第 3 片星光碎片。"
   },
   novaLines: {
     intro: "森林睡着了，我们一起把星光叫醒吧。",
@@ -239,15 +313,19 @@ export const forestRpgContent: ForestRpgContent = {
     goLamp: "把背包里的能量果放进去，看看星光会不会亮起来。",
     tooLow: "灯亮了一点，还差一些。换一颗能量更大的果子试试。",
     tooHigh: "能量太多啦，星光有点晃。换一颗小一点的试试。",
-    complete: "桥的另一边，出现了一片新的星光海。那边好像是倍数海的方向……"
+    complete: "你真的把森林小路叫醒了。现在森林又亮起来了。"
   },
   buttons: {
-    start: "和 Nova 出发",
+    start: "去看看那个光点",
+    startMission: "找回星光碎片",
     retry: "重新找果子",
-    continueForward: "继续往前走",
-    openGate: "去看看迷雾门",
-    enterGate: "进入迷雾门",
+    continueForward: "跟着小精灵往前走",
+    openGate: "靠近迷雾门",
+    enterGate: "走进门后",
     startBridge: "修复星光桥",
+    goForestCenter: "去森林中心",
+    placeFragments: "放入星光碎片",
+    lightForestPath: "点亮森林小路",
     replay: "再玩一次",
     backToAdventure: "回到入口"
   }
