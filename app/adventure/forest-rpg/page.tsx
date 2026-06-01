@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { forestRpgAssets } from "../../../lib/forestRpgAssets";
@@ -243,6 +244,13 @@ export default function ForestRpgPage() {
 
           {stage === "result" && lastTry && (
             <SceneCard className="awakening-card bottom-4 left-4 right-4 text-center sm:left-1/2 sm:w-[430px] sm:-translate-x-1/2">
+              <div className="mx-auto mb-2 flex h-20 w-20 items-center justify-center rounded-full border border-amber-100/40 bg-amber-200/18 shadow-[0_0_34px_rgba(250,204,21,0.35)]">
+                <AssetImage
+                  alt=""
+                  className="h-16 w-16 object-contain drop-shadow-[0_0_16px_rgba(250,204,21,0.75)]"
+                  src={forestRpgAssets.objects.starlightFragment}
+                />
+              </div>
               <p className="text-xs font-black tracking-[0.22em] text-amber-200">
                 {attemptCount === 1 ? content.narrative.resultPerfectTitle : content.narrative.resultSuccessTitle}
               </p>
@@ -264,6 +272,13 @@ export default function ForestRpgPage() {
           {stage === "complete" && (
             <SceneCard className="reward-card bottom-4 left-4 right-4 text-center sm:left-1/2 sm:w-[460px] sm:-translate-x-1/2">
               <p className="text-xs font-black tracking-[0.22em] text-amber-200">星光灯救援完成</p>
+              <div className="mx-auto mt-2 flex h-24 w-24 items-center justify-center rounded-full border border-amber-100/45 bg-amber-200/18 shadow-[0_0_42px_rgba(250,204,21,0.42)]">
+                <AssetImage
+                  alt=""
+                  className="h-20 w-20 object-contain drop-shadow-[0_0_20px_rgba(250,204,21,0.8)]"
+                  src={forestRpgAssets.objects.starlightFragment}
+                />
+              </div>
               <h2 className="mt-2 text-3xl font-black leading-tight">{content.narrative.rewardTitle}</h2>
               <div className="mt-4 grid gap-2 text-sm font-black text-cyan-50">
                 <p className="rounded-[18px] border border-amber-200/30 bg-amber-300/16 px-4 py-2">{content.narrative.friendLine}</p>
@@ -321,24 +336,6 @@ export default function ForestRpgPage() {
         .forest-lit .sleepy-mist { opacity: 0; transition: opacity 0.8s ease; }
         .forest-lit .forest-light { opacity: 1; }
         .forest-lit .game-stage { border-color: rgba(253,224,71,0.42); }
-        .nova-bot::before {
-          content: "";
-          position: absolute;
-          width: 46%;
-          height: 30%;
-          border-radius: 999px;
-          background: #061634;
-          box-shadow: inset 0 0 0 2px rgba(186,230,253,0.34);
-        }
-        .nova-bot::after {
-          content: "";
-          position: absolute;
-          width: 7px;
-          height: 7px;
-          border-radius: 999px;
-          background: #67e8f9;
-          box-shadow: 15px 0 #67e8f9, 0 0 9px #67e8f9, 15px 0 9px #67e8f9;
-        }
         @media (prefers-reduced-motion: reduce) {
           .energy-fruit, .lamp-ready, .lamp-lit, .sleepy-mist, .tap-hint, .starlight-burst, .reward-card, .awakening-card, .spirit-awake { animation: none; }
         }
@@ -414,18 +411,17 @@ function ForestMap({
       <div className="absolute left-[58%] top-[45%] z-20 -translate-x-1/2 -translate-y-1/2">
         <button
           aria-label="星光灯"
-          className={`relative flex h-24 w-20 items-center justify-center rounded-[34px] border border-amber-100/50 bg-blue-950/72 shadow-[0_0_26px_rgba(250,204,21,0.18)] transition active:scale-95 ${isBagReady ? "lamp-ready bg-amber-300/25 ring-4 ring-amber-200/40" : ""} ${lampState === "lit" ? "lamp-lit bg-amber-300/80" : ""} ${lampPulse ? "scale-105" : ""}`}
+          className={`relative flex h-28 w-24 items-center justify-center rounded-[34px] border border-amber-100/50 bg-[radial-gradient(circle_at_50%_35%,rgba(250,204,21,0.28),rgba(23,37,84,0.9))] shadow-[0_0_26px_rgba(250,204,21,0.18)] transition active:scale-95 sm:h-32 sm:w-28 ${isBagReady ? "lamp-ready bg-amber-300/25 ring-4 ring-amber-200/40" : ""} ${lampState === "lit" ? "lamp-lit bg-amber-300/80" : ""} ${lampPulse ? "scale-105" : ""}`}
           data-testid="starlight-lamp"
           onClick={onLampClick}
-          style={{
-            backgroundImage: `url(${lampState === "lit" ? forestRpgAssets.objects.starlightLampOn : forestRpgAssets.objects.starlightLampOff}), radial-gradient(circle at 50% 35%, rgba(250,204,21,0.28), rgba(23,37,84,0.9))`,
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-            backgroundSize: "contain, cover"
-          }}
           type="button"
         >
-          <div className={`h-12 w-10 rounded-full ${lampState === "lit" ? "bg-amber-100" : lampState === "charging" ? "bg-amber-200/65" : lampState === "too-low" ? "bg-amber-200/45" : lampState === "too-high" ? "bg-violet-300/55" : "bg-cyan-200/24"} transition`} />
+          <AssetImage
+            alt=""
+            className="h-full w-full object-contain drop-shadow-[0_0_20px_rgba(34,211,238,0.45)]"
+            src={lampState === "lit" ? forestRpgAssets.objects.starlightLampOn : forestRpgAssets.objects.starlightLampOff}
+          />
+          <div className={`absolute h-12 w-10 rounded-full ${lampState === "lit" ? "bg-amber-100/30" : lampState === "charging" ? "bg-amber-200/25" : lampState === "too-low" ? "bg-amber-200/16" : lampState === "too-high" ? "bg-violet-300/20" : "bg-cyan-200/12"} transition`} />
           <span className="absolute -bottom-7 whitespace-nowrap rounded-full bg-blue-950/70 px-2 py-1 text-[10px] font-black text-amber-100">星光灯</span>
           {isBagReady && <span className="tap-hint absolute -top-7 rounded-full bg-amber-300 px-2 py-1 text-[10px] font-black text-slate-950">点这里</span>}
         </button>
@@ -433,13 +429,13 @@ function ForestMap({
 
       <div className="absolute right-[12%] top-[24%] z-20 flex flex-col items-center gap-2 sm:right-[18%]">
         <div
-          className={`spirit-avatar relative h-20 w-20 rounded-[42%] border border-cyan-100/35 bg-center bg-contain bg-no-repeat ${spiritAwake ? "spirit-awake bg-[radial-gradient(circle_at_50%_30%,#fef3c7,#86efac_52%,#22c55e)] shadow-[0_0_42px_rgba(134,239,172,0.7)]" : "bg-[radial-gradient(circle_at_50%_30%,#dbeafe,#94a3b8_54%,#475569)] shadow-[0_0_28px_rgba(148,163,184,0.48)]"}`}
-          style={{
-            backgroundImage: `url(${spiritAwake ? forestRpgAssets.characters.awakeSpirit : forestRpgAssets.characters.sleepingSpirit}), ${spiritAwake ? "radial-gradient(circle at 50% 30%, #fef3c7, #86efac 52%, #22c55e)" : "radial-gradient(circle at 50% 30%, #dbeafe, #94a3b8 54%, #475569)"}`
-          }}
+          className={`spirit-avatar relative flex h-24 w-24 items-center justify-center rounded-[42%] border border-cyan-100/35 ${spiritAwake ? "spirit-awake bg-[radial-gradient(circle_at_50%_30%,rgba(254,243,199,0.42),rgba(134,239,172,0.2)_52%,rgba(34,197,94,0.12))] shadow-[0_0_42px_rgba(134,239,172,0.7)]" : "bg-[radial-gradient(circle_at_50%_30%,rgba(219,234,254,0.32),rgba(148,163,184,0.18)_54%,rgba(71,85,105,0.12))] shadow-[0_0_28px_rgba(148,163,184,0.48)]"} sm:h-28 sm:w-28`}
         >
-          <span className="absolute left-5 top-8 h-2 w-2 rounded-full bg-slate-900 shadow-[28px_0_0_#0f172a]" />
-          <span className="absolute bottom-4 left-1/2 h-2 w-8 -translate-x-1/2 rounded-full bg-slate-900/45" />
+          <AssetImage
+            alt=""
+            className="h-full w-full object-contain drop-shadow-[0_0_18px_rgba(125,211,252,0.56)]"
+            src={spiritAwake ? forestRpgAssets.characters.awakeSpirit : forestRpgAssets.characters.sleepingSpirit}
+          />
         </div>
         <p className="rounded-full border border-cyan-100/25 bg-blue-950/58 px-3 py-1 text-xs font-black text-cyan-50">{spiritAwake ? "醒来了" : "睡着了"}</p>
       </div>
@@ -454,22 +450,25 @@ function ForestMap({
         const showTapHint = canPick && fruit.id === recommendedFruitId;
         return (
           <button
-            className={`absolute z-30 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-amber-100/60 bg-[radial-gradient(circle_at_35%_28%,#fef3c7,#facc15_34%,#22c55e_72%,#15803d)] text-xl font-black text-slate-950 transition active:scale-95 ${canPick ? "energy-fruit hover:scale-105" : "opacity-35 grayscale"} ${carried ? "ring-4 ring-cyan-100/60" : ""}`}
+            className={`absolute z-30 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-amber-100/60 bg-[radial-gradient(circle_at_35%_28%,#fef3c7,#facc15_34%,#22c55e_72%,#15803d)] text-xl font-black text-slate-950 transition active:scale-95 ${canPick ? "energy-fruit hover:scale-105" : "opacity-35 grayscale"} ${carried ? "ring-4 ring-cyan-100/60" : ""}`}
             data-testid={fruit.id}
             disabled={!canPick}
             key={fruit.id}
             onClick={() => onCollect(fruit)}
             style={{
               left: `${fruit.position.x}%`,
-              top: `${fruit.position.y}%`,
-              backgroundImage: `url(${forestRpgAssets.objects.energyFruit}), radial-gradient(circle at 35% 28%, #fef3c7, #facc15 34%, #22c55e 72%, #15803d)`,
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
-              backgroundSize: "contain, cover"
+              top: `${fruit.position.y}%`
             }}
             type="button"
           >
-            {fruit.label}
+            <AssetImage
+              alt=""
+              className="absolute inset-0 h-full w-full object-contain drop-shadow-[0_0_14px_rgba(250,204,21,0.72)]"
+              src={forestRpgAssets.objects.energyFruit}
+            />
+            <span className="relative z-10 rounded-full bg-slate-950/68 px-2 py-0.5 text-base font-black text-amber-100 shadow-[0_0_10px_rgba(15,23,42,0.72)]">
+              {fruit.label}
+            </span>
             {showTapHint && <span className="tap-hint pointer-events-none absolute -top-7 rounded-full bg-amber-200 px-2 py-1 text-[10px] font-black text-slate-950">点我</span>}
             {picked && <span className="pointer-events-none absolute -bottom-6 whitespace-nowrap rounded-full bg-blue-950/70 px-2 py-1 text-[10px] font-black text-cyan-50">已装入</span>}
           </button>
@@ -478,11 +477,15 @@ function ForestMap({
 
       {showMap && (
         <div
-          className="absolute z-40 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-cyan-100/35 bg-cyan-300 text-xl font-black text-slate-950 shadow-[0_0_24px_rgba(34,211,238,0.46)] transition-[left,top] duration-700 ease-in-out"
+          className="absolute z-40 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-cyan-100/35 bg-[radial-gradient(circle_at_50%_35%,#e0f2fe,#38bdf8_52%,#1d4ed8)] shadow-[0_0_24px_rgba(34,211,238,0.46)] transition-[left,top] duration-700 ease-in-out sm:h-20 sm:w-20"
           data-testid="forest-rpg-player"
           style={{ left: `${playerPoint.x}%`, top: `${playerPoint.y}%` }}
         >
-          你
+          <AssetImage
+            alt="小探险家"
+            className="h-full w-full object-contain drop-shadow-[0_0_14px_rgba(34,211,238,0.65)]"
+            src={forestRpgAssets.characters.playerAvatar}
+          />
         </div>
       )}
     </div>
@@ -513,12 +516,17 @@ function SceneCard({ children, className = "" }: { children: ReactNode; classNam
 
 function NovaHint({ line }: { line: string }) {
   return (
-    <div className="mb-2 grid grid-cols-[48px_minmax(0,1fr)] items-center gap-2">
+    <div className="mb-2 grid grid-cols-[56px_minmax(0,1fr)] items-center gap-2">
       <div
         aria-label="Nova"
-        className="nova-bot relative mx-auto flex h-12 w-12 items-center justify-center rounded-[18px] border border-cyan-100/35 bg-[radial-gradient(circle_at_50%_30%,#dffbff,#38bdf8_48%,#1d4ed8)] bg-contain bg-center bg-no-repeat shadow-[0_0_20px_rgba(34,211,238,0.28)]"
-        style={{ backgroundImage: `url(${forestRpgAssets.characters.nova}), radial-gradient(circle at 50% 30%, #dffbff, #38bdf8 48%, #1d4ed8)` }}
-      />
+        className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-[18px] border border-cyan-100/35 bg-[radial-gradient(circle_at_50%_30%,#dffbff,#38bdf8_48%,#1d4ed8)] shadow-[0_0_20px_rgba(34,211,238,0.28)]"
+      >
+        <AssetImage
+          alt=""
+          className="h-full w-full object-contain drop-shadow-[0_0_12px_rgba(34,211,238,0.6)]"
+          src={forestRpgAssets.characters.nova}
+        />
+      </div>
       <p className="rounded-[16px] border border-cyan-200/16 bg-slate-950/28 p-2 text-xs font-bold leading-5 text-cyan-50">{line}</p>
     </div>
   );
@@ -541,8 +549,13 @@ function InventoryDock({ fruits, hasFailedTry, onReset }: { fruits: ForestFruit[
           return (
             <div className={`flex min-h-12 items-center justify-center rounded-[18px] border px-2 text-sm font-black ${fruit ? "border-amber-100/55 bg-amber-300/18 text-amber-50 shadow-[0_0_18px_rgba(250,204,21,0.2)]" : "border-cyan-100/18 bg-slate-950/22 text-cyan-50/55"}`} key={index}>
               {fruit ? (
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-amber-100/60 bg-[radial-gradient(circle_at_35%_28%,#fef3c7,#facc15_38%,#22c55e_76%)] text-base font-black text-slate-950">
-                  {fruit.label}
+                <span className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-amber-100/60 bg-[radial-gradient(circle_at_35%_28%,#fef3c7,#facc15_38%,#22c55e_76%)] text-base font-black text-slate-950">
+                  <AssetImage
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-contain"
+                    src={forestRpgAssets.objects.energyFruit}
+                  />
+                  <span className="relative z-10 rounded-full bg-slate-950/68 px-1.5 text-xs text-amber-100">{fruit.label}</span>
                 </span>
               ) : (
                 <span>空</span>
@@ -582,5 +595,23 @@ function SecondaryAction({ children, onClick }: { children: ReactNode; onClick: 
     <button className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-[20px] border border-cyan-200/30 bg-cyan-200/12 px-4 text-sm font-black text-cyan-50 transition active:scale-95" onClick={onClick} type="button">
       {children}
     </button>
+  );
+}
+
+function AssetImage({ alt, className, src }: { alt: string; className?: string; src: string }) {
+  return (
+    <Image
+      alt={alt}
+      aria-hidden={alt === "" ? true : undefined}
+      className={className}
+      draggable={false}
+      height={512}
+      onError={(event) => {
+        event.currentTarget.style.display = "none";
+      }}
+      src={src}
+      unoptimized
+      width={512}
+    />
   );
 }
