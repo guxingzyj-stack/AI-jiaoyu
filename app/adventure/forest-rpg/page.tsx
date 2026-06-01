@@ -336,10 +336,10 @@ export default function ForestRpgPage() {
   );
 
   function getPoint(position: PlayerPosition) {
-    if (position === "start") return { x: 10, y: 76 };
+    if (position === "start") return { x: 12, y: 68 };
     if (position === "lamp") return { x: 58, y: 45 };
     const fruit = content.fruits.find((item) => item.id === position);
-    return fruit?.position ?? { x: 10, y: 76 };
+    return fruit?.position ?? { x: 12, y: 68 };
   }
 }
 
@@ -418,7 +418,7 @@ function ForestMap({
         </button>
       </div>
 
-      <div className="absolute right-[10%] top-[23%] z-20 flex flex-col items-center gap-2 sm:right-[18%]">
+      <div className="absolute right-[5%] top-[18%] z-20 flex flex-col items-center gap-2 sm:right-[18%]">
         <div
           className={`spirit-avatar relative flex h-20 w-20 items-center justify-center rounded-[42%] border border-cyan-100/30 ${spiritAwake ? "spirit-awake bg-[radial-gradient(circle_at_50%_30%,rgba(254,243,199,0.36),rgba(134,239,172,0.18)_52%,rgba(34,197,94,0.1))] shadow-[0_0_36px_rgba(134,239,172,0.64)]" : "bg-[radial-gradient(circle_at_50%_30%,rgba(219,234,254,0.28),rgba(148,163,184,0.16)_54%,rgba(71,85,105,0.1))] shadow-[0_0_24px_rgba(148,163,184,0.42)]"} sm:h-28 sm:w-28`}
         >

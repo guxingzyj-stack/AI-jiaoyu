@@ -86,10 +86,10 @@ export const forestRpgContent: ForestRpgContent = {
   route: "/adventure/forest-rpg",
   targetEnergy: 10,
   fruits: [
-    { id: "fruit-6", value: 6, label: "6", position: { x: 20, y: 50 } },
+    { id: "fruit-6", value: 6, label: "6", position: { x: 25, y: 43 } },
     { id: "fruit-4", value: 4, label: "4", position: { x: 82, y: 52 } },
     { id: "fruit-3", value: 3, label: "3", position: { x: 36, y: 32 } },
-    { id: "fruit-8", value: 8, label: "8", position: { x: 76, y: 34 } }
+    { id: "fruit-8", value: 8, label: "8", position: { x: 58, y: 24 } }
   ],
   rewards: {
     item: "星光碎片",
