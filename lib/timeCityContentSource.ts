@@ -11,19 +11,18 @@ export const timeCityContent: S4ChapterContent = {
     button: "修好时间城"
   },
   hud: {
-    rewardLabel: "时间齿轮",
-    coreLabel: "钟塔核心"
+    rewardLabel: "轨道亮起",
+    coreLabel: "钟楼转动"
   },
-  mapHint: "先拨站台时钟，再算到达时间、排列车顺序，最后修好到达桥。",
+  mapHint: "在调度台拨钟、排列车、点亮到站桥。",
   nova: {
     intro: "先看列车和钟面发生了什么，再动手修时间机关。",
-    idle: "点一个发光地点，去修那里的时间机关。",
+    idle: "先看调度台，选择正在等待的小火车任务。",
     hint: "先看哪里停住了，再试着让它动起来。",
     complete: "时间城重新转动了，下一站是分数谷。"
   },
   edges: [
-    ["station", "clock"],
-    ["clock", "train-order"],
+    ["station", "train-order"],
     ["train-order", "arrival-bridge"],
     ["arrival-bridge", "core"]
   ],
@@ -35,7 +34,7 @@ export const timeCityContent: S4ChapterContent = {
       description: "钟楼停住了，列车还不能出发。",
       assetKey: "station",
       position: { x: 18, y: 76 },
-      reward: "时间齿轮 +1",
+      reward: "轨道亮起 +1",
       mechanic: {
         type: "set-clock",
         prompt: "钟楼停住了，让钟面走到站台要开的时间。",
@@ -49,35 +48,14 @@ export const timeCityContent: S4ChapterContent = {
       }
     },
     {
-      id: "clock",
-      title: "到达时钟",
-      shortTitle: "时钟",
-      description: "列车已经出发，平台还在等它到站。",
-      assetKey: "clock",
-      position: { x: 47, y: 58 },
-      unlockAfter: ["station"],
-      reward: "时间齿轮 +1",
-      mechanic: {
-        type: "duration-bridge",
-        prompt: "列车 2:00 出发，走 1 小时 30 分钟，点亮它会到达的站台。",
-        success: "到达时钟拨准了，平台桥升起来。",
-        hint: "先从 2:00 往后走一大格。",
-        wrongHint: "这个站台有点早或有点晚，再数一数。",
-        strongHint: "先到 3:00，再往后走半小时。",
-        successSummary: "列车到达 3:30 站台，平台桥升起来了！",
-        options: ["3:00", "3:30", "4:00"],
-        answer: "3:30"
-      }
-    },
-    {
       id: "train-order",
       title: "列车顺序",
       shortTitle: "列车",
       description: "三班列车排乱了，站台在等它们进站。",
       assetKey: "trainOrder",
       position: { x: 76, y: 42 },
-      unlockAfter: ["clock"],
-      reward: "时间齿轮 +1",
+      unlockAfter: ["station"],
+      reward: "轨道亮起 +1",
       mechanic: {
         type: "order-train",
         prompt: "三班列车排乱了，先找最早到的那一班。",
@@ -99,7 +77,7 @@ export const timeCityContent: S4ChapterContent = {
       assetKey: "bridge",
       position: { x: 42, y: 27 },
       unlockAfter: ["train-order"],
-      reward: "时间齿轮 +1",
+      reward: "轨道亮起 +1",
       mechanic: {
         type: "duration-bridge",
         prompt: "列车 1:30 出发，走 2 小时，点亮它会到达的桥。",
@@ -116,23 +94,23 @@ export const timeCityContent: S4ChapterContent = {
       id: "core",
       title: "钟塔核心",
       shortTitle: "钟塔",
-      description: "放入时间齿轮，唤醒时间城。",
+      description: "三段轨道都准点了，钟楼正在等待重新转动。",
       assetKey: "core",
       position: { x: 70, y: 17 },
-      unlockAfter: ["station", "clock", "train-order", "arrival-bridge"],
+      unlockAfter: ["station", "train-order", "arrival-bridge"],
       mechanic: {
         type: "core",
-        prompt: "时间齿轮集齐了，点亮钟塔核心。",
-        success: "时间城重新转动起来！",
+        prompt: "三段轨道都准点了，让钟楼重新转动。",
+        success: "小火车重新准点运行，时间城亮起来！",
         hint: "先修好所有时间机关。",
         answer: "core"
       }
     }
   ],
   completion: {
-    title: "时间城重新转动",
-    summary: "你拨准了时钟，也让列车按正确顺序出发。",
-    stats: ["时间齿轮 4/4", "列车顺序已排好", "钟塔核心已点亮"],
+    title: "第四章完成！",
+    summary: "小火车重新准点运行，时间城亮起来了！",
+    stats: ["轨道亮起 3/3", "列车顺序已排好", "钟楼重新转动"],
     nextHref: "/adventure/fraction-valley",
     nextLabel: "进入第五章：分数谷",
     replayLabel: "再修一次时间城"

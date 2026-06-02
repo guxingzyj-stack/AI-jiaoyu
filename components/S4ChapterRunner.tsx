@@ -27,8 +27,6 @@ export function S4ChapterRunner({ assets, content }: S4ChapterRunnerProps) {
   const firstNode = content.nodes[0];
   const [started, setStarted] = useState(false);
   const [currentId, setCurrentId] = useState(firstNode.id);
-  const [playerAt, setPlayerAt] = useState(firstNode.id);
-  const [targetId, setTargetId] = useState<string | null>(null);
   const [completed, setCompleted] = useState<string[]>([]);
   const [message, setMessage] = useState(content.nova.intro);
   const [selected, setSelected] = useState<string[]>([]);
@@ -67,15 +65,12 @@ export function S4ChapterRunner({ assets, content }: S4ChapterRunnerProps) {
       return;
     }
     if (node.id === currentId) return;
-    setTargetId(node.id);
     setSelected([]);
     setMoving(true);
     setMessage(`正走向${node.shortTitle}，到达后再看看这里发生了什么。`);
     window.setTimeout(() => {
-      setPlayerAt(node.id);
       setCurrentId(node.id);
       setMoving(false);
-      setTargetId(null);
       setMessage(status === "completed" ? "这里已经亮起来了，可以回看，也可以去下一个发光地点。" : node.mechanic.hint);
     }, 650);
   }
@@ -90,12 +85,10 @@ export function S4ChapterRunner({ assets, content }: S4ChapterRunnerProps) {
   function resetChapter() {
     setStarted(false);
     setCurrentId(firstNode.id);
-    setPlayerAt(firstNode.id);
     setCompleted([]);
     setMessage(content.nova.intro);
     setSelected([]);
     setMoving(false);
-    setTargetId(null);
     setAttemptCountByNode({});
   }
 
@@ -111,16 +104,14 @@ export function S4ChapterRunner({ assets, content }: S4ChapterRunnerProps) {
           <IntroPanel assets={assets} content={content} onStart={startChapter} />
         ) : (
           <>
-            <MapStage
+            <ChapterStage
               assets={assets}
               chapterDone={chapterDone}
               completed={completed}
               content={content}
               currentId={currentId}
               onPick={pickNode}
-              playerAt={playerAt}
               statusById={statusById}
-              targetId={targetId}
             />
             <ActionPanel
               assets={assets}
@@ -175,8 +166,8 @@ function ChapterHud({
         <span className="w-12" />
       </div>
       <div className="mt-2 grid grid-cols-3 gap-1.5">
-        <HudPill label="星片" value={`${rewardCount}/${rewardTotal}`} tone="amber" />
-        <HudPill label="地点" value={`${rewardCount + (coreDone ? 1 : 0)}/${rewardTotal + 1}`} tone="cyan" />
+        <HudPill label={content.hud.rewardLabel} value={`${rewardCount}/${rewardTotal}`} tone="amber" />
+        <HudPill label={stageHudLabel(content.theme)} value={coreDone ? "完成" : "进行中"} tone="cyan" />
         <HudPill label={content.hud.coreLabel} value={coreDone ? "已亮" : "未亮"} tone="emerald" />
       </div>
       <p className="mt-2 text-center text-[11px] font-bold leading-4 text-cyan-200/90">{content.mapHint}</p>
@@ -219,16 +210,14 @@ function IntroPanel({ assets, content, onStart }: { assets: S4ChapterAssets; con
   );
 }
 
-function MapStage({
+function ChapterStage({
   assets,
   chapterDone,
   completed,
   content,
   currentId,
   onPick,
-  playerAt,
-  statusById,
-  targetId
+  statusById
 }: {
   assets: S4ChapterAssets;
   chapterDone: boolean;
@@ -236,109 +225,153 @@ function MapStage({
   content: S4ChapterContent;
   currentId: string;
   onPick: (node: S4ChapterNode) => void;
-  playerAt: string;
   statusById: Map<string, NodeStatus>;
-  targetId: string | null;
 }) {
-  const markerNode = content.nodes.find((node) => node.id === (targetId ?? playerAt)) ?? content.nodes[0];
+  const current = content.nodes.find((node) => node.id === currentId) ?? content.nodes[0];
+  const workNodes = content.nodes.filter((node) => node.mechanic.type !== "core");
+  const coreNode = content.nodes.find((node) => node.mechanic.type === "core");
+  const coreReady = workNodes.every((node) => completed.includes(node.id));
+
+  if (content.theme === "geometry") {
+    return (
+      <StageFrame assets={assets} tone="violet" topLine={chapterDone ? "山门完全打开，山脊光路亮起。" : "把合适的形状石装进机关槽。"}>
+        <div className="absolute left-1/2 top-[46%] h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-[34px] border-2 border-violet-200/35 bg-[#111b56]/78 shadow-[0_0_32px_rgba(167,139,250,0.34)]">
+          <div className={`absolute inset-8 rounded-[26px] border-4 ${coreReady ? "border-amber-200 bg-amber-300/12 shadow-[0_0_24px_rgba(252,211,77,0.55)]" : "border-dashed border-cyan-100/35 bg-[#06122c]/55"}`} />
+          <div className="absolute left-1/2 top-8 -translate-x-1/2">
+            <ShapeCard active={completed.includes("gate") || current.id === "gate"} label="形状槽" shape={completed.includes("gate") ? "三角形" : "空位"} />
+          </div>
+          <div className="absolute bottom-7 left-1/2 flex -translate-x-1/2 gap-1.5">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <span key={index} className={`flex h-9 w-10 items-center justify-center rounded-[10px] border ${completed.includes("triangle-path") ? "border-amber-200 bg-amber-300/25" : "border-violet-100/30 bg-[#06122c]/60"}`}>
+                <TriangleIcon lit={completed.includes("triangle-path")} />
+              </span>
+            ))}
+          </div>
+          <div className={`absolute right-6 top-16 h-16 w-11 rounded-full border ${completed.includes("mirror-cave") ? "border-cyan-100 bg-cyan-300/20 shadow-[0_0_18px_rgba(103,232,249,0.55)]" : "border-cyan-100/30 bg-[#06122c]/60"}`} />
+        </div>
+        <PlayerBadge className="absolute bottom-[92px] left-8" />
+        <StepBar current={current} nodes={content.nodes} onPick={onPick} statusById={statusById} word="机槽" />
+      </StageFrame>
+    );
+  }
+
+  if (content.theme === "time") {
+    return (
+      <StageFrame assets={assets} tone="cyan" topLine={chapterDone ? "小火车准点运行，时间城重新转动。" : "调度时钟、站台和小火车。"}>
+        <div className="absolute left-5 top-[82px] w-24 rounded-[18px] border border-cyan-200/25 bg-[#0a2350]/78 p-2 text-center">
+          <p className="text-[10px] font-black text-cyan-100">调度台</p>
+          <ClockFace lit={completed.includes("station")} time={completed.includes("station") ? "3:00" : "0:00"} />
+        </div>
+        <div className="absolute right-5 top-[82px] h-32 w-24 rounded-[20px] border border-amber-200/25 bg-[#0a2350]/78 p-2 text-center">
+          <p className="text-[10px] font-black text-amber-100">钟楼</p>
+          <div className={`mx-auto mt-3 h-16 w-10 rounded-full border ${chapterDone ? "border-amber-200 bg-amber-300/20" : "border-cyan-100/30 bg-[#06122c]/65"}`} />
+        </div>
+        <div className="absolute left-10 right-10 top-[224px] h-2 rounded-full bg-cyan-100/28 shadow-[0_0_12px_rgba(103,232,249,0.35)]" />
+        <div className={`absolute left-[42%] top-[202px] h-16 w-20 rounded-[18px] border-2 ${completed.includes("arrival-bridge") ? "border-amber-200 bg-amber-300/25 shadow-[0_0_20px_rgba(252,211,77,0.55)]" : "border-cyan-100/35 bg-[#0a2350]/85"}`}>
+          <div className="mx-auto mt-4 h-5 w-12 rounded-full bg-cyan-200/50" />
+        </div>
+        <PlayerBadge className="absolute left-[calc(42%+8px)] top-[174px]" />
+        <StepBar current={current} nodes={content.nodes} onPick={onPick} statusById={statusById} word="轨道" />
+      </StageFrame>
+    );
+  }
+
+  if (content.theme === "fraction") {
+    return (
+      <StageFrame assets={assets} tone="emerald" topLine={chapterDone ? "分享泉亮起来，大家分得一样公平。" : "在分享桌上把圆饼、花园和星光分公平。"}>
+        <div className="absolute left-1/2 top-[44%] w-[82%] -translate-x-1/2 -translate-y-1/2 rounded-[28px] border border-emerald-200/30 bg-[#0a2f42]/80 p-4 shadow-[0_0_30px_rgba(52,211,153,0.24)]">
+          <div className="grid grid-cols-[42px_1fr_42px] items-center gap-2">
+            <div className="h-11 w-11 rounded-full border border-emerald-100/35 bg-emerald-300/18" />
+            <div className="rounded-[22px] border border-emerald-100/35 bg-[#06122c]/65 p-3">
+              <div className="mx-auto grid h-24 w-24 grid-cols-2 overflow-hidden rounded-full border-2 border-emerald-100/55">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <span key={index} className={`border border-emerald-100/20 ${index < (completed.includes("quarter-garden") ? 2 : completed.includes("gate") ? 1 : 0) ? "bg-emerald-300/45" : "bg-[#06122c]/45"}`} />
+                ))}
+              </div>
+              <div className="mt-3">
+                <FractionBar label="小河" parts={4} litParts={completed.includes("equal-river") ? 2 : 0} />
+              </div>
+            </div>
+            <PlayerBadge />
+          </div>
+        </div>
+        <StepBar current={current} nodes={content.nodes} onPick={onPick} statusById={statusById} word="分享" />
+      </StageFrame>
+    );
+  }
+
   return (
-    <section className={`${s4VisualTheme.mapCard} bg-[#06122c]`} style={{ aspectRatio: "1 / 1" }}>
-      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${assets.background})` }} />
-      <div className={`absolute inset-0 ${mapOverlayClass(content.theme)}`} />
-      <div className="absolute inset-0 bg-[#06122c]/35" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(252,211,77,0.2),transparent_38%),radial-gradient(circle_at_24%_76%,rgba(34,211,238,0.2),transparent_42%)]" />
-
-      <div className="absolute left-3 right-3 top-3 rounded-full border border-cyan-100/20 bg-[#06122c]/64 px-3 py-1.5 text-center text-[10px] font-black leading-4 text-cyan-50 backdrop-blur-md">
-        {chapterDone ? content.nova.complete : "点发光地点，修好这一段。"}
-      </div>
-
-      <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-        {content.edges.map(([from, to]) => {
-          const a = content.nodes.find((node) => node.id === from);
-          const b = content.nodes.find((node) => node.id === to);
-          if (!a || !b) return null;
-          const lit = completed.includes(from) && (completed.includes(to) || statusById.get(to) === "available");
+    <StageFrame assets={assets} tone="amber" topLine={chapterDone ? "五个星环都回到星核，守护者能量汇集完成。" : "把五个区域的星光送回中央星核。"}>
+      <div className="absolute left-1/2 top-[45%] h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-200/25 bg-[#101957]/75 shadow-[0_0_34px_rgba(252,211,77,0.26)]">
+        <button
+          className={`absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 text-[11px] font-black transition active:scale-95 ${coreReady ? "border-amber-200 bg-amber-300/25 text-amber-50 shadow-[0_0_28px_rgba(252,211,77,0.72)]" : "border-amber-100/35 bg-[#06122c]/70 text-amber-100/60"}`}
+          onClick={() => coreNode && onPick(coreNode)}
+          type="button"
+        >
+          星核
+        </button>
+        {workNodes.map((node, index) => {
+          const angle = -90 + index * 72;
+          const lit = completed.includes(node.id);
           return (
-            <line
-              key={`${from}-${to}`}
-              x1={a.position.x}
-              x2={b.position.x}
-              y1={a.position.y}
-              y2={b.position.y}
-              className={lit ? "stroke-amber-200/80" : "stroke-cyan-100/35"}
-              strokeDasharray={lit ? undefined : "2 2"}
-              strokeLinecap="round"
-              strokeWidth="0.9"
-            />
+            <button
+              key={node.id}
+              className={`absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-[9px] font-black transition active:scale-95 ${lit ? "border-amber-200 bg-amber-300/25 text-amber-50 shadow-[0_0_16px_rgba(252,211,77,0.55)]" : statusById.get(node.id) === "available" ? "border-cyan-200/70 bg-cyan-300/14 text-cyan-50" : "border-slate-300/30 bg-slate-800/60 text-slate-200/55"}`}
+              onClick={() => onPick(node)}
+              style={{ transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-96px) rotate(${-angle}deg)` }}
+              type="button"
+            >
+              {node.shortTitle}
+            </button>
           );
         })}
-      </svg>
+      </div>
+      <PlayerBadge className="absolute bottom-[92px] left-1/2 -translate-x-1/2" />
+    </StageFrame>
+  );
+}
 
-      {content.nodes.map((node) => (
-        <MapNode
-          key={node.id}
-          asset={assets.nodes[node.assetKey]}
-          isCurrent={currentId === node.id}
-          node={node}
-          onClick={() => onPick(node)}
-          status={statusById.get(node.id) ?? "locked"}
-        />
-      ))}
-      <PlayerMarker node={markerNode} />
+function StageFrame({ assets, children, tone, topLine }: { assets: S4ChapterAssets; children: React.ReactNode; tone: "amber" | "cyan" | "emerald" | "violet"; topLine: string }) {
+  const toneClass = tone === "emerald" ? "border-emerald-100/25 text-emerald-50" : tone === "amber" ? "border-amber-100/25 text-amber-50" : tone === "violet" ? "border-violet-100/25 text-violet-50" : "border-cyan-100/25 text-cyan-50";
+  return (
+    <section className={`${s4VisualTheme.mapCard} min-h-[390px] bg-[#06122c]`}>
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${assets.background})` }} />
+      <div className="absolute inset-0 bg-[#06122c]/62" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_24%,rgba(252,211,77,0.18),transparent_34%),radial-gradient(circle_at_24%_78%,rgba(34,211,238,0.18),transparent_40%)]" />
+      <div className={`absolute left-3 right-3 top-3 rounded-full border bg-[#06122c]/72 px-3 py-1.5 text-center text-[10px] font-black leading-4 backdrop-blur-md ${toneClass}`}>{topLine}</div>
+      {children}
     </section>
   );
 }
 
-function MapNode({
-  asset,
-  isCurrent,
-  node,
-  onClick,
-  status
-}: {
-  asset: string;
-  isCurrent: boolean;
-  node: S4ChapterNode;
-  onClick: () => void;
-  status: NodeStatus;
-}) {
-  const available = status === "available";
-  const completed = status === "completed";
-  const ring =
-    status === "locked"
-      ? "border-slate-400/45 bg-[#1b2740]/85 opacity-80"
-      : completed
-        ? "border-amber-300/85 bg-[#0b1f44]/85 shadow-[0_0_16px_rgba(252,211,77,0.6)]"
-        : "border-cyan-200/85 bg-[#0b1f44]/85 shadow-[0_0_16px_rgba(34,211,238,0.6)]";
-
+function StepBar({ current, nodes, onPick, statusById, word }: { current: S4ChapterNode; nodes: S4ChapterNode[]; onPick: (node: S4ChapterNode) => void; statusById: Map<string, NodeStatus>; word: string }) {
   return (
-    <button
-      aria-label={node.title}
-      className={`absolute z-10 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 backdrop-blur-[1px] transition active:scale-95 ${ring} ${isCurrent ? "ring-2 ring-white/70" : ""}`}
-      data-testid={`map-node-${node.id}`}
-      onClick={onClick}
-      style={{ left: `${node.position.x}%`, top: `${node.position.y}%` }}
-      type="button"
-    >
-      <span className={`block h-9 w-9 overflow-hidden rounded-full ${status === "locked" ? "opacity-50 grayscale" : ""}`}>
-        <Image alt="" className="h-full w-full object-cover" height={72} src={asset} width={72} />
-      </span>
-      {status === "locked" && <span className="absolute -right-1 -top-1 rounded-full bg-slate-700 px-1 text-[9px] font-black text-cyan-50">锁</span>}
-      {completed && <span className="absolute -right-1 -top-1 rounded-full bg-amber-300 px-1.5 text-[9px] font-black text-slate-950">亮</span>}
-      {available && !completed && <span className="absolute -top-3 rounded-full bg-cyan-200 px-1.5 py-0.5 text-[9px] font-black text-slate-950">可去</span>}
-      <span className="pointer-events-none absolute -bottom-7 max-w-[58px] truncate whitespace-nowrap rounded-full bg-[#06122c]/85 px-1.5 py-0.5 text-[9px] font-black text-cyan-50">{node.shortTitle}</span>
+    <div className="absolute bottom-4 left-4 right-4 grid gap-2" style={{ gridTemplateColumns: `repeat(${nodes.length}, minmax(0, 1fr))` }}>
+      {nodes.map((node, index) => (
+        <StageStepButton key={node.id} active={current.id === node.id} index={index + 1} node={node} onPick={onPick} status={statusById.get(node.id) ?? "locked"} word={word} />
+      ))}
+    </div>
+  );
+}
+
+function StageStepButton({ active, index, node, onPick, status, word }: { active: boolean; index: number; node: S4ChapterNode; onPick: (node: S4ChapterNode) => void; status: NodeStatus; word: string }) {
+  const tone =
+    status === "locked"
+      ? "border-slate-400/35 bg-[#1b2740]/82 text-slate-200/65"
+      : status === "completed"
+        ? "border-amber-300/80 bg-amber-300/18 text-amber-50 shadow-[0_0_14px_rgba(252,211,77,0.42)]"
+        : "border-cyan-200/75 bg-cyan-300/14 text-cyan-50 shadow-[0_0_14px_rgba(34,211,238,0.34)]";
+  return (
+    <button className={`min-h-16 rounded-[16px] border px-1.5 py-2 text-center transition active:scale-95 ${tone} ${active ? "ring-2 ring-white/70" : ""}`} data-testid={`stage-step-${node.id}`} onClick={() => onPick(node)} type="button">
+      <span className="text-[10px] font-black opacity-75">{word} {index}</span>
+      <span className="mt-1 block truncate text-xs font-black">{node.shortTitle}</span>
+      <span className="mt-1 block text-[9px] font-black opacity-80">{status === "completed" ? "已亮" : status === "available" ? "可操作" : "未开启"}</span>
     </button>
   );
 }
 
-function PlayerMarker({ node }: { node: S4ChapterNode }) {
-  return (
-    <span
-      aria-label="你在这里"
-      className="pointer-events-none absolute z-20 h-9 w-9 -translate-x-1/2 bg-contain bg-bottom bg-no-repeat text-[0px] text-transparent drop-shadow-[0_0_10px_rgba(103,232,249,0.6)] transition-[left,top] duration-[650ms] ease-out"
-      style={{ left: `${node.position.x}%`, top: `calc(${node.position.y}% - 30px)`, backgroundImage: `url(${FOREST_MAP_ASSETS.player})` }}
-    />
-  );
+function PlayerBadge({ className = "" }: { className?: string }) {
+  return <span aria-label="你在这里" className={`pointer-events-none z-20 h-9 w-9 bg-contain bg-bottom bg-no-repeat drop-shadow-[0_0_10px_rgba(103,232,249,0.6)] ${className}`} style={{ backgroundImage: `url(${FOREST_MAP_ASSETS.player})` }} />;
 }
 
 function ActionPanel({
@@ -439,7 +472,7 @@ function ActionPanel({
 
       {isCore ? (
         <button className={`${s4VisualTheme.primaryButton} mt-3`} disabled={!coreReady || currentDone} onClick={() => onComplete(current)} type="button">
-          {currentDone ? "核心已点亮" : "放入星光，点亮核心"}
+          {currentDone ? coreDoneLabel(content.theme) : coreActionLabel(content.theme)}
         </button>
       ) : (
         <div className="mt-3 grid grid-cols-2 gap-2">
@@ -618,6 +651,51 @@ function MechanicStage({
   return null;
 }
 
+function stageHudLabel(theme: S4ChapterContent["theme"]) {
+  switch (theme) {
+    case "geometry":
+      return "拼装中";
+    case "time":
+      return "小火车";
+    case "fraction":
+      return "朋友心情";
+    case "core":
+      return "守护者能量";
+    default:
+      return "进行中";
+  }
+}
+
+function coreActionLabel(theme: S4ChapterContent["theme"]) {
+  switch (theme) {
+    case "geometry":
+      return "打开几何山门";
+    case "time":
+      return "启动钟楼转动";
+    case "fraction":
+      return "点亮分享泉";
+    case "core":
+      return "点亮数学星核";
+    default:
+      return "完成任务";
+  }
+}
+
+function coreDoneLabel(theme: S4ChapterContent["theme"]) {
+  switch (theme) {
+    case "geometry":
+      return "山门已打开";
+    case "time":
+      return "钟楼已转动";
+    case "fraction":
+      return "分享泉已亮";
+    case "core":
+      return "星核已点亮";
+    default:
+      return "已完成";
+  }
+}
+
 function optionTone(type: S4ChapterNode["mechanic"]["type"]) {
   if (type === "make-half" || type === "quarter-garden" || type === "equal-river") return "border-emerald-200/30 bg-emerald-300/12 text-emerald-50";
   if (type === "set-clock" || type === "duration-bridge" || type === "order-train") return "border-cyan-200/30 bg-cyan-300/12 text-cyan-50";
@@ -750,21 +828,6 @@ function CompleteOverlay({
       </section>
     </div>
   );
-}
-
-function mapOverlayClass(theme: S4ChapterContent["theme"]) {
-  switch (theme) {
-    case "geometry":
-      return "bg-[radial-gradient(circle_at_72%_34%,rgba(167,139,250,0.28),transparent_42%),radial-gradient(circle_at_26%_78%,rgba(252,211,77,0.18),transparent_38%)]";
-    case "time":
-      return "bg-[radial-gradient(circle_at_62%_24%,rgba(252,211,77,0.25),transparent_40%),radial-gradient(circle_at_28%_76%,rgba(34,211,238,0.2),transparent_42%)]";
-    case "fraction":
-      return "bg-[radial-gradient(circle_at_70%_28%,rgba(110,231,183,0.23),transparent_42%),radial-gradient(circle_at_30%_78%,rgba(252,211,77,0.18),transparent_38%)]";
-    case "core":
-      return "bg-[radial-gradient(circle_at_50%_28%,rgba(252,211,77,0.26),transparent_38%),radial-gradient(circle_at_24%_78%,rgba(125,211,252,0.18),transparent_42%)]";
-    default:
-      return "";
-  }
 }
 
 function themeClass(theme: S4ChapterContent["theme"]) {

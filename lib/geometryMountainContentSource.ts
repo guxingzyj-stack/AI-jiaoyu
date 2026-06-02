@@ -11,19 +11,18 @@ export const geometryMountainContent: S4ChapterContent = {
     button: "修好几何山"
   },
   hud: {
-    rewardLabel: "形状星片",
-    coreLabel: "山心核心"
+    rewardLabel: "山门机关",
+    coreLabel: "山脊光路"
   },
-  mapHint: "按顺序修山门、形状座、三角石路、镜洞，再点亮山心。",
+  mapHint: "装好形状槽、石阶槽和镜像槽，打开几何山门。",
   nova: {
     intro: "先看机关轮廓，再选一块能卡进去的形状石。",
-    idle: "点地图上发光的地点，角色会走过去修机关。",
+    idle: "先看山门机关盘，选择正在亮起的机关槽。",
     hint: "先观察轮廓，不急着猜答案。",
     complete: "几何山亮起来了，下一站是时间城。"
   },
   edges: [
-    ["gate", "socket"],
-    ["socket", "triangle-path"],
+    ["gate", "triangle-path"],
     ["triangle-path", "mirror-cave"],
     ["mirror-cave", "core"]
   ],
@@ -35,7 +34,7 @@ export const geometryMountainContent: S4ChapterContent = {
       description: "山门上有一个空空的形状槽。",
       assetKey: "gate",
       position: { x: 22, y: 78 },
-      reward: "形状星片 +1",
+      reward: "山门机关 +1",
       mechanic: {
         type: "shape-match",
         prompt: "山门上有一个空空的形状槽，选一块能放进去的形状石。",
@@ -49,36 +48,14 @@ export const geometryMountainContent: S4ChapterContent = {
       }
     },
     {
-      id: "socket",
-      title: "双形状座",
-      shortTitle: "形状座",
-      description: "形状座上有两个不同的空位。",
-      assetKey: "socket",
-      position: { x: 48, y: 58 },
-      unlockAfter: ["gate"],
-      reward: "形状星片 +1",
-      mechanic: {
-        type: "shape-match",
-        prompt: "形状座有两个空位，先看左边空位的轮廓。",
-        success: "两个空位都放对了，形状座发出蓝紫星光。",
-        hint: "先看轮廓，再看边角。",
-        wrongHint: "这块形状石放上去有点晃。",
-        strongHint: "第一个空位很圆，第二个空位四边一样整齐。",
-        successSummary: "圆形和正方形都放进了正确的空位。",
-        options: ["圆形", "长方形", "正方形", "三角形"],
-        answer: ["圆形", "正方形"],
-        targetCount: 2
-      }
-    },
-    {
       id: "triangle-path",
       title: "三角石路",
       shortTitle: "石路",
       description: "山路断开了，有几块石阶空着。",
       assetKey: "trianglePath",
       position: { x: 72, y: 42 },
-      unlockAfter: ["socket"],
-      reward: "形状星片 +1",
+      unlockAfter: ["gate"],
+      reward: "山门机关 +1",
       mechanic: {
         type: "path-build",
         prompt: "山路断开了，选能卡进缺口的石块。",
@@ -100,7 +77,7 @@ export const geometryMountainContent: S4ChapterContent = {
       assetKey: "mirror",
       position: { x: 38, y: 28 },
       unlockAfter: ["triangle-path"],
-      reward: "形状星片 +1",
+      reward: "山门机关 +1",
       mechanic: {
         type: "mirror-pair",
         prompt: "山洞里的图案只亮了一半，找一块能拼完整的光片。",
@@ -117,23 +94,23 @@ export const geometryMountainContent: S4ChapterContent = {
       id: "core",
       title: "山心核心",
       shortTitle: "山心",
-      description: "放入形状星片，点亮几何山。",
+      description: "三个机关槽都装好了，山门正在等待打开。",
       assetKey: "core",
       position: { x: 70, y: 18 },
-      unlockAfter: ["gate", "socket", "triangle-path", "mirror-cave"],
+      unlockAfter: ["gate", "triangle-path", "mirror-cave"],
       mechanic: {
         type: "core",
-        prompt: "形状星片集齐了，点亮山心核心。",
-        success: "几何山完全亮起来了！",
-        hint: "先完成前面的四个形状机关。",
+        prompt: "三个机关槽都装好了，打开几何山门。",
+        success: "几何山门打开了，山脊光路亮起来！",
+        hint: "先完成前面的三个机关槽。",
         answer: "core"
       }
     }
   ],
   completion: {
-    title: "几何山点亮成功",
-    summary: "你用边、角和镜像修好了山路。",
-    stats: ["形状星片 4/4", "三角石路已连好", "山心核心已点亮"],
+    title: "第三章完成！",
+    summary: "几何山门打开了，山脊光路亮起来了！",
+    stats: ["山门机关 3/3", "三角石阶已拼装", "镜像槽已接上"],
     nextHref: "/adventure/time-city",
     nextLabel: "进入第四章：时间城",
     replayLabel: "再走一次几何山"

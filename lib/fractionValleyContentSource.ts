@@ -11,19 +11,18 @@ export const fractionValleyContent: S4ChapterContent = {
     button: "修好分数谷"
   },
   hud: {
-    rewardLabel: "分享星片",
-    coreLabel: "分享核心"
+    rewardLabel: "公平分享",
+    coreLabel: "分享泉"
   },
-  mapHint: "修好分享门、半块花园、四份花田和相等河，再点亮分享核心。",
+  mapHint: "在分享桌上分圆饼、点花园、接亮小河两岸。",
   nova: {
     intro: "先看星光被怎么分开，再动手点亮需要的那一份。",
-    idle: "点地图上的发光地点，去帮山谷重新分光。",
+    idle: "先看分享桌，选择正在等待的分享任务。",
     hint: "看图，不急着看数字。",
     complete: "分数谷亮起来了，星光核心正在呼唤我们。"
   },
   edges: [
-    ["gate", "half-pie"],
-    ["half-pie", "quarter-garden"],
+    ["gate", "quarter-garden"],
     ["quarter-garden", "equal-river"],
     ["equal-river", "core"]
   ],
@@ -35,7 +34,7 @@ export const fractionValleyContent: S4ChapterContent = {
       description: "小精灵想和你公平分享圆饼。",
       assetKey: "gate",
       position: { x: 22, y: 77 },
-      reward: "分享星片 +1",
+      reward: "公平分享 +1",
       mechanic: {
         type: "make-half",
         prompt: "小精灵想和你公平分享圆饼，先试着把它分开。",
@@ -49,35 +48,14 @@ export const fractionValleyContent: S4ChapterContent = {
       }
     },
     {
-      id: "half-pie",
-      title: "半块花园",
-      shortTitle: "半块",
-      description: "花园被分开了，找出公平的一份。",
-      assetKey: "halfPie",
-      position: { x: 50, y: 59 },
-      unlockAfter: ["gate"],
-      reward: "分享星片 +1",
-      mechanic: {
-        type: "make-half",
-        prompt: "花园被分开了，找出两份中公平的一份。",
-        success: "半块花园开出了星花。",
-        hint: "不要太少，也不要拿走全部。",
-        wrongHint: "这一份不是公平分出来的一份。",
-        strongHint: "两份一样大时，拿其中一份就是一半。",
-        successSummary: "你拿到了两份中的一份，这就是一半。",
-        options: ["一小角", "一半", "一整块"],
-        answer: "一半"
-      }
-    },
-    {
       id: "quarter-garden",
       title: "四份花田",
       shortTitle: "四份",
       description: "花园被分成四块小地。",
       assetKey: "quarterGarden",
       position: { x: 75, y: 42 },
-      unlockAfter: ["half-pie"],
-      reward: "分享星片 +1",
+      unlockAfter: ["gate"],
+      reward: "公平分享 +1",
       mechanic: {
         type: "quarter-garden",
         prompt: "花园分成四块小地，先试着点亮需要的几块。",
@@ -99,7 +77,7 @@ export const fractionValleyContent: S4ChapterContent = {
       assetKey: "equalRiver",
       position: { x: 40, y: 26 },
       unlockAfter: ["quarter-garden"],
-      reward: "分享星片 +1",
+      reward: "公平分享 +1",
       mechanic: {
         type: "equal-river",
         prompt: "小河两边要亮起一样多的星光，找右边一样多的那一份。",
@@ -116,23 +94,23 @@ export const fractionValleyContent: S4ChapterContent = {
       id: "core",
       title: "分享核心",
       shortTitle: "核心",
-      description: "放入分享星片，点亮分数谷。",
+      description: "三次公平分享都完成了，分享泉正在等待亮起。",
       assetKey: "core",
       position: { x: 69, y: 16 },
-      unlockAfter: ["gate", "half-pie", "quarter-garden", "equal-river"],
+      unlockAfter: ["gate", "quarter-garden", "equal-river"],
       mechanic: {
         type: "core",
-        prompt: "分享星片集齐了，点亮分享核心。",
-        success: "分数谷完全亮起来！",
-        hint: "先完成前面的分享机关。",
+        prompt: "三次公平分享都完成了，让分享泉亮起来。",
+        success: "大家分得一样公平，分享泉亮起来！",
+        hint: "先完成前面的三次分享。",
         answer: "core"
       }
     }
   ],
   completion: {
-    title: "分数谷公平亮起",
-    summary: "你让星光被公平地分成一样大的份数。",
-    stats: ["分享星片 4/4", "2/4 和 1/2 已连上", "分享核心已点亮"],
+    title: "第五章完成！",
+    summary: "大家分得一样公平，分享泉亮起来了！",
+    stats: ["公平分享 3/3", "圆饼已分开", "小河两岸一样亮"],
     nextHref: "/adventure/star-core",
     nextLabel: "进入终章：星光核心",
     replayLabel: "再走一次分数谷"
