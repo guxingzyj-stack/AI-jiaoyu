@@ -12,6 +12,7 @@ import {
   type SeaLocation,
   type SeaLocationId
 } from "../../../lib/starlightSeaContentSource";
+import { FOREST_MAP_ASSETS } from "../../../lib/forestMapContentSource";
 import { starlightSeaAssets } from "../../../lib/starlightSeaAssets";
 
 type LocationStatus = "locked" | "available" | "completed";
@@ -255,11 +256,10 @@ export default function StarlightSeaPage() {
 
           {/* 小船（点击地点后滑过去）：圆形蓝色发光底 + 透明船图 */}
           <span
-            className="pointer-events-none absolute z-10 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-cyan-200/60 bg-[#0b2a55]/85 shadow-[0_0_14px_rgba(103,232,249,0.7)]"
-            style={{ left: `${boatPos.x}%`, top: `calc(${boatPos.y}% - 30px)`, transition: "left 0.6s ease, top 0.6s ease" }}
-            aria-label="小星船"
+            className="pointer-events-none absolute z-10 h-9 w-9 -translate-x-1/2 bg-contain bg-bottom bg-no-repeat drop-shadow-[0_0_10px_rgba(103,232,249,0.6)]"
+            style={{ left: `${boatPos.x}%`, top: `calc(${boatPos.y}% - 30px)`, backgroundImage: `url(${FOREST_MAP_ASSETS.player})`, transition: "left 0.6s ease, top 0.6s ease" }}
+            aria-label="你在这里"
           >
-            <CoinImg className="h-8 w-8" src={starlightSeaAssets.boatNode} />
           </span>
         </section>
 
