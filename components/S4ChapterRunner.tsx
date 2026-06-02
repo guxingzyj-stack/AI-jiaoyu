@@ -27,10 +27,12 @@ export function S4ChapterRunner({ assets, content }: S4ChapterRunnerProps) {
   const [started, setStarted] = useState(false);
   const [currentId, setCurrentId] = useState(firstNode.id);
   const [playerAt, setPlayerAt] = useState(firstNode.id);
+  const [targetId, setTargetId] = useState<string | null>(null);
   const [completed, setCompleted] = useState<string[]>([]);
   const [message, setMessage] = useState(content.nova.intro);
   const [selected, setSelected] = useState<string[]>([]);
   const [moving, setMoving] = useState(false);
+  const [attemptCountByNode, setAttemptCountByNode] = useState<Record<string, number>>({});
 
   const current = content.nodes.find((node) => node.id === currentId) ?? firstNode;
   const coreNode = content.nodes[content.nodes.length - 1];
@@ -57,25 +59,31 @@ export function S4ChapterRunner({ assets, content }: S4ChapterRunnerProps) {
   }
 
   function pickNode(node: S4ChapterNode) {
+    if (moving) return;
     const status = statusById.get(node.id) ?? "locked";
     if (status === "locked") {
       setMessage("前面的星光还没亮，先完成正在发光的地点。");
       return;
     }
-    setCurrentId(node.id);
+    if (node.id === currentId) return;
+    setTargetId(node.id);
     setSelected([]);
     setMoving(true);
+    setMessage(`正走向${node.shortTitle}，到达后再看看这里发生了什么。`);
     window.setTimeout(() => {
       setPlayerAt(node.id);
+      setCurrentId(node.id);
       setMoving(false);
-      setMessage(status === "completed" ? "这里已经亮起来了，可以去下一个地点。" : node.mechanic.prompt);
-    }, 360);
+      setTargetId(null);
+      setMessage(status === "completed" ? "这里已经亮起来了，可以回看，也可以去下一个发光地点。" : node.mechanic.hint);
+    }, 650);
   }
 
   function completeNode(node: S4ChapterNode) {
     setCompleted((prev) => (prev.includes(node.id) ? prev : [...prev, node.id]));
     setSelected([]);
-    setMessage(node.mechanic.success);
+    setAttemptCountByNode((prev) => ({ ...prev, [node.id]: 0 }));
+    setMessage(node.mechanic.successSummary ?? node.mechanic.success);
   }
 
   function resetChapter() {
@@ -86,6 +94,8 @@ export function S4ChapterRunner({ assets, content }: S4ChapterRunnerProps) {
     setMessage(content.nova.intro);
     setSelected([]);
     setMoving(false);
+    setTargetId(null);
+    setAttemptCountByNode({});
   }
 
   return (
@@ -109,6 +119,7 @@ export function S4ChapterRunner({ assets, content }: S4ChapterRunnerProps) {
               onPick={pickNode}
               playerAt={playerAt}
               statusById={statusById}
+              targetId={targetId}
             />
             <ActionPanel
               assets={assets}
@@ -122,7 +133,9 @@ export function S4ChapterRunner({ assets, content }: S4ChapterRunnerProps) {
               rewardCount={rewardCount}
               rewardTotal={rewardTotal}
               selected={selected}
+              attemptCount={attemptCountByNode[current.id] ?? 0}
               setMessage={setMessage}
+              setAttemptCountByNode={setAttemptCountByNode}
               setSelected={setSelected}
             />
             <button className="mx-auto rounded-full border border-cyan-300/25 bg-blue-950/45 px-4 py-1.5 text-[11px] font-black text-cyan-200 active:scale-95" onClick={resetChapter} type="button">
@@ -213,7 +226,8 @@ function MapStage({
   currentId,
   onPick,
   playerAt,
-  statusById
+  statusById,
+  targetId
 }: {
   assets: S4ChapterAssets;
   chapterDone: boolean;
@@ -223,7 +237,9 @@ function MapStage({
   onPick: (node: S4ChapterNode) => void;
   playerAt: string;
   statusById: Map<string, NodeStatus>;
+  targetId: string | null;
 }) {
+  const markerNode = content.nodes.find((node) => node.id === (targetId ?? playerAt)) ?? content.nodes[0];
   return (
     <section className={`${s4VisualTheme.mapCard} bg-[#06122c]`} style={{ aspectRatio: "1 / 1" }}>
       <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${assets.background})` }} />
@@ -262,12 +278,12 @@ function MapStage({
           key={node.id}
           asset={assets.nodes[node.assetKey]}
           isCurrent={currentId === node.id}
-          isPlayerHere={playerAt === node.id}
           node={node}
           onClick={() => onPick(node)}
           status={statusById.get(node.id) ?? "locked"}
         />
       ))}
+      <PlayerMarker node={markerNode} />
     </section>
   );
 }
@@ -275,14 +291,12 @@ function MapStage({
 function MapNode({
   asset,
   isCurrent,
-  isPlayerHere,
   node,
   onClick,
   status
 }: {
   asset: string;
   isCurrent: boolean;
-  isPlayerHere: boolean;
   node: S4ChapterNode;
   onClick: () => void;
   status: NodeStatus;
@@ -311,9 +325,19 @@ function MapNode({
       {status === "locked" && <span className="absolute -right-1 -top-1 rounded-full bg-slate-700 px-1 text-[9px] font-black text-cyan-50">锁</span>}
       {completed && <span className="absolute -right-1 -top-1 rounded-full bg-amber-300 px-1.5 text-[9px] font-black text-slate-950">亮</span>}
       {available && !completed && <span className="absolute -top-3 rounded-full bg-cyan-200 px-1.5 py-0.5 text-[9px] font-black text-slate-950">可去</span>}
-      {isPlayerHere && <span className="absolute -bottom-3 rounded-full border border-white bg-cyan-300 px-1.5 py-0.5 text-[9px] font-black text-slate-950 shadow-[0_0_12px_rgba(103,232,249,0.8)]">你</span>}
       <span className="pointer-events-none absolute -bottom-7 max-w-[58px] truncate whitespace-nowrap rounded-full bg-[#06122c]/85 px-1.5 py-0.5 text-[9px] font-black text-cyan-50">{node.shortTitle}</span>
     </button>
+  );
+}
+
+function PlayerMarker({ node }: { node: S4ChapterNode }) {
+  return (
+    <span
+      className="pointer-events-none absolute z-20 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-cyan-300 text-[10px] font-black text-slate-950 shadow-[0_0_14px_rgba(103,232,249,0.85)] transition-[left,top] duration-[650ms] ease-out"
+      style={{ left: `${node.position.x}%`, top: `calc(${node.position.y}% - 34px)` }}
+    >
+      你
+    </span>
   );
 }
 
@@ -329,7 +353,9 @@ function ActionPanel({
   rewardCount,
   rewardTotal,
   selected,
+  attemptCount,
   setMessage,
+  setAttemptCountByNode,
   setSelected
 }: {
   assets: S4ChapterAssets;
@@ -343,12 +369,20 @@ function ActionPanel({
   rewardCount: number;
   rewardTotal: number;
   selected: string[];
+  attemptCount: number;
   setMessage: (message: string) => void;
+  setAttemptCountByNode: React.Dispatch<React.SetStateAction<Record<string, number>>>;
   setSelected: React.Dispatch<React.SetStateAction<string[]>>;
 }) {
   const currentDone = currentStatus === "completed";
   const isCore = current.mechanic.type === "core";
   const coreReady = isCore && rewardCount >= rewardTotal && (current.unlockAfter ?? []).every((id) => completed.includes(id));
+
+  function showWrongHint() {
+    const nextCount = attemptCount + 1;
+    setAttemptCountByNode((prev) => ({ ...prev, [current.id]: nextCount }));
+    setMessage(nextCount >= 2 ? (current.mechanic.strongHint ?? current.mechanic.hint) : (current.mechanic.wrongHint ?? current.mechanic.hint));
+  }
 
   function choose(option: string) {
     if (currentDone) {
@@ -360,7 +394,7 @@ function ActionPanel({
       const expected = answer[selected.length];
       if (option !== expected) {
         setSelected([]);
-        setMessage(current.mechanic.hint);
+        showWrongHint();
         return;
       }
       const next = [...selected, option];
@@ -375,7 +409,7 @@ function ActionPanel({
     if (option === answer) {
       onComplete(current);
     } else {
-      setMessage(current.mechanic.hint);
+      showWrongHint();
     }
   }
 
@@ -383,7 +417,6 @@ function ActionPanel({
     <section className={`${s4VisualTheme.card} p-3`}>
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[10px] font-black text-amber-200">{currentStatus === "locked" ? "未解锁" : currentDone ? "已完成" : "当前位置"}</p>
           <h2 className="truncate text-sm font-black text-white">{current.title}</h2>
         </div>
         <span className="rounded-full border border-cyan-300/30 bg-blue-950/55 px-2 py-0.5 text-[10px] font-black text-cyan-100">
@@ -398,7 +431,6 @@ function ActionPanel({
       </div>
 
       <div className="mt-3 rounded-[16px] border border-white/10 bg-[#06122c]/58 p-2.5">
-        <p className="text-[11px] font-black text-amber-200">当前目标</p>
         <p className="mt-1 text-sm font-black leading-5 text-cyan-50">{moving ? "角色正在走过去..." : current.mechanic.prompt}</p>
         {selected.length > 0 && <p className="mt-1 text-[11px] font-bold text-amber-100">当前尝试：{selected.join(" → ")}</p>}
       </div>
@@ -488,7 +520,7 @@ function MechanicStage({
             <div className="flex items-center justify-center gap-2">
               {correctList.map((label, index) => (
                 <div key={`${label}-${index}`} className="rounded-[12px] border-2 border-dashed border-cyan-100/35 bg-[#06122c]/45 p-1.5">
-                  <ShapeCard label={selected[index] ?? "空位"} shape={selected[index] ?? label} active={Boolean(selected[index]) || currentDone} />
+                  <ShapeCard label={selected[index] ?? "空位"} shape={selected[index] ?? "空位"} active={Boolean(selected[index]) || currentDone} />
                 </div>
               ))}
             </div>
@@ -516,10 +548,10 @@ function MechanicStage({
           </div>
         ) : (
           <div className="grid grid-cols-[78px_1fr] items-center gap-3">
-            <ClockFace time={String(current.mechanic.answer ?? "3:00")} lit={currentDone} />
+            <ClockFace time={currentDone ? String(current.mechanic.answer ?? "3:00") : "0:00"} lit={currentDone} />
             <div>
               <p className="text-[11px] font-black text-cyan-50">{type === "set-clock" ? "目标时间" : "到达时间"}</p>
-              <p className="mt-1 text-xl font-black text-amber-100">{String(current.mechanic.answer ?? "")}</p>
+              <p className="mt-1 text-xl font-black text-amber-100">{currentDone ? String(current.mechanic.answer ?? "") : "看选项试一试"}</p>
               <p className="mt-1 text-[10px] font-bold leading-4 text-cyan-100/80">从出发时间往后数。</p>
             </div>
           </div>
@@ -538,8 +570,8 @@ function MechanicStage({
           </div>
         ) : type === "equal-river" ? (
           <div className="grid gap-2">
-            <FractionBar label="1/2" parts={2} litParts={1} />
-            <FractionBar label="2/4" parts={4} litParts={currentDone || selected.includes("2/4") ? 2 : 0} />
+            <FractionBar label="左岸" parts={2} litParts={1} />
+            <FractionBar label="右岸" parts={4} litParts={currentDone || selected.includes("2/4") ? 2 : 0} />
           </div>
         ) : (
           <div className="grid grid-cols-3 items-end gap-1.5">
@@ -566,15 +598,15 @@ function MechanicStage({
         ) : current.id === "shape-time-memory" ? (
           <div className="grid gap-2">
             <div className="flex items-center justify-center gap-3">
-              <ShapeCard label="三角形" shape="三角形" active={selected.includes("三角形") || currentDone} />
+              <ShapeCard label={selected.includes("三角形") || currentDone ? "三角形" : "形状石"} shape={selected.includes("三角形") || currentDone ? "三角形" : "空位"} active={selected.includes("三角形") || currentDone} />
               <ClockFace time="3:30" lit={selected.includes("3:30") || currentDone} />
             </div>
             <p className="text-center text-[10px] font-bold text-amber-50/80">先三角形，再 3:30。</p>
           </div>
         ) : current.id === "share-memory" ? (
           <div className="grid gap-2">
-            <FractionBar label="1/2" parts={2} litParts={1} />
-            <FractionBar label="2/4" parts={4} litParts={currentDone || selected.includes("2/4") ? 2 : 0} />
+            <FractionBar label="左岸" parts={2} litParts={1} />
+            <FractionBar label="右岸" parts={4} litParts={currentDone || selected.includes("2/4") ? 2 : 0} />
           </div>
         ) : (
           <p className="text-center text-xs font-bold leading-5 text-amber-50/85">选出真正帮世界变亮的方法。</p>
@@ -596,7 +628,7 @@ function optionTone(type: S4ChapterNode["mechanic"]["type"]) {
 function ShapeCard({ active, label, shape }: { active?: boolean; label: string; shape: string }) {
   return (
     <div className={`flex min-h-14 flex-col items-center justify-center rounded-[12px] border px-1.5 py-1.5 text-center ${active ? "border-amber-200 bg-amber-300/20" : "border-cyan-100/25 bg-[#06122c]/45"}`}>
-      {shape.includes("圆") ? <span className="h-7 w-7 rounded-full border-4 border-cyan-100 bg-cyan-300/25" /> : shape.includes("正方") || shape.includes("方") ? <span className="h-7 w-7 rounded-[6px] border-4 border-emerald-100 bg-emerald-300/25" /> : <TriangleIcon lit={active} />}
+      {shape === "空位" ? <span className="flex h-7 w-7 items-center justify-center rounded-[8px] border-2 border-dashed border-cyan-100/50 text-[10px] text-cyan-100/70">?</span> : shape.includes("圆") ? <span className="h-7 w-7 rounded-full border-4 border-cyan-100 bg-cyan-300/25" /> : shape.includes("正方") || shape.includes("方") ? <span className="h-7 w-7 rounded-[6px] border-4 border-emerald-100 bg-emerald-300/25" /> : <TriangleIcon lit={active} />}
       <span className="mt-1 max-w-[52px] truncate text-[9px] font-black text-cyan-50">{label}</span>
     </div>
   );

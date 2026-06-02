@@ -30,6 +30,9 @@ export type S4ChapterNode = {
     prompt: string;
     success: string;
     hint: string;
+    wrongHint?: string;
+    strongHint?: string;
+    successSummary?: string;
     options?: string[];
     answer?: string | string[];
     targetCount?: number;
