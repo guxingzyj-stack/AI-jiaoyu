@@ -37,14 +37,15 @@ export const fractionValleyContent: S4ChapterContent = {
       reward: "公平分享 +1",
       mechanic: {
         type: "make-half",
-        prompt: "小精灵想和你公平分享圆饼，先试着把它分开。",
+        prompt: "小精灵想和你公平分享圆饼，先把圆饼切开，再拿其中一半。",
         success: "分享门亮起温暖的光。",
         hint: "两边要看起来一样大。",
         wrongHint: "圆饼还没公平分开，再看两边大小。",
         strongHint: "两份一样大时，每个人拿到的才一样多。",
         successSummary: "你拿到了两份中的一份，这就是一半。",
-        options: ["左边大一点", "两边一样大", "右边大一点"],
-        answer: "两边一样大"
+        options: ["切开圆饼", "左边大一点", "拿一半", "右边大一点"],
+        answer: ["切开圆饼", "拿一半"],
+        targetCount: 2
       }
     },
     {

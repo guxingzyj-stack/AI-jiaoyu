@@ -43,7 +43,7 @@ export const timeCityContent: S4ChapterContent = {
         wrongHint: "还没到 3 点，再拨一拨时钟。",
         strongHint: "分针要回到最上面，目标是整点。",
         successSummary: "钟面到 3:00 了，列车可以出发！",
-        options: ["2:00", "3:00", "4:30"],
+        options: ["时针走1格", "分针走15分钟", "重置"],
         answer: "3:00"
       }
     },
@@ -80,13 +80,13 @@ export const timeCityContent: S4ChapterContent = {
       reward: "轨道亮起 +1",
       mechanic: {
         type: "duration-bridge",
-        prompt: "列车 1:30 出发，走 2 小时，点亮它会到达的桥。",
+        prompt: "小火车从 3:00 出发，走 30 分钟，选择会到达的站台。",
         success: "到达桥伸出金色轨道。",
-        hint: "从 1:30 往后数两段小时。",
+        hint: "从 3:00 往后走半小时。",
         wrongHint: "这一站有点早或有点晚，再试一次。",
-        strongHint: "分钟还是 30，小时往后走两个。",
+        strongHint: "半小时后，分针会走到 30。",
         successSummary: "小火车到达 3:30 站台！",
-        options: ["2:30", "3:30", "4:00"],
+        options: ["3:15", "3:30", "4:00"],
         answer: "3:30"
       }
     },
