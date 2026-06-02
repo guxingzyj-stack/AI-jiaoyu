@@ -49,7 +49,7 @@ export function S4ChapterRunner({ assets, content }: S4ChapterRunnerProps) {
   function pickNode(node: S4ChapterNode) {
     const status = statusById.get(node.id) ?? "locked";
     if (status === "locked") {
-      setMessage("前面的星光还没亮，先去完成可用节点。");
+      setMessage("前面的星光还没亮，先完成正在发光的地点。");
       return;
     }
     setCurrentId(node.id);
@@ -58,7 +58,7 @@ export function S4ChapterRunner({ assets, content }: S4ChapterRunnerProps) {
     window.setTimeout(() => {
       setPlayerAt(node.id);
       setMoving(false);
-      setMessage(status === "completed" ? "这里已经亮起来了，可以去下一个节点。" : node.mechanic.prompt);
+      setMessage(status === "completed" ? "这里已经亮起来了，可以去下一个地点。" : node.mechanic.prompt);
     }, 260);
   }
 
@@ -100,7 +100,7 @@ export function S4ChapterRunner({ assets, content }: S4ChapterRunnerProps) {
           <IntroPanel assets={assets} content={content} onStart={startChapter} />
         ) : (
           <div className="grid min-h-0 flex-1 gap-2 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-            <section className="relative min-h-[520px] overflow-hidden rounded-[28px] border border-cyan-200/18 bg-[#06122c] shadow-[0_0_28px_rgba(56,189,248,0.2)] sm:min-h-[640px] lg:min-h-[720px]">
+            <section className="relative min-h-[360px] overflow-hidden rounded-[28px] border border-cyan-200/18 bg-[#06122c] shadow-[0_0_28px_rgba(56,189,248,0.2)] sm:min-h-[560px] lg:min-h-[720px]">
               <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${assets.background})` }} />
               <div className="absolute inset-0 bg-gradient-to-b from-[#06122c]/15 via-transparent to-[#06122c]/76" />
               <div className="absolute left-3 right-3 top-3 rounded-full border border-cyan-100/20 bg-[#06122c]/58 px-3 py-2 text-center text-xs font-black text-cyan-50 backdrop-blur-md">
@@ -268,7 +268,7 @@ function ActionPanel({
 
   function choose(option: string) {
     if (currentDone) {
-      setMessage("这个节点已经点亮了，去看看下一个发光地点。");
+      setMessage("这个地点已经点亮了，去看看下一个发光地点。");
       return;
     }
     const answer = current.mechanic.answer;
@@ -284,7 +284,7 @@ function ActionPanel({
       if (next.length >= answer.length) {
         onComplete(current);
       } else {
-        setMessage("很好，继续找下一步。");
+        setMessage(`很好，已放好 ${next.length}/${answer.length} 步，继续找下一步。`);
       }
       return;
     }
@@ -311,6 +311,10 @@ function ActionPanel({
         {selected.length > 0 && <p className="mt-1 text-[11px] font-bold text-amber-100">已点：{selected.join(" → ")}</p>}
       </div>
 
+      {!isCore && (
+        <MechanicStage current={current} currentDone={currentDone} selected={selected} />
+      )}
+
       {isCore ? (
         <button
           className="mt-3 w-full rounded-[20px] bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 py-3 text-sm font-black text-slate-950 shadow-[0_0_20px_rgba(252,211,77,0.35)] active:scale-95 disabled:opacity-45 disabled:shadow-none"
@@ -328,7 +332,7 @@ function ActionPanel({
               <button
                 key={`${option}-${index}`}
                 className={`min-h-12 rounded-[18px] border px-2 text-sm font-black transition active:scale-95 ${
-                  picked ? "border-amber-200 bg-amber-300/25 text-amber-50" : "border-cyan-200/25 bg-cyan-300/10 text-cyan-50"
+                  picked ? "border-amber-200 bg-amber-300/25 text-amber-50" : `${optionTone(current.mechanic.type)}`
                 }`}
                 disabled={currentDone || moving}
                 onClick={() => choose(option)}
@@ -346,6 +350,238 @@ function ActionPanel({
         <div className="rounded-[14px] border border-cyan-200/15 bg-[#06122c]/55 px-2 py-2">{content.hud.coreLabel}</div>
       </div>
     </section>
+  );
+}
+
+function MechanicStage({
+  current,
+  currentDone,
+  selected
+}: {
+  current: S4ChapterNode;
+  currentDone: boolean;
+  selected: string[];
+}) {
+  const type = current.mechanic.type;
+  const answer = current.mechanic.answer;
+  const correctList = Array.isArray(answer) ? answer : typeof answer === "string" ? [answer] : [];
+
+  if (type === "shape-match" || type === "mirror-pair" || type === "path-build") {
+    const labels = current.mechanic.options ?? [];
+    return (
+      <div className="mt-3 rounded-[18px] border border-violet-200/18 bg-violet-300/10 p-3">
+        {type === "mirror-pair" ? (
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+            <ShapeCard label="左边镜像" shape="三角形" active />
+            <div className="h-20 w-1 rounded-full bg-cyan-200/50 shadow-[0_0_12px_rgba(103,232,249,0.45)]" />
+            <div className="grid grid-cols-3 gap-1.5">
+              {labels.map((label) => (
+                <ShapeCard key={label} label={label} shape={label} active={currentDone || selected.includes(label)} />
+              ))}
+            </div>
+          </div>
+        ) : type === "path-build" ? (
+          <div className="grid gap-3">
+            <div className="flex items-center justify-center gap-2">
+              {Array.from({ length: current.mechanic.targetCount ?? correctList.length }).map((_, index) => (
+                <div
+                  key={index}
+                  className={`flex h-12 w-14 items-center justify-center rounded-[14px] border-2 ${
+                    currentDone || index < selected.length
+                      ? "border-amber-200 bg-amber-300/25 shadow-[0_0_14px_rgba(252,211,77,0.45)]"
+                      : "border-dashed border-cyan-100/35 bg-[#06122c]/45"
+                  }`}
+                >
+                  <TriangleIcon lit={currentDone || index < selected.length} />
+                </div>
+              ))}
+            </div>
+            <p className="text-center text-[11px] font-bold text-cyan-100/80">只把三角石放进缺口，山路才会连起来。</p>
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            <div className="flex items-center justify-center gap-2">
+              {correctList.map((label, index) => (
+                <div key={`${label}-${index}`} className="rounded-[14px] border-2 border-dashed border-cyan-100/35 bg-[#06122c]/45 p-2">
+                  <ShapeCard label={selected[index] ?? "空位"} shape={selected[index] ?? label} active={Boolean(selected[index]) || currentDone} />
+                </div>
+              ))}
+            </div>
+            <p className="text-center text-[11px] font-bold text-cyan-100/80">先看机关空位，再从按钮里选对应形状。</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (type === "set-clock" || type === "duration-bridge" || type === "order-train") {
+    return (
+      <div className="mt-3 rounded-[18px] border border-cyan-200/18 bg-cyan-300/10 p-3">
+        {type === "order-train" ? (
+          <div className="grid gap-3">
+            <div className="grid grid-cols-3 gap-2">
+              {["第1班", "第2班", "第3班"].map((label, index) => (
+                <div key={label} className={`rounded-[14px] border p-2 text-center ${index < selected.length || currentDone ? "border-amber-200 bg-amber-300/20" : "border-cyan-100/25 bg-[#06122c]/45"}`}>
+                  <p className="text-[10px] font-black text-cyan-100/80">{label}</p>
+                  <p className="mt-1 text-sm font-black text-white">{selected[index] ?? "--:--"}</p>
+                </div>
+              ))}
+            </div>
+            <TrainTrack lit={currentDone} stops={currentDone ? ["2:00", "3:00", "4:00"] : selected} />
+          </div>
+        ) : (
+          <div className="grid grid-cols-[92px_1fr] items-center gap-3">
+            <ClockFace time={String(current.mechanic.answer ?? "3:00")} lit={currentDone} />
+            <div>
+              <p className="text-xs font-black text-cyan-50">{type === "set-clock" ? "目标时间" : "到达时间"}</p>
+              <p className="mt-1 text-2xl font-black text-amber-100">{String(current.mechanic.answer ?? "")}</p>
+              <p className="mt-1 text-[11px] font-bold leading-4 text-cyan-100/80">从题目里的出发时间往后数，再点正确站台。</p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (type === "make-half" || type === "quarter-garden" || type === "equal-river") {
+    return (
+      <div className="mt-3 rounded-[18px] border border-emerald-200/18 bg-emerald-300/10 p-3">
+        {type === "quarter-garden" ? (
+          <div className="grid gap-2">
+            <FractionGrid selected={selected} lit={currentDone} />
+            <p className="text-center text-[11px] font-bold text-emerald-50/80">四块一样大，点亮两块就是 2/4。</p>
+          </div>
+        ) : type === "equal-river" ? (
+          <div className="grid gap-2">
+            <FractionBar label="一半" parts={2} litParts={1} />
+            <FractionBar label="2/4" parts={4} litParts={currentDone || selected.includes("2/4") ? 2 : 0} />
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 items-end gap-2">
+            <SplitBlock label="左边大" left={70} right={30} active={selected.includes("左边大一点")} />
+            <SplitBlock label="一样大" left={50} right={50} active={currentDone || selected.includes("两边一样大") || selected.includes("一半")} />
+            <SplitBlock label="右边大" left={30} right={70} active={selected.includes("右边大一点")} />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (type === "memory-choice" || type === "memory-sequence") {
+    return (
+      <div className="mt-3 rounded-[18px] border border-amber-200/18 bg-amber-300/10 p-3">
+        {current.id === "sea-memory" ? (
+          <div className="flex flex-wrap justify-center gap-1.5">
+            {Array.from({ length: 9 }).map((_, index) => {
+              const value = String(index + 1);
+              const lit = selected.includes(value) || (currentDone && ["3", "6", "9"].includes(value));
+              return <span key={value} className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-black ${lit ? "border-amber-200 bg-amber-300/30 text-amber-50" : "border-cyan-100/25 bg-[#06122c]/45 text-cyan-100/65"}`}>{value}</span>;
+            })}
+          </div>
+        ) : current.id === "shape-time-memory" ? (
+          <div className="grid gap-2">
+            <div className="flex items-center justify-center gap-3">
+              <ShapeCard label="三角形" shape="三角形" active={selected.includes("三角形") || currentDone} />
+              <ClockFace time="3:30" lit={selected.includes("3:30") || currentDone} />
+            </div>
+            <p className="text-center text-[11px] font-bold text-amber-50/80">先修三角路，再算列车到 3:30。</p>
+          </div>
+        ) : current.id === "share-memory" ? (
+          <div className="grid gap-2">
+            <FractionBar label="1/2" parts={2} litParts={1} />
+            <FractionBar label="2/4" parts={4} litParts={currentDone || selected.includes("2/4") ? 2 : 0} />
+          </div>
+        ) : (
+          <p className="text-center text-xs font-bold leading-5 text-amber-50/85">从之前的冒险里选出真正帮世界变亮的方法。</p>
+        )}
+      </div>
+    );
+  }
+
+  return null;
+}
+
+function optionTone(type: S4ChapterNode["mechanic"]["type"]) {
+  if (type === "make-half" || type === "quarter-garden" || type === "equal-river") return "border-emerald-200/30 bg-emerald-300/12 text-emerald-50";
+  if (type === "set-clock" || type === "duration-bridge" || type === "order-train") return "border-cyan-200/30 bg-cyan-300/12 text-cyan-50";
+  if (type === "memory-choice" || type === "memory-sequence") return "border-amber-200/30 bg-amber-300/12 text-amber-50";
+  return "border-violet-200/30 bg-violet-300/12 text-violet-50";
+}
+
+function ShapeCard({ active, label, shape }: { active?: boolean; label: string; shape: string }) {
+  return (
+    <div className={`flex min-h-16 flex-col items-center justify-center rounded-[14px] border px-2 py-2 text-center ${active ? "border-amber-200 bg-amber-300/20" : "border-cyan-100/25 bg-[#06122c]/45"}`}>
+      {shape.includes("圆") ? <span className="h-8 w-8 rounded-full border-4 border-cyan-100 bg-cyan-300/25" /> : shape.includes("正方") || shape.includes("方") ? <span className="h-8 w-8 rounded-[6px] border-4 border-emerald-100 bg-emerald-300/25" /> : <TriangleIcon lit={active} />}
+      <span className="mt-1 text-[10px] font-black text-cyan-50">{label}</span>
+    </div>
+  );
+}
+
+function TriangleIcon({ lit }: { lit?: boolean }) {
+  return <span className={`block h-0 w-0 border-x-[16px] border-b-[28px] border-x-transparent ${lit ? "border-b-amber-200 drop-shadow-[0_0_10px_rgba(252,211,77,0.6)]" : "border-b-violet-200/80"}`} />;
+}
+
+function ClockFace({ lit, time }: { lit?: boolean; time: string }) {
+  const minute = time.endsWith(":30") ? "rotate-90" : "rotate-0";
+  const hour = time.startsWith("3") ? "rotate-90" : time.startsWith("4") ? "rotate-[120deg]" : "rotate-[60deg]";
+  return (
+    <div className={`relative mx-auto h-20 w-20 rounded-full border-4 ${lit ? "border-amber-200 bg-amber-300/15" : "border-cyan-100/45 bg-[#06122c]/65"}`}>
+      <span className="absolute left-1/2 top-1 h-3 w-1 -translate-x-1/2 rounded-full bg-cyan-100/75" />
+      <span className="absolute left-1/2 top-1/2 h-1 w-6 origin-left rounded-full bg-cyan-100" />
+      <span className={`absolute left-1/2 top-1/2 h-1 w-7 origin-left rounded-full bg-amber-200 ${minute}`} />
+      <span className={`absolute left-1/2 top-1/2 h-1 w-5 origin-left rounded-full bg-white ${hour}`} />
+      <span className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />
+    </div>
+  );
+}
+
+function TrainTrack({ lit, stops }: { lit?: boolean; stops: string[] }) {
+  return (
+    <div className="flex items-center justify-center gap-1.5">
+      {["2:00", "3:00", "4:00"].map((stop, index) => {
+        const active = lit || stops[index] === stop;
+        return (
+          <div key={stop} className={`flex min-h-10 flex-1 items-center justify-center rounded-[12px] border text-xs font-black ${active ? "border-amber-200 bg-amber-300/20 text-amber-50" : "border-cyan-100/25 bg-[#06122c]/45 text-cyan-100/65"}`}>
+            {stops[index] ?? stop}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function FractionGrid({ lit, selected }: { lit?: boolean; selected: string[] }) {
+  return (
+    <div className="mx-auto grid h-28 w-28 grid-cols-2 overflow-hidden rounded-[18px] border-2 border-emerald-100/60">
+      {["第1块", "第2块", "第3块", "第4块"].map((label) => (
+        <div key={label} className={`border border-emerald-100/25 ${lit || selected.includes(label) ? "bg-emerald-300/45" : "bg-[#06122c]/45"}`} />
+      ))}
+    </div>
+  );
+}
+
+function FractionBar({ label, litParts, parts }: { label: string; litParts: number; parts: number }) {
+  return (
+    <div className="grid grid-cols-[42px_1fr] items-center gap-2">
+      <span className="text-xs font-black text-emerald-50">{label}</span>
+      <div className="grid h-9 overflow-hidden rounded-[12px] border border-emerald-100/45" style={{ gridTemplateColumns: `repeat(${parts}, minmax(0, 1fr))` }}>
+        {Array.from({ length: parts }).map((_, index) => (
+          <span key={index} className={`border-r border-emerald-100/25 last:border-r-0 ${index < litParts ? "bg-emerald-300/45" : "bg-[#06122c]/45"}`} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SplitBlock({ active, label, left, right }: { active?: boolean; label: string; left: number; right: number }) {
+  return (
+    <div className={`rounded-[14px] border p-2 ${active ? "border-amber-200 bg-amber-300/15" : "border-emerald-100/25 bg-[#06122c]/45"}`}>
+      <div className="flex h-16 overflow-hidden rounded-[10px] border border-emerald-100/35">
+        <span className="bg-emerald-300/45" style={{ width: `${left}%` }} />
+        <span className="bg-cyan-300/30" style={{ width: `${right}%` }} />
+      </div>
+      <p className="mt-1 text-center text-[10px] font-black text-emerald-50">{label}</p>
+    </div>
   );
 }
 
