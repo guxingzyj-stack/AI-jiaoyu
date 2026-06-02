@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { FOREST_MAP_ASSETS } from "../lib/forestMapContentSource";
 import type { S4ChapterAssets, S4ChapterContent, S4ChapterNode } from "../lib/s4ChapterTypes";
 
 type NodeStatus = "locked" | "available" | "completed";
@@ -333,11 +334,10 @@ function MapNode({
 function PlayerMarker({ node }: { node: S4ChapterNode }) {
   return (
     <span
-      className="pointer-events-none absolute z-20 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-cyan-300 text-[10px] font-black text-slate-950 shadow-[0_0_14px_rgba(103,232,249,0.85)] transition-[left,top] duration-[650ms] ease-out"
-      style={{ left: `${node.position.x}%`, top: `calc(${node.position.y}% - 34px)` }}
-    >
-      你
-    </span>
+      aria-label="你在这里"
+      className="pointer-events-none absolute z-20 h-9 w-9 -translate-x-1/2 bg-contain bg-bottom bg-no-repeat text-[0px] text-transparent drop-shadow-[0_0_10px_rgba(103,232,249,0.6)] transition-[left,top] duration-[650ms] ease-out"
+      style={{ left: `${node.position.x}%`, top: `calc(${node.position.y}% - 30px)`, backgroundImage: `url(${FOREST_MAP_ASSETS.player})` }}
+    />
   );
 }
 
